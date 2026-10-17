@@ -1,0 +1,71 @@
+# Hill Stream — what does not belong in the published repository.
+#
+# The site itself is static: index.html, the .dc.html pages, the shared
+# modules and uploads/photos are all tracked, so GitHub Pages can serve the
+# demo. What is excluded below is either a secret, local state, or scratch
+# that nothing on the site loads.
+
+
+# ── Secrets and live data ────────────────────────────────────────────────
+# hillstream.db is not just data. server.js generates the JWT signing key,
+# the reset salt and the reset-code digest on first run and stores them
+# here (server.js:41-46), alongside the operator's password digest and the
+# guest book. Publishing it would hand over the keys to the property.
+# The server recreates it, and reseeds the owner account, on next start.
+hillstream.db
+hillstream.db-wal
+hillstream.db-shm
+hillstream.db-journal
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+
+# Anything holding credentials for a real deployment.
+.env
+.env.*
+!.env.example
+
+
+# ── Local editor state ───────────────────────────────────────────────────
+# The <image-slot> drop sidecar: ~2 MB of base64 holding the same pictures
+# that now live as real files in uploads/photos, which every slot points at
+# via src. The site renders identically without it — and server.js refuses
+# to serve dot-files anyway, so it never reached the browser.
+# Delete this line if you would rather version the drops.
+.image-slots.state.json
+.thumbnail
+
+
+# ── Scratch the site never loads ─────────────────────────────────────────
+# 73 paste artefacts and window grabs (~20 MB) left over from building the
+# pages — screenshots of the site and the PMS, not photographs of the
+# resort. Nothing references them. The real photography is uploads/photos
+# and the four ChatGPT source images, which stay tracked.
+uploads/pasted-*.png
+uploads/Screenshot*.png
+
+# Two clips no page plays (~18 MB). Every video the site actually uses —
+# the six home-page clips, the gallery reel and the header mark — is
+# tracked. Remove these two lines if you want the spares kept.
+uploads/Video Project (1).mp4
+uploads/make_it_more_pefect_adn_beauti.mp4
+
+
+# ── Node ─────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+
+
+# ── OS and editor ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*~

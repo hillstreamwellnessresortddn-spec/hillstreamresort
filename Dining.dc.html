@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="./content.js"></script>
+<script src="./image-slot.js"></script>
+<style>
+  html, body { margin:0; padding:0; background:#F2EEE4; }
+  * { box-sizing:border-box; }
+  a { color:#5B7057; }
+  a:hover { color:#2C3A2E; }
+  :focus-visible { outline:2px solid #8A6E42; outline-offset:3px; }
+  ::selection { background:#DCD3BE; }
+  @keyframes hsRise { from { opacity:0; transform:translateY(26px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes hsReveal { from { clip-path:inset(0 0 100% 0); } to { clip-path:inset(0 0 0 0); } }
+  @keyframes hsFloat { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
+  @keyframes hsLine { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+  .hs-table-fig { animation:hsReveal 1100ms cubic-bezier(.22,.61,.36,1) both; }
+  .hs-table-fig image-slot { display:block; width:100%; height:100%; transition:transform 900ms cubic-bezier(.22,.61,.36,1), filter 900ms ease; }
+  .hs-table-wrap:hover .hs-table-fig image-slot { transform:scale(1.04); filter:saturate(1.06); }
+  .hs-table-copy > * { animation:hsRise 900ms cubic-bezier(.22,.61,.36,1) both; }
+  .hs-table-copy > *:nth-child(1) { animation-delay:220ms; }
+  .hs-table-copy > *:nth-child(2) { animation-delay:340ms; }
+  .hs-table-copy > *:nth-child(3) { animation-delay:460ms; }
+  .hs-table-copy > *:nth-child(4) { animation-delay:580ms; }
+  .hs-table-mark { transform-origin:left center; animation:hsLine 900ms cubic-bezier(.22,.61,.36,1) 300ms both; }
+
+  /* Hero */
+  @keyframes hsHeroIn { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes hsGrain { 0% { transform:translate(0,0); } 100% { transform:translate(-2%, 1%); } }
+  .hs-hero > * { animation:hsHeroIn 1000ms cubic-bezier(.22,.61,.36,1) both; }
+  .hs-hero > *:nth-child(1) { animation-delay:80ms; }
+  .hs-hero > *:nth-child(2) { animation-delay:220ms; }
+  .hs-hero > *:nth-child(3) { animation-delay:380ms; }
+  .hs-hero > *:nth-child(4) { animation-delay:520ms; }
+  .hs-tag { transition:border-color 320ms ease, color 320ms ease, background 320ms ease; }
+  .hs-tag:hover { border-color:#C4A97A; color:#F2EEE4; background:rgba(196,169,122,0.1); }
+
+  /* Scroll reveal */
+  .hs-rv { opacity:0; transform:translateY(30px); transition:opacity 1000ms cubic-bezier(.22,.61,.36,1), transform 1000ms cubic-bezier(.22,.61,.36,1); }
+  .hs-rv.hs-in { opacity:1; transform:translateY(0); }
+
+  /* Menu rows */
+  .hs-course { position:relative; transition:padding-left 480ms cubic-bezier(.22,.61,.36,1); }
+  .hs-course::after { content:''; position:absolute; left:0; top:0; width:0; height:1px; background:#8A6E42; transition:width 640ms cubic-bezier(.22,.61,.36,1); }
+  .hs-course:hover { padding-left:14px; }
+  .hs-course:hover::after { width:100%; }
+  .hs-course:hover .hs-course-name { color:#8A6E42; }
+  .hs-course-name { transition:color 380ms ease; }
+  .hs-num { font-family:'Marcellus', serif; font-variant-numeric:oldstyle-nums; }
+
+  /* Diet cards */
+  .hs-diet { position:relative; transition:transform 460ms cubic-bezier(.22,.61,.36,1), box-shadow 460ms ease, background 460ms ease; }
+  .hs-diet::before { content:''; position:absolute; left:0; top:0; width:100%; height:2px; background:#C4A97A; transform:scaleX(0); transform-origin:left; transition:transform 520ms cubic-bezier(.22,.61,.36,1); }
+  .hs-diet:hover { transform:translateY(-4px); box-shadow:0 26px 50px -32px rgba(44,58,46,0.5); background:#F4EFE2; z-index:1; }
+  .hs-diet:hover::before { transform:scaleX(1); }
+
+  .hs-cta { position:relative; overflow:hidden; }
+  .hs-cta span { position:relative; z-index:1; transition:color 360ms ease; }
+  .hs-cta::before { content:''; position:absolute; inset:0; background:#2C3A2E; transform:translateY(101%); transition:transform 420ms cubic-bezier(.22,.61,.36,1); }
+  .hs-cta:hover::before { transform:translateY(0); }
+  .hs-cta:hover span { color:#F2EEE4; }
+
+  @media (prefers-reduced-motion:reduce) { .hs-table-fig, .hs-table-copy > *, .hs-table-mark, .hs-hero > * { animation:none !important; } .hs-rv { opacity:1; transform:none; } }
+</style>
+<script src="./spotlight.js"></script>
+<script src="./api.js"></script>
+</helmet>
+
+<div style="background:#F2EEE4; color:#2C3A2E; font-family:'Jost', system-ui, sans-serif; font-weight:300; overflow-x:hidden">
+
+  <dc-import name="SiteHeader" current="dining" hint-size="100%,68px"></dc-import>
+
+  <section style="position:relative; background:#2C3A2E; color:#F2EEE4; padding:clamp(60px, 13vw, 108px) 0; overflow:hidden">
+    <div style="position:absolute; inset:0; background:radial-gradient(120% 90% at 82% 0%, rgba(196,169,122,0.16), rgba(44,58,46,0) 60%); pointer-events:none"></div>
+    <div style="position:absolute; right:-6%; top:-14%; width:min(46vw,420px); height:min(46vw,420px); border:1px solid rgba(196,169,122,0.22); border-radius:50%; pointer-events:none"></div>
+    <div class="hs-hero" style="position:relative; max-width:1180px; margin:0 auto; padding:0 20px">
+      <p style="margin:0 0 18px; font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#C4A97A">{{ pageKicker }}</p>
+      <h1 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(36px, 10vw, 72px); line-height:1.05; letter-spacing:-0.02em; margin:0 0 22px; max-width:18ch">{{ pageTitle }}</h1>
+      <p style="margin:0; font-size:clamp(15px, 4vw, 19px); line-height:1.72; color:#D9D3C4; max-width:48ch; text-wrap:pretty">{{ pageLede }}</p>
+      <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:32px">
+        <sc-for list="{{ tags }}" as="t" hint-placeholder-count="4">
+          <span class="hs-tag" style="font-size:11px; letter-spacing:0.1em; color:#D9D3C4; border:1px solid #4C5A4C; padding:8px 13px">{{ t }}</span>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section class="hs-table-wrap" style="max-width:1180px; margin:0 auto; padding:clamp(40px, 10vw, 80px) 20px clamp(32px, 8vw, 56px); display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:clamp(20px, 5vw, 40px); align-items:center">
+    <div class="hs-table-fig" style="position:relative; aspect-ratio:4 / 5; min-height:280px; overflow:hidden; box-shadow:0 24px 60px -30px rgba(44,58,46,0.55)">
+      <image-slot id="hs-dining-table" shape="rect" fit="cover" src="uploads/photos/g16.jpg" placeholder="The long table laid for dinner"></image-slot>
+      <span style="position:absolute; left:0; bottom:0; padding:12px 16px; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#F2EEE4; background:linear-gradient(0deg, rgba(44,58,46,0.72), rgba(44,58,46,0))">Seats twenty-two · One sitting</span>
+    </div>
+    <div class="hs-table-copy">
+      <div class="hs-table-mark" style="width:52px; height:2px; background:#C4A97A; margin-bottom:20px"></div>
+      <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(22px, 6vw, 34px); margin:0 0 16px">The table</h2>
+      <p style="margin:0 0 16px; font-size:15px; line-height:1.72; color:#4A4A40; text-wrap:pretty">Everyone eats together at eight, at one table that seats twenty-two. Guests who want to eat alone can ask for a tray in the room, and about one in ten does on the first night and then never again.</p>
+      <p style="margin:0 0 16px; font-size:15px; line-height:1.72; color:#4A4A40; text-wrap:pretty">Breakfast is looser: served at the stream pavilion from seven until ten, ordered off a short card. Lunch is a single dish, left out at one for whoever is around.</p>
+      <p style="margin:0; font-size:15px; line-height:1.72; color:#4A4A40; text-wrap:pretty">The kitchen grows what it can on the four terraces below it. Everything else comes up the hill twice a week.</p>
+    </div>
+  </section>
+
+  <section class="hs-rv" style="max-width:1180px; margin:0 auto; padding:0 20px clamp(48px, 12vw, 88px)">
+    <div style="display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:clamp(20px, 5vw, 32px)">
+      <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(22px, 6vw, 34px); margin:0">This week's dinner</h2>
+      <span style="font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#6E6A5C">Changes every Monday</span>
+    </div>
+    <div style="display:flex; flex-direction:column">
+      <sc-for list="{{ courses }}" as="c" hint-placeholder-count="5">
+        <div class="hs-course" style="border-top:1px solid #E0D9C8; padding:22px 0; display:flex; flex-wrap:wrap; gap:6px 20px; align-items:baseline">
+          <span class="hs-num" style="font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#8A6E42; flex:0 0 88px">{{ c.n }}</span>
+          <h3 class="hs-course-name" style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(18px, 4.6vw, 23px); margin:0; flex:1 1 240px">{{ c.name }}</h3>
+          <p style="margin:0; flex:1 1 100%; font-size:14px; line-height:1.65; color:#4A4A40; max-width:58ch; padding-left:0; text-wrap:pretty">{{ c.note }}</p>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section class="hs-rv" style="background:#EAE4D6; padding:clamp(44px, 11vw, 88px) 0">
+    <div style="max-width:1180px; margin:0 auto; padding:0 20px">
+      <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(22px, 6vw, 34px); margin:0 0 8px">Eating differently</h2>
+      <p style="margin:0 0 clamp(24px, 6vw, 40px); font-size:15px; line-height:1.7; color:#4A4A40; max-width:46ch; text-wrap:pretty">Tell us when you book, not when you sit down — the kitchen orders for the week.</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(232px, 1fr)); gap:1px; background:#DED6C4; border:1px solid #DED6C4">
+        <sc-for list="{{ diets }}" as="d" hint-placeholder-count="4">
+          <div class="hs-diet" style="background:#EFEADD; padding:24px 20px">
+            <div style="font-family:'Marcellus', serif; font-size:20px">{{ d.name }}</div>
+            <p style="margin:10px 0 0; font-size:13px; line-height:1.65; color:#4A4A40; text-wrap:pretty">{{ d.note }}</p>
+          </div>
+        </sc-for>
+      </div>
+      <a class="hs-cta" href="Booking%20Engine.dc.html" style="display:inline-block; margin-top:28px; border:1px solid #2C3A2E; color:#2C3A2E; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; padding:15px 22px; text-decoration:none"><span>Choose a meal plan</span></a>
+    </div>
+  </section>
+
+  <dc-import name="SiteFooter" hint-size="100%,420px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844}}">
+const CT = () => (typeof window !== 'undefined' && window.HSContent) || null;
+const FB = { kicker: 'Dining', title: "One kitchen, one menu, eight o'clock", lede: '' };
+
+class Component extends DCLogic {
+  state = { copy: CT() ? CT().published().dining : FB };
+
+  componentDidMount() {
+    this.bindContent(0);
+    this.initReveal();
+  }
+
+  initReveal() {
+    const mq = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+    const nodes = () => Array.from(this._root ? this._root.querySelectorAll('.hs-rv') : document.querySelectorAll('.hs-rv'));
+    const run = () => {
+      const els = nodes();
+      if (!els.length) { this._tR = setTimeout(run, 60); return; }
+      if (mq && mq.matches) { els.forEach(el => el.classList.add('hs-in')); return; }
+      this._io = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('hs-in'); this._io.unobserve(e.target); } });
+      }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+      els.forEach(el => this._io.observe(el));
+    };
+    run();
+  }
+
+  bindContent(tries) {
+    if (!CT()) {
+      if (tries < 60) this._tC = setTimeout(() => this.bindContent(tries + 1), 50);
+      return;
+    }
+    this.setState({ copy: CT().published().dining });
+    this._unsubC = CT().subscribe(c => this.setState({ copy: c.dining }));
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this._tC);
+    clearTimeout(this._tR);
+    if (this._io) this._io.disconnect();
+    if (this._unsubC) this._unsubC();
+  }
+
+  renderVals() {
+    const cp = this.state.copy || FB;
+
+    return {
+      pageKicker: cp.kicker || FB.kicker,
+      pageTitle: cp.title || FB.title,
+      pageLede: cp.lede || '',
+      tags: ['Set five-course dinner', 'Terrace-grown', 'Ayurvedic menu on request', 'No à la carte', 'One sitting'],
+      courses: [
+        { n: 'First', name: 'Buttermilk, cucumber, toasted cumin', note: 'Cold, and deliberately plain. It is there to slow you down after the drive.' },
+        { n: 'Second', name: 'Charred aubergine, walnut, mustard oil', note: 'The aubergines come off the second terrace from June to September and from the valley the rest of the year.' },
+        { n: 'Third', name: 'Kafuli, hand-rolled roti', note: 'The green mash of the hills, spinach and fenugreek, cooked long. The house dish.' },
+        { n: 'Fourth', name: 'Trout, ghee, wild pepper', note: 'From the farm at Tehri, forty minutes down. Vegetarians are given the paneer instead, cooked the same way.' },
+        { n: 'Last', name: 'Jaggery custard, roasted seeds', note: 'Sweet but not much. Coffee is on the sideboard until ten.' }
+      ],
+      diets: [
+        { name: 'Vegetarian', note: 'The default. Four of five courses are vegetarian anyway, and nothing needs warning.' },
+        { name: 'Vegan', note: 'Ghee and buttermilk are the two things to work around. Give us a day\u2019s notice and it is easy.' },
+        { name: 'Ayurvedic', note: 'Set with the doctor after your consultation, and cooked separately. Ask when booking.' },
+        { name: 'Allergies', note: 'Nuts appear in three dishes and mustard oil in most. Tell us and the kitchen rebuilds the menu.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

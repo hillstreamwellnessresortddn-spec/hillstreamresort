@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="./rates.js"></script>
+<script src="./image-slot.js"></script>
+<!-- Before bookings.js: a reservation writes the guest's record as it is
+     taken, so the guest book is never behind the book of reservations. -->
+<script src="./profiles.js"></script>
+<script src="./bookings.js"></script>
+<!-- Not for the guest, who never signs in here: desk mode has to be able to
+     prove an operator is actually at the counter before it unlocks cash and
+     the OTA capture form. -->
+<script src="./auth.js"></script>
+<style>
+  html, body { margin:0; padding:0; background:#F2EEE4; }
+  * { box-sizing:border-box; }
+  a { color:#5B7057; text-decoration:none; }
+  a:hover { color:#2C3A2E; }
+  input, select, textarea, button { font-family:'Jost', system-ui, sans-serif; }
+  input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible { outline:2px solid #A98B5D; outline-offset:2px; }
+  ::selection { background:#DCD3BE; }
+  @keyframes hsRise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+  @keyframes hsSpin { to { transform:rotate(360deg); } }
+  /* Each step arrives as a panel: it rises, sharpens and unmasks from the top
+     edge, so moving through the flow reads as one continuous surface. */
+  @keyframes hsPanel { from { opacity:0; transform:translateY(26px); filter:blur(7px); clip-path:inset(0 0 8% 0); } to { opacity:1; transform:none; filter:none; clip-path:inset(-30% -30% -30% -30%); } }
+  @keyframes hsTrackIn { from { opacity:0; letter-spacing:0.56em; } to { opacity:1; letter-spacing:0.28em; } }
+  @keyframes hsWipeX { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+  /* The mark behind the page drifts, so the ground is never quite static. */
+  @keyframes hsFloat { 0% { transform:translate3d(0,0,0) scale(1); } 50% { transform:translate3d(-2.2%,-1.4%,0) scale(1.045); } 100% { transform:translate3d(1.6%,1%,0) scale(1.015); } }
+  @keyframes hsSheen { 0% { transform:translateX(-140%) skewX(-18deg); } 100% { transform:translateX(260%) skewX(-18deg); } }
+  @keyframes hsPulse { 0%, 100% { opacity:1; transform:scale(1); } 50% { opacity:0.35; transform:scale(0.7); } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:1ms !important; animation-delay:1ms !important; transition-duration:1ms !important; }
+  }
+</style>
+<script src="./spotlight.js"></script>
+<script src="./api.js"></script>
+</helmet>
+
+<div style="position:relative; isolation:isolate; min-height:100vh; background:#F2EEE4; color:#2C3A2E; font-family:'Jost', system-ui, sans-serif; font-weight:300; padding-bottom:96px; overflow-x:clip">
+
+  <div aria-hidden="true" data-no-spot="1" style="position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden">
+    <div style="position:absolute; inset:0; background:radial-gradient(78% 58% at 50% -8%, rgba(255,252,244,0.95) 0%, rgba(242,238,228,0) 62%), radial-gradient(62% 48% at 100% 100%, rgba(214,204,180,0.42) 0%, rgba(242,238,228,0) 66%)"></div>
+    <img src="uploads/ChatGPT%20Image%20Sep%207%2C%202026%2C%2004_10_19%20PM.png" alt="" style="position:absolute; right:-14%; bottom:-10%; width:min(1180px, 108vw); mix-blend-mode:multiply; opacity:0.085; animation:hsFloat 40s ease-in-out infinite alternate; will-change:transform">
+  </div>
+
+  <header style="position:sticky; top:0; z-index:40; background:rgba(242,238,228,0.92); backdrop-filter:blur(10px); border-bottom:1px solid #E0D9C8">
+    <div style="max-width:1120px; margin:0 auto; padding:12px 20px; display:flex; align-items:center; justify-content:space-between; gap:16px">
+      <a href="index.html" style="display:flex; align-items:center; gap:16px; min-width:0; text-decoration:none; color:#2C3A2E">
+        <span style="display:block; width:82px; height:54px; flex:0 0 auto; overflow:hidden; position:relative">
+          <img src="uploads/ChatGPT%20Image%20Sep%207%2C%202026%2C%2004_10_19%20PM.png" alt="Hill Stream Resorts" style="position:absolute; left:50%; top:-5px; width:136px; transform:translateX(-50%); mix-blend-mode:multiply">
+        </span>
+        <span style="display:flex; flex-direction:column; gap:3px; min-width:0">
+          <span style="font-family:'Marcellus', serif; font-size:15px; letter-spacing:0.22em; text-transform:uppercase">Hill Stream</span>
+          <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Wellness Resort</span>
+        </span>
+      </a>
+      <div style="display:flex; align-items:center; gap:14px">
+        <span style="font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#6E6A5C; animation:hsTrackIn 900ms cubic-bezier(.2,.7,.3,1) both">{{ stepLabel }}</span>
+        <span style="font-family:'Marcellus', serif; font-size:13px; color:#8A6E42">{{ stepCounter }}</span>
+      </div>
+    </div>
+    <div style="position:relative; height:2px; background:#E0D9C8">
+      <div style="position:relative; height:2px; background:linear-gradient(90deg, #C6AC7C 0%, #A98B5D 100%); box-shadow:0 0 12px rgba(169,139,93,0.55); transition:width 620ms cubic-bezier(.2,.7,.3,1); width:{{ progressPct }}"></div>
+    </div>
+  </header>
+
+  <sc-if value="{{ hasFeed }}" hint-placeholder-val="{{ false }}">
+    <div aria-live="polite" style="position:fixed; top:98px; right:20px; z-index:45; width:min(310px, calc(100vw - 40px)); pointer-events:none; opacity:{{ toastFade }}; transform:{{ toastShift }}; transition:opacity 620ms cubic-bezier(.2,.7,.3,1), transform 620ms cubic-bezier(.2,.7,.3,1)">
+      <div style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(251,248,241,0.97); backdrop-filter:blur(12px); border:1px solid #E0D9C8; box-shadow:0 26px 54px -32px rgba(20,26,20,0.55)">
+        <span style="flex:0 0 auto; width:30px; height:30px; border-radius:50%; border:1px solid #DCCFAE; background:#F4EEDF; color:#7A6231; font-family:'Marcellus', serif; font-size:13px; display:flex; align-items:center; justify-content:center">{{ toast.initial }}</span>
+        <span style="flex:1 1 auto; min-width:0">
+          <span style="display:block; font-size:13px; color:#2C3A2E">{{ toast.who }}</span>
+          <span style="display:block; font-size:11.5px; color:#6E6A5C; margin-top:2px">{{ toast.line }}</span>
+        </span>
+        <span style="flex:0 0 auto; font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:#8A8471; text-align:right; max-width:82px">{{ toast.when }}</span>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ?staff=1 asks for desk mode; a live operator session grants it. Without
+       one the page stays the ordinary guest booking flow. -->
+  <sc-if value="{{ staffDenied }}" hint-placeholder-val="{{ false }}">
+    <div style="position:relative; z-index:1; max-width:1120px; margin:18px auto 0; padding:0 20px">
+      <div style="display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; justify-content:space-between; background:#F6EDE4; border:1px solid #D8BFA4; color:#6B4630; padding:12px 16px">
+        <span style="font-size:11px; letter-spacing:0.14em; text-transform:uppercase">Desk mode needs a signed-in operator</span>
+        <a href="PMS%20Dashboard.dc.html" style="font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#8A6E42; text-decoration:none; border-bottom:1px solid rgba(138,110,66,0.45); padding-bottom:3px">Sign in to the PMS</a>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isStaff }}" hint-placeholder-val="{{ false }}">
+    <div style="position:relative; z-index:1; max-width:1120px; margin:18px auto 0; padding:0 20px">
+      <div style="display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; justify-content:space-between; background:#26302A; color:#F2EEE4; padding:12px 16px">
+        <span style="display:flex; align-items:center; gap:10px; font-size:11px; letter-spacing:0.18em; text-transform:uppercase">
+          <span style="display:block; width:6px; height:6px; border-radius:50%; background:#C6AC7C"></span>Desk mode · booking taken on behalf of a guest
+        </span>
+        <a href="PMS%20Dashboard.dc.html" style="font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#D8C39A; text-decoration:none; border-bottom:1px solid rgba(216,195,154,0.45); padding-bottom:3px">Back to the dashboard</a>
+      </div>
+    </div>
+  </sc-if>
+
+  <main style="position:relative; z-index:1; max-width:1120px; margin:0 auto; padding:28px 20px 0">
+
+    <sc-if value="{{ showModeToggle }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:26px">
+        <button onClick="{{ setModeNew }}" style="cursor:pointer; border:1px solid {{ newModeBorder }}; background:{{ newModeBg }}; color:{{ newModeColor }}; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; padding:12px 18px; transition:background 220ms, color 220ms, border-color 220ms">Take a new booking</button>
+        <button onClick="{{ setModeRegister }}" style="cursor:pointer; border:1px solid {{ regModeBorder }}; background:{{ regModeBg }}; color:{{ regModeColor }}; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; padding:12px 18px; transition:background 220ms, color 220ms, border-color 220ms">Register an existing booking</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:hsPanel 780ms cubic-bezier(.2,.7,.3,1) both">
+        <p style="margin:0 0 10px; font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#96793F; animation:hsTrackIn 1300ms cubic-bezier(.2,.7,.3,1) both">Step one</p>
+        <h1 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(30px,7vw,46px); line-height:1.12; margin:0 0 12px; letter-spacing:-0.01em">Reserve your stay</h1>
+        <p style="margin:0 0 28px; font-size:15px; line-height:1.65; color:#6E6A5C; max-width:44ch; text-wrap:pretty">Tell us when you would like to arrive. Availability and rates are drawn live from the resort.</p>
+
+        <div style="background:#FBF8F1; border:1px solid #E0D9C8; box-shadow:0 30px 66px -48px rgba(20,26,20,0.5), inset 0 1px 0 #FFFDF8; padding:clamp(20px, 3vw, 30px); display:flex; flex-direction:column; gap:18px">
+          <div style="display:flex; flex-wrap:wrap; gap:14px">
+            <label style="flex:1 1 150px; display:flex; flex-direction:column; gap:7px">
+              <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Check-in</span>
+              <input type="date" min="{{ todayIso }}" value="{{ checkIn }}" onChange="{{ onCheckIn }}" style="width:100%; padding:12px 12px; font-size:15px; color:#2C3A2E; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05); transition:border-color 320ms, box-shadow 320ms">
+            </label>
+            <label style="flex:1 1 150px; display:flex; flex-direction:column; gap:7px">
+              <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Check-out</span>
+              <input type="date" min="{{ checkOutMin }}" value="{{ checkOut }}" onChange="{{ onCheckOut }}" style="width:100%; padding:12px 12px; font-size:15px; color:#2C3A2E; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05); transition:border-color 320ms, box-shadow 320ms">
+            </label>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:14px">
+            <label style="flex:1 1 100px; display:flex; flex-direction:column; gap:7px">
+              <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Adults</span>
+              <select value="{{ adults }}" onChange="{{ onAdults }}" style="width:100%; padding:12px; font-size:15px; color:#2C3A2E; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05); transition:border-color 320ms, box-shadow 320ms">
+                <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+              </select>
+            </label>
+            <label style="flex:1 1 100px; display:flex; flex-direction:column; gap:7px">
+              <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Children</span>
+              <select value="{{ children }}" onChange="{{ onChildren }}" style="width:100%; padding:12px; font-size:15px; color:#2C3A2E; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05); transition:border-color 320ms, box-shadow 320ms">
+                <option value="0">0</option><option value="1">1</option><option value="2">2</option>
+              </select>
+            </label>
+            <label style="flex:1 1 100px; display:flex; flex-direction:column; gap:7px">
+              <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Rooms</span>
+              <select value="{{ roomCount }}" onChange="{{ onRoomCount }}" style="width:100%; padding:12px; font-size:15px; color:#2C3A2E; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05); transition:border-color 320ms, box-shadow 320ms">
+                <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+              </select>
+            </label>
+          </div>
+          <div style="display:flex; align-items:baseline; gap:8px; padding-top:4px; border-top:1px solid #EAE4D6">
+            <span style="font-family:'Marcellus', serif; font-size:20px">{{ nights }}</span>
+            <span style="font-size:13px; color:#6E6A5C">{{ nightsLabel }} · {{ weekendLabel }}</span>
+          </div>
+          <sc-if value="{{ dateErr }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:8px; font-size:13px; color:#B4553E">{{ dateErr }}</div>
+          </sc-if>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:18px">
+          <sc-for list="{{ notes }}" as="note" hint-placeholder-count="3">
+            <span style="font-size:11px; letter-spacing:0.08em; color:#6E6A5C; border:1px solid #E0D9C8; padding:7px 12px; background:#FBF8F1">{{ note }}</span>
+          </sc-for>
+        </div>
+
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isRegister }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:hsPanel 780ms cubic-bezier(.2,.7,.3,1) both">
+        <p style="margin:0 0 10px; font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#96793F">Desk</p>
+        <h1 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(28px,6vw,40px); line-height:1.15; margin:0 0 12px">Register an existing booking</h1>
+        <p style="margin:0 0 26px; font-size:15px; line-height:1.65; color:#6E6A5C; max-width:54ch; text-wrap:pretty">A reservation that already came through an OTA or over the phone. It lands in the resort's system under its channel, with what the guest has paid and any balance to collect at arrival.</p>
+
+        <sc-if value="{{ regFormOpen }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#FBF8F1; border:1px solid #E0D9C8; box-shadow:0 30px 66px -48px rgba(20,26,20,0.5), inset 0 1px 0 #FFFDF8; padding:clamp(20px, 3vw, 30px); display:flex; flex-direction:column; gap:18px">
+            <div style="display:flex; flex-wrap:wrap; gap:14px">
+              <label style="flex:1 1 220px; display:flex; flex-direction:column; gap:7px">
+                <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Booked through</span>
+                <select value="{{ regChannel }}" onChange="{{ onRegChannel }}" style="width:100%; padding:12px; font-size:15px; color:#2C3A2E; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05)">
+                  <sc-for list="{{ regChannelOptions }}" as="o" hint-placeholder-count="13"><option value="{{ o }}">{{ o }}</option></sc-for>
+                </select>
+              </label>
+              <label style="flex:1 1 220px; display:flex; flex-direction:column; gap:7px">
+                <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Room</span>
+                <select value="{{ regRoom }}" onChange="{{ onRegRoom }}" style="width:100%; padding:12px; font-size:15px; color:#2C3A2E; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05)">
+                  <sc-for list="{{ regRoomOptions }}" as="o" hint-placeholder-count="5"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+                </select>
+              </label>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:14px">
+              <label style="flex:1 1 200px; display:flex; flex-direction:column; gap:7px">
+                <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Full name</span>
+                <input value="{{ gName }}" onChange="{{ onName }}" placeholder="Ananya Rao" style="width:100%; padding:12px; font-size:15px; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05); color:#2C3A2E">
+              </label>
+              <label style="flex:1 1 200px; display:flex; flex-direction:column; gap:7px">
+                <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Email</span>
+                <input type="email" value="{{ gEmail }}" onChange="{{ onEmail }}" placeholder="you@example.com" style="width:100%; padding:12px; font-size:15px; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05); color:#2C3A2E">
+              </label>
+              <label style="flex:1 1 160px; display:flex; flex-direction:column; gap:7px">
+                <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Phone</span>
+                <input type="tel" value="{{ gPhone }}" onChange="{{ onPhone }}" placeholder="+91 98xxx xxxxx" style="width:100%; padding:12px; font-size:15px; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05); color:#2C3A2E">
+              </label>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:14px">
+              <label style="flex:1 1 150px; display:flex; flex-direction:column; gap:7px">
+                <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Check-in</span>
+                <input type="date" min="{{ todayIso }}" value="{{ checkIn }}" onChange="{{ onCheckIn }}" style="width:100%; padding:12px; font-size:15px; color:#2C3A2E; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05)">
+              </label>
+              <label style="flex:1 1 150px; display:flex; flex-direction:column; gap:7px">
+                <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Check-out</span>
+                <input type="date" min="{{ checkOutMin }}" value="{{ checkOut }}" onChange="{{ onCheckOut }}" style="width:100%; padding:12px; font-size:15px; color:#2C3A2E; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05)">
+              </label>
+              <label style="flex:1 1 90px; display:flex; flex-direction:column; gap:7px">
+                <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Adults</span>
+                <select value="{{ adults }}" onChange="{{ onAdults }}" style="width:100%; padding:12px; font-size:15px; color:#2C3A2E; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05)"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select>
+              </label>
+              <label style="flex:1 1 90px; display:flex; flex-direction:column; gap:7px">
+                <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Children</span>
+                <select value="{{ children }}" onChange="{{ onChildren }}" style="width:100%; padding:12px; font-size:15px; color:#2C3A2E; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05)"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select>
+              </label>
+            </div>
+            <div style="padding-top:6px; border-top:1px solid #EAE4D6; display:flex; flex-wrap:wrap; gap:20px; align-items:flex-start">
+              <div style="flex:1 1 260px; min-width:0; display:flex; flex-direction:column; gap:14px">
+                <div style="display:flex; flex-wrap:wrap; gap:14px">
+                  <label style="flex:1 1 140px; display:flex; flex-direction:column; gap:7px">
+                    <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Amount paid (₹)</span>
+                    <input type="number" min="0" value="{{ regPaid }}" onChange="{{ onRegPaid }}" placeholder="0" style="width:100%; padding:12px; font-size:15px; color:#2C3A2E; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05); font-variant-numeric:tabular-nums">
+                  </label>
+                  <sc-if value="{{ regHasBalance }}" hint-placeholder-val="{{ false }}">
+                    <label style="flex:1 1 140px; display:flex; flex-direction:column; gap:7px">
+                      <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Remaining (₹)</span>
+                      <input type="number" min="0" value="{{ regRemaining }}" onChange="{{ onRegRemaining }}" placeholder="0" style="width:100%; padding:12px; font-size:15px; color:#2C3A2E; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05); font-variant-numeric:tabular-nums">
+                    </label>
+                  </sc-if>
+                </div>
+                <label style="display:flex; align-items:center; gap:10px; font-size:14px; color:#2C3A2E; cursor:pointer">
+                  <input type="checkbox" checked="{{ regHasBalance }}" onChange="{{ toggleRegBalance }}" style="width:17px; height:17px; accent-color:#8A6E42; cursor:pointer">
+                  Balance still to collect
+                </label>
+              </div>
+              <div style="flex:1 1 220px; display:flex; flex-direction:column; gap:12px">
+                <div style="display:flex; justify-content:space-between; align-items:baseline; padding-bottom:12px; border-bottom:1px solid #EAE4D6">
+                  <span style="font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Booking total</span>
+                  <span style="font-family:'Marcellus', serif; font-size:26px">{{ regTotalText }}</span>
+                </div>
+                <div style="font-size:13px; color:#6E6A5C">Paid · <span style="color:#2C3A2E; font-variant-numeric:tabular-nums">{{ regPaidText }}</span></div>
+                <button onClick="{{ registerExisting }}" style="cursor:pointer; width:100%; border:1px solid #2C3A2E; background:#2C3A2E; color:#F2EEE4; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; padding:15px; transition:background 200ms" style-hover="background:#1F2A21">Register booking</button>
+                <div style="font-size:12px; color:#B4553E; min-height:14px">{{ regErr }}</div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ regDone }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#2C3A2E; color:#F2EEE4; padding:24px; display:flex; flex-wrap:wrap; gap:20px; justify-content:space-between; align-items:center">
+            <div>
+              <div style="font-size:10px; letter-spacing:0.18em; text-transform:uppercase; opacity:0.65">Registered · booking reference</div>
+              <div style="font-family:'Marcellus', serif; font-size:26px; margin-top:4px; letter-spacing:0.04em">{{ regRef }}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:10px; letter-spacing:0.18em; text-transform:uppercase; opacity:0.65">Total · paid</div>
+              <div style="font-family:'Marcellus', serif; font-size:22px; margin-top:4px">{{ regTotalText }} · {{ regPaidText }}</div>
+            </div>
+          </div>
+          <p style="margin:16px 0 0; font-size:14px; line-height:1.65; color:#6E6A5C; max-width:52ch">It is now in the resort's system under {{ regChannel }} and shows in the dashboard's New bookings queue, ready for a room to be assigned at check-in.</p>
+          <button onClick="{{ registerAnother }}" style="margin-top:20px; cursor:pointer; border:1px solid #C9C0AA; background:transparent; color:#6E6A5C; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; padding:13px 22px" style-hover="border-color:#2C3A2E; color:#2C3A2E">Register another</button>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isStep2 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:hsPanel 780ms cubic-bezier(.2,.7,.3,1) both">
+        <p style="margin:0 0 10px; font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#96793F; animation:hsTrackIn 1300ms cubic-bezier(.2,.7,.3,1) both">Step two</p>
+        <h1 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(28px,6vw,40px); line-height:1.15; margin:0 0 10px">Available rooms</h1>
+        <p style="margin:0 0 6px; font-size:14px; color:#6E6A5C">{{ stayLine }}</p>
+        <p style="margin:0 0 24px; font-size:12px; letter-spacing:0.06em; color:#8A6E42">{{ ratesLine }}</p>
+
+        <sc-if value="{{ hasBookErr }}" hint-placeholder-val="{{ false }}">
+          <div role="alert" style="background:#F6EDE4; border:1px solid #D8BFA4; padding:18px 20px; margin-bottom:18px">
+            <p style="margin:0; font-size:14px; line-height:1.65; color:#6B4630">{{ bookErr }}</p>
+            <p style="margin:6px 0 0; font-size:12px; line-height:1.65; color:#8A6E42">Nothing has been charged. Pick another room, or change the dates.</p>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ noOffers }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#FBF8F1; border:1px solid #E0D9C8; padding:22px; margin-bottom:18px">
+            <p style="margin:0; font-size:15px; line-height:1.65; color:#2C3A2E">Nothing is open for these dates.</p>
+            <p style="margin:8px 0 0; font-size:13px; line-height:1.65; color:#6E6A5C; max-width:44ch">Some categories carry a minimum stay, and others may be closed for the season. Try a longer stay or a different week.</p>
+          </div>
+        </sc-if>
+
+        <div style="display:flex; flex-direction:column; gap:18px">
+          <sc-for list="{{ offers }}" as="room" hint-placeholder-count="4">
+            <article style="position:relative; background:#FBF8F1; border:1px solid #E0D9C8; overflow:hidden; transition:transform 620ms cubic-bezier(.2,.7,.3,1), box-shadow 620ms cubic-bezier(.2,.7,.3,1), border-color 620ms" style-hover="transform:translateY(-6px); box-shadow:0 34px 70px -40px rgba(20,26,20,0.45); border-color:#CDBF9C">
+              <sc-if value="{{ room.isSelected }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute; inset:0; border:2px solid #2C3A2E; pointer-events:none; z-index:3"></div>
+              </sc-if>
+              <div style="display:flex; flex-wrap:wrap">
+                <div style="flex:1 1 260px; position:relative; min-height:200px">
+                  <image-slot id="{{ room.slotId }}" shape="rect" fit="cover" src="{{ room.photo }}" placeholder="{{ room.slotHint }}"></image-slot>
+                  <sc-if value="{{ room.scarce }}" hint-placeholder-val="{{ false }}">
+                    <span style="position:absolute; top:12px; left:12px; z-index:2; background:rgba(44,58,46,0.9); color:#F2EEE4; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; padding:6px 10px">{{ room.leftText }}</span>
+                  </sc-if>
+                </div>
+                <div style="flex:1 1 320px; padding:22px; display:flex; flex-direction:column; gap:14px">
+                  <div>
+                    <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:24px; margin:0 0 4px">{{ room.name }}</h2>
+                    <p style="margin:0 0 10px; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#8A6E42">{{ room.tagline }}</p>
+                    <p style="margin:0; font-size:14px; line-height:1.6; color:#6E6A5C; text-wrap:pretty">{{ room.desc }}</p>
+                  </div>
+                  <div style="display:flex; flex-wrap:wrap; gap:6px">
+                    <sc-for list="{{ room.facts }}" as="fact" hint-placeholder-count="3">
+                      <span style="font-size:11px; letter-spacing:0.06em; color:#6E6A5C; border:1px solid #E0D9C8; padding:5px 9px">{{ fact }}</span>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:14px; margin-top:auto; padding-top:14px; border-top:1px solid #EAE4D6">
+                    <div>
+                      <div style="display:flex; align-items:baseline; gap:6px">
+                        <span style="font-family:'Marcellus', serif; font-size:26px">{{ room.nightly }}</span>
+                        <span style="font-size:12px; color:#6E6A5C">per night</span>
+                      </div>
+                      <div style="font-size:12px; color:#6E6A5C; margin-top:3px">{{ room.totalLine }}</div>
+                      <div style="font-size:11px; letter-spacing:0.06em; color:{{ room.availColor }}; margin-top:6px">{{ room.availText }}</div>
+                    </div>
+                    <button onClick="{{ room.select }}" disabled="{{ room.soldOut }}" style="cursor:{{ room.ctaCursor }}; border:1px solid {{ room.ctaColor }}; background:transparent; color:{{ room.ctaColor }}; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; padding:12px 20px; transition:background 200ms, color 200ms">{{ room.cta }}</button>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isStep3 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:hsPanel 780ms cubic-bezier(.2,.7,.3,1) both">
+        <p style="margin:0 0 10px; font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#96793F; animation:hsTrackIn 1300ms cubic-bezier(.2,.7,.3,1) both">Step three</p>
+        <h1 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(28px,6vw,40px); line-height:1.15; margin:0 0 10px">Shape your stay</h1>
+        <p style="margin:0 0 26px; font-size:14px; color:#6E6A5C">{{ selectedName }} · {{ stayLine }}</p>
+
+        <section style="margin-bottom:30px">
+          <h3 style="font-family:'Marcellus', serif; font-weight:400; font-size:19px; letter-spacing:-0.01em; margin:0 0 16px; padding-bottom:11px; border-bottom:1px solid transparent; background-image:linear-gradient(90deg, #C6AC7C 0%, rgba(198,172,124,0.12) 72%, rgba(198,172,124,0) 100%); background-size:100% 1px; background-position:0 100%; background-repeat:no-repeat">Meal plan</h3>
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <sc-for list="{{ meals }}" as="meal" hint-placeholder-count="4">
+              <button onClick="{{ meal.pick }}" style="cursor:pointer; text-align:left; width:100%; background:#FBF8F1; border:1px solid #E0D9C8; padding:16px; display:flex; align-items:center; gap:14px; transition:border-color 320ms, transform 420ms cubic-bezier(.2,.7,.3,1), box-shadow 420ms" style-hover="border-color:#A98B5D; transform:translateX(6px); box-shadow:-6px 0 0 0 #C6AC7C">
+                <span style="width:16px; height:16px; border-radius:50%; border:1px solid #A98B5D; flex:none; display:flex; align-items:center; justify-content:center">
+                  <sc-if value="{{ meal.on }}" hint-placeholder-val="{{ false }}">
+                    <span style="width:8px; height:8px; border-radius:50%; background:#2C3A2E; display:block"></span>
+                  </sc-if>
+                </span>
+                <span style="flex:1 1 auto; min-width:0">
+                  <span style="display:block; font-size:15px; color:#2C3A2E">{{ meal.name }}</span>
+                  <span style="display:block; font-size:12px; color:#6E6A5C; margin-top:2px">{{ meal.note }}</span>
+                </span>
+                <span style="font-size:14px; color:#2C3A2E; white-space:nowrap">{{ meal.priceText }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </section>
+
+        <section>
+          <h3 style="font-family:'Marcellus', serif; font-weight:400; font-size:19px; letter-spacing:-0.01em; margin:0 0 16px; padding-bottom:11px; border-bottom:1px solid transparent; background-image:linear-gradient(90deg, #C6AC7C 0%, rgba(198,172,124,0.12) 72%, rgba(198,172,124,0) 100%); background-size:100% 1px; background-position:0 100%; background-repeat:no-repeat">Wellness &amp; services</h3>
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <sc-for list="{{ extras }}" as="ex" hint-placeholder-count="6">
+              <button onClick="{{ ex.toggle }}" style="cursor:pointer; text-align:left; width:100%; background:#FBF8F1; border:1px solid #E0D9C8; padding:16px; display:flex; align-items:center; gap:14px; transition:border-color 320ms, transform 420ms cubic-bezier(.2,.7,.3,1), box-shadow 420ms" style-hover="border-color:#A98B5D; transform:translateX(6px); box-shadow:-6px 0 0 0 #C6AC7C">
+                <span style="width:16px; height:16px; border:1px solid #A98B5D; flex:none; display:flex; align-items:center; justify-content:center">
+                  <sc-if value="{{ ex.on }}" hint-placeholder-val="{{ false }}">
+                    <span style="width:8px; height:8px; background:#2C3A2E; display:block"></span>
+                  </sc-if>
+                </span>
+                <span style="flex:1 1 auto; min-width:0">
+                  <span style="display:block; font-size:15px; color:#2C3A2E">{{ ex.name }}</span>
+                  <span style="display:block; font-size:12px; color:#6E6A5C; margin-top:2px">{{ ex.note }}</span>
+                </span>
+                <span style="font-size:14px; color:#2C3A2E; white-space:nowrap">{{ ex.priceText }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isStep4 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:hsPanel 780ms cubic-bezier(.2,.7,.3,1) both">
+        <p style="margin:0 0 10px; font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#96793F; animation:hsTrackIn 1300ms cubic-bezier(.2,.7,.3,1) both">Step four</p>
+        <h1 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(28px,6vw,40px); line-height:1.15; margin:0 0 24px">Who is arriving?</h1>
+        <div style="background:#FBF8F1; border:1px solid #E0D9C8; box-shadow:0 30px 66px -48px rgba(20,26,20,0.5), inset 0 1px 0 #FFFDF8; padding:clamp(20px, 3vw, 30px); display:flex; flex-direction:column; gap:16px">
+          <div style="display:flex; flex-wrap:wrap; gap:14px">
+            <label style="flex:1 1 200px; display:flex; flex-direction:column; gap:7px">
+              <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Full name</span>
+              <input value="{{ gName }}" onChange="{{ onName }}" placeholder="Ananya Rao" style="width:100%; padding:12px; font-size:15px; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05); transition:border-color 320ms, box-shadow 320ms; color:#2C3A2E">
+            </label>
+            <label style="flex:1 1 200px; display:flex; flex-direction:column; gap:7px">
+              <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Email</span>
+              <input type="email" value="{{ gEmail }}" onChange="{{ onEmail }}" placeholder="you@example.com" style="width:100%; padding:12px; font-size:15px; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05); transition:border-color 320ms, box-shadow 320ms; color:#2C3A2E">
+            </label>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:14px">
+            <label style="flex:1 1 200px; display:flex; flex-direction:column; gap:7px">
+              <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Phone</span>
+              <input type="tel" value="{{ gPhone }}" onChange="{{ onPhone }}" placeholder="+91 98xxx xxxxx" style="width:100%; padding:12px; font-size:15px; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05); transition:border-color 320ms, box-shadow 320ms; color:#2C3A2E">
+            </label>
+            <label style="flex:1 1 200px; display:flex; flex-direction:column; gap:7px">
+              <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Country</span>
+              <select value="{{ gCountry }}" onChange="{{ onCountry }}" style="width:100%; padding:12px; font-size:15px; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05); transition:border-color 320ms, box-shadow 320ms; color:#2C3A2E">
+                <option value="India">India</option><option value="United Kingdom">United Kingdom</option><option value="United States">United States</option><option value="Singapore">Singapore</option><option value="Australia">Australia</option>
+              </select>
+            </label>
+          </div>
+          <label style="display:flex; flex-direction:column; gap:7px">
+            <span style="font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Special requests</span>
+            <textarea rows="3" value="{{ gNotes }}" onChange="{{ onNotes }}" placeholder="Arrival time, dietary needs, occasion" style="width:100%; padding:12px; font-size:15px; background:#FFFDF8; border:1px solid #D8D0BC; border-radius:0; box-shadow:inset 0 1px 2px rgba(20,26,20,0.05); transition:border-color 320ms, box-shadow 320ms; color:#2C3A2E; resize:vertical"></textarea>
+          </label>
+          <p style="margin:0; font-size:12px; color:#6E6A5C; line-height:1.6">Guest details are stored against your profile in the resort's system. Returning guests keep their preferences and stay history.</p>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isStep5 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:hsPanel 780ms cubic-bezier(.2,.7,.3,1) both">
+        <p style="margin:0 0 10px; font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#96793F; animation:hsTrackIn 1300ms cubic-bezier(.2,.7,.3,1) both">Step five</p>
+        <h1 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(28px,6vw,40px); line-height:1.15; margin:0 0 24px">Your reservation</h1>
+        <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:flex-start">
+          <div style="flex:1 1 300px; position:relative; min-height:220px">
+            <image-slot id="hs-summary" shape="rect" fit="cover" src="{{ selectedPhoto }}" placeholder="Selected room photograph"></image-slot>
+          </div>
+          <div style="flex:1 1 340px; background:#FBF8F1; border:1px solid #E0D9C8; box-shadow:0 30px 66px -48px rgba(20,26,20,0.5), inset 0 1px 0 #FFFDF8; padding:clamp(20px, 3vw, 30px)">
+            <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:22px; margin:0 0 4px">{{ selectedName }}</h2>
+            <p style="margin:0 0 18px; font-size:13px; color:#6E6A5C">{{ stayLine }} · {{ guestLine }}</p>
+            <div style="display:flex; flex-direction:column; gap:10px">
+              <sc-for list="{{ lines }}" as="line" hint-placeholder-count="5">
+                <div style="display:flex; justify-content:space-between; gap:16px; font-size:14px">
+                  <span style="color:#6E6A5C">{{ line.label }}</span>
+                  <span style="color:#2C3A2E; white-space:nowrap">{{ line.value }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:16px; padding-top:14px; border-top:1px solid #E0D9C8; display:flex; justify-content:space-between; align-items:baseline">
+              <span style="font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">Total</span>
+              <span style="font-family:'Marcellus', serif; font-size:28px">{{ totalText }}</span>
+            </div>
+            <div style="margin-top:16px; padding:14px; background:#EFEADD; font-size:12px; line-height:1.65; color:#6E6A5C">Free cancellation until 72 hours before arrival. Rates confirmed against live inventory at the moment of payment.</div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isStep6 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:hsPanel 780ms cubic-bezier(.2,.7,.3,1) both; max-width:520px">
+        <p style="margin:0 0 10px; font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#96793F; animation:hsTrackIn 1300ms cubic-bezier(.2,.7,.3,1) both">Step six</p>
+        <h1 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(28px,6vw,40px); line-height:1.15; margin:0 0 8px">Secure payment</h1>
+        <p style="margin:0 0 24px; font-size:14px; line-height:1.65; color:#6E6A5C">Card details are entered on Razorpay's own hosted checkout, never on this page. Hill Stream receives a payment token and nothing else.</p>
+
+        <sc-if value="{{ isStaff }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-bottom:18px; background:#FBF8F1; border:1px solid #E0D9C8; padding:clamp(18px, 2.6vw, 24px)">
+            <div style="font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#96793F">How is the guest paying?</div>
+            <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:14px">
+              <sc-for list="{{ payModes }}" as="pm" hint-placeholder-count="2">
+                <button onClick="{{ pm.pick }}" style="cursor:pointer; flex:1 1 180px; text-align:left; padding:14px 16px; background:{{ pm.bg }}; border:1px solid {{ pm.border }}; color:{{ pm.color }}; transition:border-color 320ms, background 320ms">
+                  <span style="display:block; font-size:14px">{{ pm.name }}</span>
+                  <span style="display:block; font-size:12px; margin-top:3px; opacity:0.72">{{ pm.note }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="background:#FBF8F1; border:1px solid #E0D9C8; box-shadow:0 30px 66px -48px rgba(20,26,20,0.5), inset 0 1px 0 #FFFDF8; padding:clamp(20px, 3vw, 30px)">
+          <div style="display:flex; justify-content:space-between; align-items:baseline; padding-bottom:14px; border-bottom:1px solid #EAE4D6">
+            <span style="font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:#6E6A5C">{{ payLabel }}</span>
+            <span style="font-family:'Marcellus', serif; font-size:26px">{{ payNowText }}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; padding:12px 0 0">
+            <span style="font-size:13px; color:#6E6A5C">Razorpay order</span>
+            <span style="font-size:13px; color:#2C3A2E; font-variant-numeric:tabular-nums">{{ orderId }}</span>
+          </div>
+          <sc-if value="{{ isCash }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ takeCash }}" style="cursor:pointer; margin-top:18px; width:100%; border:1px solid #2C3A2E; background:#2C3A2E; color:#F2EEE4; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; padding:16px; display:flex; align-items:center; justify-content:center; gap:10px; transition:background 320ms" style-hover="background:#1F2A21">Record {{ payNowText }} taken in cash</button>
+            <p style="margin:12px 0 0; font-size:12px; color:#6E6A5C; line-height:1.6; text-align:center">Marked paid at the desk · a receipt is raised against the folio</p>
+          </sc-if>
+          <sc-if value="{{ isCard }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ openGateway }}" style="cursor:pointer; margin-top:18px; width:100%; border:1px solid #2C3A2E; background:#2C3A2E; color:#F2EEE4; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; padding:16px; display:flex; align-items:center; justify-content:center; gap:10px; transition:background 200ms" style-hover="background:#1F2A21">
+            <svg width="13" height="15" viewBox="0 0 13 15" fill="none" aria-hidden="true"><path d="M3 6V4a3.5 3.5 0 017 0v2" stroke="#F2EEE4" stroke-width="1.3"/><rect x="1" y="6" width="11" height="8" rx="1.5" stroke="#F2EEE4" stroke-width="1.3"/></svg>
+            Pay {{ payNowText }} securely
+          </button>
+          <p style="margin:12px 0 0; font-size:12px; color:#6E6A5C; line-height:1.6; text-align:center">Opens Razorpay Checkout · UPI, cards, net banking, wallets</p>
+          </sc-if>
+        </div>
+
+        <div style="margin-top:20px; display:flex; flex-direction:column; gap:1px; background:#E0D9C8; border:1px solid #E0D9C8">
+          <sc-for list="{{ secure }}" as="sec" hint-placeholder-count="4">
+            <div style="background:#FBF8F1; padding:14px 16px">
+              <div style="font-size:13px; color:#2C3A2E; letter-spacing:0.02em">{{ sec.title }}</div>
+              <div style="font-size:12px; color:#6E6A5C; line-height:1.55; margin-top:3px; text-wrap:pretty">{{ sec.body }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isStep7 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:hsRise 600ms ease both; max-width:620px">
+        <p style="margin:0 0 14px; font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#96793F; animation:hsTrackIn 1300ms cubic-bezier(.2,.7,.3,1) both">Confirmed</p>
+        <h1 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(30px,7vw,46px); line-height:1.12; margin:0 0 14px">The hills are expecting you.</h1>
+        <p style="margin:0 0 26px; font-size:15px; line-height:1.7; color:#6E6A5C; max-width:46ch; text-wrap:pretty">{{ confirmLine }}</p>
+        <div style="background:#2C3A2E; color:#F2EEE4; padding:22px; display:flex; flex-wrap:wrap; gap:20px; justify-content:space-between; align-items:center">
+          <div>
+            <div style="font-size:10px; letter-spacing:0.18em; text-transform:uppercase; opacity:0.65">Booking reference</div>
+            <div style="font-family:'Marcellus', serif; font-size:26px; margin-top:4px; letter-spacing:0.04em">{{ bookingId }}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:10px; letter-spacing:0.18em; text-transform:uppercase; opacity:0.65">Paid</div>
+            <div style="font-family:'Marcellus', serif; font-size:26px; margin-top:4px">{{ payNowText }}</div>
+          </div>
+        </div>
+        <div style="margin-top:20px; background:#FBF8F1; border:1px solid #E0D9C8; box-shadow:0 30px 66px -48px rgba(20,26,20,0.5), inset 0 1px 0 #FFFDF8; padding:clamp(20px, 3vw, 30px)">
+          <h3 style="font-family:'Marcellus', serif; font-weight:400; font-size:16px; margin:0 0 14px">What happens now</h3>
+          <div style="display:flex; flex-direction:column; gap:12px">
+            <sc-for list="{{ afterSteps }}" as="a" hint-placeholder-count="4">
+              <div style="display:flex; gap:12px; align-items:flex-start">
+                <span style="width:6px; height:6px; background:#A98B5D; flex:none; margin-top:7px"></span>
+                <span style="font-size:14px; line-height:1.55; color:#6E6A5C">{{ a }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <button onClick="{{ restart }}" style="margin-top:22px; cursor:pointer; border:1px solid #C9C0AA; background:transparent; color:#6E6A5C; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; padding:13px 22px" style-hover="border-color:#2C3A2E; color:#2C3A2E">Start another booking</button>
+      </div>
+    </sc-if>
+
+  </main>
+
+  <sc-if value="{{ showBar }}" hint-placeholder-val="{{ true }}">
+    <div style="position:fixed; left:0; right:0; bottom:0; z-index:50; background:rgba(251,248,241,0.97); backdrop-filter:saturate(140%) blur(16px); box-shadow:0 -22px 44px -34px rgba(20,26,20,0.5)">
+      <div style="height:1px; background:linear-gradient(90deg, rgba(198,172,124,0) 0%, rgba(198,172,124,0.75) 46%, rgba(198,172,124,0) 100%)"></div>
+      <div style="max-width:1120px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; gap:14px">
+        <sc-if value="{{ canBack }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ back }}" style="cursor:pointer; border:1px solid #D8D0BC; background:transparent; color:#6E6A5C; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; padding:14px 16px; flex:none" style-hover="border-color:#2C3A2E; color:#2C3A2E">Back</button>
+        </sc-if>
+        <div style="flex:1 1 auto; min-width:0">
+          <div style="font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#8A8471">{{ barLabel }}</div>
+          <div style="font-family:'Marcellus', serif; font-size:23px; line-height:1.2; letter-spacing:-0.01em; color:#1B241C; font-variant-numeric:tabular-nums">{{ barValue }}</div>
+        </div>
+        <button onClick="{{ next }}" disabled="{{ nextDisabled }}" style="position:relative; overflow:hidden; cursor:pointer; border:1px solid #2C3A2E; background:#2C3A2E; color:#F2EEE4; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; padding:15px 22px; flex:none; transition:background 320ms, letter-spacing 460ms cubic-bezier(.2,.7,.3,1), box-shadow 320ms" style-hover="background:#1F2A21; letter-spacing:0.22em; box-shadow:0 16px 34px -18px rgba(20,26,20,0.7)" style-before="content:''; position:absolute; top:0; bottom:0; left:0; width:38%; background:linear-gradient(90deg, rgba(246,243,234,0) 0%, rgba(246,243,234,0.22) 50%, rgba(246,243,234,0) 100%); animation:hsSheen 4.6s cubic-bezier(.4,0,.2,1) infinite; pointer-events:none">{{ nextLabel }}</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ gwOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; z-index:90; background:rgba(18,22,28,0.72); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px">
+      <div style="width:382px; max-width:100%; max-height:100%; overflow-y:auto; background:#FDFDFD; border-radius:6px; box-shadow:0 24px 60px rgba(0,0,0,0.45); animation:hsRise 260ms cubic-bezier(.4,0,.2,1) both">
+
+        <div style="background:#12161C; color:#F5F6F7; padding:14px 18px; display:flex; align-items:center; gap:10px; border-radius:6px 6px 0 0">
+          <svg width="12" height="14" viewBox="0 0 13 15" fill="none" aria-hidden="true"><path d="M3 6V4a3.5 3.5 0 017 0v2" stroke="#8FD3A8" stroke-width="1.4"/><rect x="1" y="6" width="11" height="8" rx="1.5" stroke="#8FD3A8" stroke-width="1.4"/></svg>
+          <div style="flex:1 1 auto; min-width:0">
+            <div style="font-size:12px; font-weight:500; letter-spacing:0.02em">Razorpay Secure Checkout</div>
+            <div style="font-size:10px; color:#B9C0CA; margin-top:1px">api.razorpay.com · TLS 1.3</div>
+          </div>
+          <button onClick="{{ closeGateway }}" style="cursor:pointer; border:1px solid #2A303A; background:transparent; color:#B9C0CA; font-size:14px; line-height:1; width:24px; height:24px; border-radius:4px; flex:none" style-hover="background:#1C222B">×</button>
+        </div>
+
+        <div style="padding:14px 18px; border-bottom:1px solid #E7E9ED; display:flex; align-items:center; justify-content:space-between; gap:12px">
+          <div>
+            <div style="font-size:13px; color:#12161C; font-weight:500">Hill Stream Wellness Resort</div>
+            <div style="font-size:11px; color:#565E6B; margin-top:2px; font-variant-numeric:tabular-nums">{{ orderId }}</div>
+          </div>
+          <div style="font-size:18px; color:#12161C; font-variant-numeric:tabular-nums; white-space:nowrap">{{ payNowText }}</div>
+        </div>
+
+        <sc-if value="{{ gwSelect }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="padding:14px 18px 8px; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:#5F6773">Payment method</div>
+            <sc-for list="{{ gwMethods }}" as="m" hint-placeholder-count="4">
+              <button onClick="{{ m.pick }}" style="cursor:pointer; width:100%; text-align:left; background:transparent; border:none; border-top:1px solid #EDEFF2; padding:15px 18px; display:flex; align-items:center; gap:12px; transition:background 160ms" style-hover="background:#F4F5F7">
+                <span style="width:28px; height:28px; border-radius:4px; background:#F0F1F4; color:#4B5563; font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center; flex:none">{{ m.abbr }}</span>
+                <span style="flex:1 1 auto; min-width:0">
+                  <span style="display:block; font-size:13px; color:#12161C">{{ m.name }}</span>
+                  <span style="display:block; font-size:11px; color:#5F6773; margin-top:1px">{{ m.note }}</span>
+                </span>
+                <span style="color:#B4B9C2; font-size:14px">›</span>
+              </button>
+            </sc-for>
+            <div style="border-top:1px solid #EDEFF2; padding:14px 18px; font-size:11px; color:#5F6773; line-height:1.6">PCI DSS Level 1 certified. Card numbers are tokenised on Razorpay's vault and are never sent to the resort.</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ gwCard }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:16px 18px; display:flex; flex-direction:column; gap:12px">
+            <label style="display:flex; flex-direction:column; gap:5px">
+              <span style="font-size:11px; color:#565E6B">Card number</span>
+              <input placeholder="4111 1111 1111 1111" style="width:100%; padding:11px 12px; font-size:14px; color:#12161C; background:#FFFFFF; border:1px solid #D5D8DE; border-radius:4px; letter-spacing:0.06em">
+            </label>
+            <div style="display:flex; gap:12px">
+              <label style="flex:1 1 0; display:flex; flex-direction:column; gap:5px">
+                <span style="font-size:11px; color:#565E6B">Expiry</span>
+                <input placeholder="09 / 29" style="width:100%; padding:11px 12px; font-size:14px; color:#12161C; background:#FFFFFF; border:1px solid #D5D8DE; border-radius:4px">
+              </label>
+              <label style="flex:1 1 0; display:flex; flex-direction:column; gap:5px">
+                <span style="font-size:11px; color:#565E6B">CVV</span>
+                <input type="password" placeholder="•••" style="width:100%; padding:11px 12px; font-size:14px; color:#12161C; background:#FFFFFF; border:1px solid #D5D8DE; border-radius:4px">
+              </label>
+            </div>
+            <button onClick="{{ gwSubmitCard }}" style="cursor:pointer; width:100%; border:none; background:#12161C; color:#F5F6F7; font-size:13px; font-weight:500; padding:13px; border-radius:4px; transition:background 180ms" style-hover="background:#000000">Pay {{ payNowText }}</button>
+            <p style="margin:0; font-size:11px; color:#5F6773; line-height:1.6">You will be taken to your bank for 3-D Secure authentication. This page never sees the card number.</p>
+            <button onClick="{{ gwBack }}" style="cursor:pointer; align-self:flex-start; border:none; background:transparent; color:#565E6B; font-size:11px; padding:0; text-decoration:underline">Choose another method</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ gwUpi }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:28px 18px; text-align:center">
+            <div style="width:30px; height:30px; margin:0 auto 16px; border:2px solid #E7E9ED; border-top-color:#12161C; border-radius:50%; animation:hsSpin 900ms linear infinite"></div>
+            <p style="margin:0; font-size:14px; color:#12161C">Approve the request in your UPI app</p>
+            <p style="margin:8px 0 0; font-size:12px; color:#5F6773; line-height:1.6">A collect request for {{ payNowText }} has been sent. Do not close this window.</p>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ gwOtp }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:16px 18px; display:flex; flex-direction:column; gap:12px">
+            <div style="font-size:12px; color:#565E6B; line-height:1.6">3-D Secure · your bank has sent a one-time code to the number ending 4417.</div>
+            <input placeholder="Enter OTP" style="width:100%; padding:12px; font-size:16px; letter-spacing:0.3em; text-align:center; color:#12161C; background:#FFFFFF; border:1px solid #D5D8DE; border-radius:4px">
+            <button onClick="{{ gwVerify }}" style="cursor:pointer; width:100%; border:none; background:#12161C; color:#F5F6F7; font-size:13px; font-weight:500; padding:13px; border-radius:4px" style-hover="background:#000000">Verify and pay</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ gwAuth }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:28px 18px; text-align:center">
+            <div style="width:30px; height:30px; margin:0 auto 16px; border:2px solid #E7E9ED; border-top-color:#12161C; border-radius:50%; animation:hsSpin 900ms linear infinite"></div>
+            <p style="margin:0; font-size:14px; color:#12161C">Authorising with your bank</p>
+            <p style="margin:8px 0 0; font-size:12px; color:#5F6773">Do not refresh or press back.</p>
+          </div>
+        </sc-if>
+
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ paying }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; z-index:80; background:rgba(44,58,46,0.55); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; padding:24px">
+      <div style="background:#FBF8F1; padding:32px 36px; text-align:center; max-width:340px">
+        <div style="width:34px; height:34px; margin:0 auto 18px; border:2px solid #E0D9C8; border-top-color:#8A6E42; border-radius:50%; animation:hsSpin 900ms linear infinite"></div>
+        <p style="margin:0; font-family:'Marcellus', serif; font-size:18px; color:#2C3A2E">Verifying the payment signature</p>
+        <p style="margin:8px 0 0; font-size:13px; color:#6E6A5C; line-height:1.6">Your room stays held while the resort checks Razorpay's HMAC signature server-side. Only then is the booking confirmed.</p>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showInventoryCounts&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behaviour&quot;},&quot;depositMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Full payment&quot;,&quot;Deposit from rate plan&quot;],&quot;default&quot;:&quot;Full payment&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Behaviour&quot;}}">
+const INR = n => '₹' + Math.round(n).toLocaleString('en-IN');
+const iso = d => d.toISOString().slice(0, 10);
+
+/* Rates, minimum stay and stop-sell come from rates.js — the table the PMS
+   writes. Only the descriptive copy lives here. */
+const R = () => (typeof window !== 'undefined' && window.HSRates) || null;
+
+const FEED_KEY = 'hs_recent_bookings_v1';
+/* Five minutes between notifications — a reservation stream, not a ticker. */
+const FEED_GAP = 5 * 60 * 1000;
+
+/* The stream of recent reservations shown to a guest mid-booking. Seeded with
+   the last day's bookings; this browser's own land on top of it. */
+const SEED_FEED = [
+  { who: 'Ananya R.', from: 'Gurugram', room: 'Hill Stream Signature Room', nights: 3, mins: 12 },
+  { who: 'Devika S.', from: 'Mumbai', room: 'Premium Valley View Room', nights: 2, mins: 47 },
+  { who: 'Rohan M.', from: 'Bengaluru', room: 'Stream View Room', nights: 4, mins: 96 },
+  { who: 'The Kapoors', from: 'Delhi', room: 'Deluxe View Room', nights: 2, mins: 150 },
+  { who: 'Imran Q.', from: 'Hyderabad', room: 'Jungle View Room', nights: 3, mins: 214 },
+  { who: 'Meera N.', from: 'Pune', room: 'Premium Suite Room', nights: 5, mins: 320 },
+  { who: 'Sanjana T.', from: 'Kolkata', room: 'Stream View Room', nights: 2, mins: 405 },
+  { who: 'Aarav D.', from: 'Jaipur', room: 'Deluxe Suite Room', nights: 3, mins: 520 },
+  { who: 'Lena F.', from: 'Singapore', room: 'Hill Stream Signature Room', nights: 4, mins: 700 },
+  { who: 'Vikram B.', from: 'Chandigarh', room: 'Premium Valley View Room', nights: 2, mins: 880 }
+];
+
+/* Copy only. This page holds no inventory of its own: how many rooms exist is
+   the rate plan's business (the PMS writes it), and how many are left is
+   bookings.js counting the reservations that actually hold them for the
+   nights being asked about. Nothing here is a number that can go stale. */
+const ROOMS = [
+  { id:'deluxe-view', photo:'uploads/photos/rooms/room1.jpg', name:'Deluxe View Room', tagline:'Hill view', desc:'A comfortable, peaceful room looking out over the hills, with modern comforts and a warm, welcoming feel.', occ:'Max 3 adults, 1 child', kids:'Kids free up to 3 yrs', maxAdults:3, maxChildren:1 },
+  { id:'premium-valley', photo:'uploads/photos/rooms/room2.jpg', name:'Premium Valley View Room', tagline:'Valley view', desc:'Wide views across the surrounding valleys and hills, with comfortable interiors, a sitting area and modern conveniences.', occ:'Max 3 adults, 1 child', kids:'Kids free up to 3 yrs', maxAdults:3, maxChildren:1 },
+  { id:'deluxe-suite', photo:'uploads/photos/rooms/room7.jpg', name:'Deluxe Suite Room', tagline:'Suite', desc:'A refined, relaxing suite for guests who want extra comfort, space and privacy, set in the quiet of the hills.', occ:'Max 3 adults, 1 child', kids:'Kids free up to 3 yrs', maxAdults:3, maxChildren:1 },
+  { id:'jungle-view', photo:'uploads/photos/rooms/room6.jpg', name:'Jungle View Room', tagline:'Forest view', desc:'Lush greenery outside the window and the calm of the hills: a refreshing retreat designed for comfort and relaxation.', occ:'Max 3 adults, 1 child', kids:'Kids free up to 3 yrs', maxAdults:3, maxChildren:1 },
+  { id:'premium-suite', photo:'uploads/photos/rooms/room3.jpg', name:'Premium Suite Room', tagline:'Suite', desc:'A spacious suite with refined interiors, a dining corner and a peaceful mountain feel, for guests who value extra space and privacy.', occ:'Max 3 adults, 1 child', kids:'Kids free up to 3 yrs', maxAdults:3, maxChildren:1 },
+  { id:'stream-view', photo:'uploads/photos/rooms/room5.jpg', name:'Stream View Room', tagline:'Stream view', desc:'Overlooking the natural stream and surrounded by the hills, so the sound of the water is part of the stay.', occ:'Max 3 adults, 1 child', kids:'Kids free up to 3 yrs', maxAdults:3, maxChildren:1 },
+  { id:'signature', photo:'uploads/photos/rooms/room4.jpg', name:'Hill Stream Signature Room', tagline:'Signature', desc:'The resort\'s own signature room, designed around warmth, comfort and tranquillity.', occ:'Max 3 adults, 1 child', kids:'Kids free up to 3 yrs', maxAdults:3, maxChildren:1 }
+];
+
+const B = () => (typeof window !== 'undefined' && window.HSBookings) || null;
+
+/* Meal plans, extras and tax are priced in the rate plan the PMS writes —
+   nothing on this page carries a price of its own. */
+const OTA_SOURCES = ['Booking.com', 'MakeMyTrip', 'Goibibo', 'Agoda', 'Expedia', 'Hotels.com', 'Airbnb', 'Cleartrip', 'EaseMyTrip', 'Yatra', 'OYO', 'Direct call', 'Walk-in'];
+const MEALS = () => (R() ? R().meals() : []);
+const EXTRAS = () => (R() ? R().extras() : []);
+
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    const a = new Date(); a.setDate(a.getDate() + 21);
+    const b = new Date(a); b.setDate(b.getDate() + 3);
+    this.state = {
+      step: 1, checkIn: iso(a), checkOut: iso(b),
+      adults: 2, children: 0, roomCount: 1,
+      roomId: null, meal: 'bb', extras: {},
+      name: '', email: '', phone: '', country: 'India', notes: '',
+      paying: false, bookingId: null, gw: null,
+      feed: [], toastIdx: 0, toastOn: false,
+      /* Desk mode: the PMS opens this page with ?staff=1 to take a booking on
+         behalf of a guest, which unlocks cash as a payment method and the OTA
+         capture form. The query string only asks — a signed-in operator in
+         this tab is what actually grants it, so a guest cannot type their way
+         into the desk's tools. Re-checked on mount, once auth.js has run. */
+      staff: false,
+      staffWanted: typeof location !== 'undefined' && /[?&]staff=1/.test(location.search),
+      /* Reservations already in the book, so what is left can be counted. */
+      book: B() ? B().all() : [],
+      bookErr: '',
+      payMode: 'card',
+      mode: 'new', regChannel: 'Booking.com', regPaid: '', regHasBalance: false, regRemaining: '', regDone: null, regErr: '',
+      rates: R() ? R().get() : { categories: [], seasons: [] }
+    };
+  }
+
+  componentDidMount() {
+    if (R()) this._unsub = R().subscribe(rates => this.setState({ rates }));
+    /* What is left changes the moment anybody books — in this tab, at the
+       desk, or in another tab of the same browser. The page follows the book
+       rather than holding a number of its own. */
+    if (B()) this._unsubB = B().subscribe(book => this.setState({ book }));
+    this.bindStaff(0);
+    this.setState({ feed: this.loadFeed() });
+    this.cycleFeed(9000);
+  }
+
+  /* auth.js is a helmet script and may not have run yet. */
+  bindStaff(tries) {
+    if (!this.state.staffWanted) return;
+    const A = window.HSAuth;
+    if (!A) {
+      if (tries < 60) this._authWait = setTimeout(() => this.bindStaff(tries + 1), 50);
+      return;
+    }
+    /* The session comes from the server, so re-ask once it has answered. */
+    const settle = () => this.setState({ staff: A.can('pms', A.STAFF) });
+    settle();
+    const api = window.HSApi;
+    if (api) {
+      if (api.ready && api.ready.then) api.ready.then(settle);
+      if (api.onSession) this._unsubS = api.onSession(settle);
+    }
+  }
+
+  componentWillUnmount() {
+    this.clearTimers();
+    clearTimeout(this._feedT);
+    clearTimeout(this._authWait);
+    if (this._unsub) this._unsub();
+    if (this._unsubB) this._unsubB();
+  }
+
+  /* Rooms of a category free for every night of the stay being asked about.
+     Inventory from the rate plan, sold from the book — computed on every
+     render, never cached, so it cannot drift from what has been booked. */
+  avail(catId) {
+    if (!B() || !B().availability) return { total: 0, sold: 0, left: 0 };
+    return B().availability(catId, this.state.checkIn, this.nights());
+  }
+
+  /* Recent bookings. The seeded ones carry an age in minutes so the list reads
+     as a live stream; anything this browser books is stored with a timestamp
+     and sits at the top of the same list on every later visit. */
+  loadFeed() {
+    let mine = [];
+    try {
+      mine = JSON.parse(localStorage.getItem(FEED_KEY) || '[]');
+    } catch (e) { mine = []; }
+    if (!Array.isArray(mine)) mine = [];
+    const seeded = SEED_FEED.map(x => Object.assign({}, x, { at: Date.now() - x.mins * 60000 }));
+    return mine.concat(seeded).sort((a, b) => b.at - a.at).slice(0, 14);
+  }
+
+  pushFeed(rec) {
+    let mine = [];
+    try { mine = JSON.parse(localStorage.getItem(FEED_KEY) || '[]'); } catch (e) { mine = []; }
+    if (!Array.isArray(mine)) mine = [];
+    mine.unshift(rec);
+    mine = mine.slice(0, 8);
+    try { localStorage.setItem(FEED_KEY, JSON.stringify(mine)); } catch (e) {}
+    this.setState({ feed: this.loadFeed(), toastIdx: 0, toastOn: true });
+    this.cycleFeed(6200);
+  }
+
+  /* One notification at a time: it rides in, holds, leaves, and the next one
+     follows after a pause — a queue, never a stack of shouting cards. */
+  cycleFeed(delay) {
+    clearTimeout(this._feedT);
+    this._feedT = setTimeout(() => {
+      this.setState(s => ({ toastOn: true }));
+      this._feedT = setTimeout(() => {
+        this.setState(s => ({ toastOn: false }));
+        this._feedT = setTimeout(() => {
+          this.setState(s => {
+            const n = (s.feed || []).length || 1;
+            return { toastIdx: ((s.toastIdx || 0) + 1) % n };
+          });
+          this.cycleFeed(FEED_GAP);
+        }, 700);
+      }, 5400);
+    }, delay);
+  }
+
+  /* Hands the reservation to the PMS. Room number is left unassigned — the
+     desk allocates it — and the folio carries what was actually paid.
+
+     The store decides, not this page: add() re-counts the book at the moment
+     of writing and refuses a room that was taken while the guest was filling
+     the form. Nothing downstream may show a confirmation until this says ok,
+     which is why it returns a result instead of a reference.
+
+     Returns { ok:true, ref } or { ok:false, error }. */
+  commit(method) {
+    if (!B()) return { ok: false, error: 'The reservation system is not reachable. Nothing has been charged.' };
+    if (this._committed) return { ok: true, ref: this._committed };
+    const s = this.state;
+    const sel = ROOMS.filter(x => x.id === s.roomId)[0];
+    const t = this.totals();
+    const mealName = (MEALS().filter(m => m.id === s.meal)[0] || {}).name || '';
+    const r = B().add({
+      guest: s.name || 'Guest',
+      email: s.email, phone: s.phone, country: s.country,
+      category: s.roomId, categoryName: sel ? sel.name : '',
+      checkIn: s.checkIn, nights: this.nights(),
+      adults: +s.adults, children: +s.children,
+      meal: mealName,
+      extras: EXTRAS().filter(e => s.extras[e.id]).map(e => e.name),
+      total: Math.round(t.total),
+      paid: Math.round(t.payNow),
+      roomTotal: Math.round(t.room),
+      serviceTotal: Math.round(t.services),
+      roomCount: +s.roomCount || 1,
+      method,
+      source: s.staff ? 'Desk' : 'Website',
+      notes: s.notes
+    });
+    return Promise.resolve(r).then(res => {
+      const out = res || { ok: false, error: 'That reservation could not be saved.' };
+      if (out.ok) this._committed = out.ref;
+      return out;
+    });
+  }
+
+  /* A booking that could not be written is a booking that did not happen: the
+     guest goes back to the room list with the reason, not to a confirmation
+     screen for a room somebody else has. */
+  bookingFailed(error) {
+    this.clearTimers();
+    this.setState({
+      paying: false, gw: null, step: 2, roomId: null, bookingId: null,
+      bookErr: error || 'That room was taken while you were booking. Nothing has been charged.'
+    });
+    if (typeof window !== 'undefined') window.scrollTo(0, 0);
+  }
+
+  /* Cash at the desk: no gateway, the folio is settled on the spot. */
+  takeCash() {
+    if (!this.state.staff) return;
+    this.setState({ paying: true, bookErr: '' });
+    this.later(() => {
+      this.commit('cash').then(r => {
+        if (!r.ok) { this.bookingFailed(r.error); return; }
+        this.setState({ paying: false, step: 7, bookingId: r.ref });
+        const s = this.state;
+        const sel = ROOMS.filter(x => x.id === s.roomId)[0];
+        this.pushFeed({
+          who: this.shortName(s.name) || 'A guest',
+          from: '', room: sel ? sel.name : 'a room',
+          nights: this.nights(), mine: true, at: Date.now()
+        });
+      });
+    }, 900);
+  }
+
+  shortName(n) {
+    const parts = String(n || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '';
+    return parts.length === 1 ? parts[0] : parts[0] + ' ' + parts[1][0].toUpperCase() + '.';
+  }
+
+  ago(at) {
+    const m = Math.max(0, Math.round((Date.now() - at) / 60000));
+    if (m < 1) return 'just now';
+    if (m === 1) return 'a minute ago';
+    if (m < 60) return m + ' minutes ago';
+    const h = Math.round(m / 60);
+    if (h === 1) return 'an hour ago';
+    if (h < 24) return h + ' hours ago';
+    const d = Math.round(h / 24);
+    return d === 1 ? 'yesterday' : d + ' days ago';
+  }
+
+  nights() {
+    const a = new Date(this.state.checkIn), b = new Date(this.state.checkOut);
+    return Math.max(1, Math.round((b - a) / 86400000));
+  }
+
+  nightDates() {
+    const out = [], a = new Date(this.state.checkIn);
+    for (let i = 0; i < this.nights(); i++) { const d = new Date(a); d.setDate(a.getDate() + i); out.push(d); }
+    return out;
+  }
+
+  weekendCount() { return this.nightDates().filter(d => d.getDay() === 5 || d.getDay() === 6).length; }
+
+  plan(id) {
+    const c = R() ? R().cat(id, this.state.rates) : null;
+    return c || { base: 0, weekend: 0, minStay: 1, stopSell: false };
+  }
+
+  roomSubtotal(r) {
+    if (!R()) return 0;
+    return R().stayTotal(r.id, new Date(this.state.checkIn), this.nights(), this.state.roomCount, this.state.rates);
+  }
+
+  selected() { return ROOMS.find(r => r.id === this.state.roomId) || null; }
+
+  extrasTotal() {
+    const n = this.nights();
+    return EXTRAS().filter(e => this.state.extras[e.id]).reduce((s, e) => s + (e.per === 'night' ? e.price * n : e.price), 0);
+  }
+
+  mealTotal() {
+    const m = MEALS().find(x => x.id === this.state.meal);
+    if (!m) return 0;
+    return m.pp * (this.state.adults + this.state.children * 0.5) * this.nights() * this.state.roomCount;
+  }
+
+  totals() {
+    const r = this.selected();
+    const room = r ? this.roomSubtotal(r) : 0;
+    const services = this.mealTotal() + this.extrasTotal();
+    const adr = r ? room / (this.nights() * this.state.roomCount) : 0;
+    const cfg = R() ? R().taxFor(room, services, adr, this.state.rates)
+      : { roomRate: 0.12, serviceRate: 0.18, amount: room * 0.12 + services * 0.18 };
+    const tax = cfg.amount;
+    const total = room + services + tax;
+    const share = (R() ? R().tax(this.state.rates).deposit : 25) / 100;
+    const deposit = this.props.depositMode === '25% deposit';
+    return { room, services, tax, roomRate: cfg.roomRate, serviceRate: cfg.serviceRate,
+      total, payNow: deposit ? total * share : total, deposit, depositPct: Math.round(share * 100) };
+  }
+
+  fmtDate(s) {
+    return new Date(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  }
+
+  go(n) {
+    const s = this.state;
+    if (n > 1 && s.step === 1) {
+      if (s.checkIn < iso(new Date())) { this.setState({ dateErr: 'Check-in cannot be before today' }); return; }
+      if (s.checkOut <= s.checkIn) { this.setState({ dateErr: 'Check-out must be after check-in' }); return; }
+    }
+    /* A refusal belongs to the attempt that caused it, not to the next one. */
+    this.setState({ step: n, dateErr: '', bookErr: '' });
+    if (typeof window !== 'undefined') window.scrollTo(0, 0);
+  }
+
+  orderId() {
+    if (!this._order) this._order = 'order_' + Math.random().toString(36).slice(2, 16).toUpperCase();
+    return this._order;
+  }
+
+  clearTimers() { (this._timers || []).forEach(clearTimeout); this._timers = []; }
+
+  later(fn, ms) { (this._timers = this._timers || []).push(setTimeout(fn, ms)); }
+
+  authorise() {
+    this.setState({ gw: 'auth', bookErr: '' });
+    this.later(() => {
+      this.setState({ gw: null, paying: true });
+      this.later(() => {
+        /* Written before it is confirmed. If the room went while the gateway
+           was thinking, the guest is told so instead of being shown a
+           reference for a reservation that does not exist. */
+        this.commit('online').then(r => {
+          if (!r.ok) { this.bookingFailed(r.error); return; }
+          this.setState({ paying: false, step: 7, bookingId: r.ref });
+          /* The guest's own reservation joins the stream the moment it clears. */
+          const s = this.state;
+          const sel = ROOMS.filter(x => x.id === s.roomId)[0];
+          this.pushFeed({
+            who: this.shortName(s.name) || 'A guest',
+            from: s.country || '',
+            room: sel ? sel.name : 'a room',
+            nights: this.nights(),
+            mine: true,
+            at: Date.now()
+          });
+        });
+      }, 1700);
+    }, 1500);
+  }
+
+  /* Desk mode only: record a reservation that already came through an OTA or
+     over the phone. It goes straight into the resort's system under the
+     channel it was booked on, with what the guest paid and any balance due. */
+  registerExisting() {
+    const s = this.state;
+    /* Capturing an OTA booking writes straight into the property's book —
+       an operator's job, and only while their session is alive. */
+    const A = window.HSAuth;
+    if (!s.staff || !(A && A.can('pms', A.STAFF))) {
+      this.setState({ staff: false, regErr: 'Your session has ended. Sign in to the PMS and open this page again.' });
+      return;
+    }
+    if (!(s.name || '').trim()) { this.setState({ regErr: 'Enter the guest name' }); return; }
+    if (!s.roomId) { this.setState({ regErr: 'Choose a room' }); return; }
+    if (s.checkIn < iso(new Date())) { this.setState({ regErr: 'Check-in cannot be before today' }); return; }
+    if (s.checkOut <= s.checkIn) { this.setState({ regErr: 'Check-out must be after check-in' }); return; }
+    if (!B()) return;
+    const sel = ROOMS.filter(x => x.id === s.roomId)[0];
+    const paid = Math.max(0, Math.round(+s.regPaid || 0));
+    const remaining = s.regHasBalance ? Math.max(0, Math.round(+s.regRemaining || 0)) : 0;
+    const total = paid + remaining;
+    /* An OTA booking takes a real room, so it is checked against the book
+       like any other — that is how an overbooked channel is caught here
+       rather than at the front desk on the night. */
+    const r = B().add({
+      guest: s.name.trim(), email: s.email, phone: s.phone, country: s.country,
+      category: s.roomId, categoryName: sel ? sel.name : '',
+      checkIn: s.checkIn, nights: this.nights(),
+      adults: +s.adults, children: +s.children,
+      meal: '', extras: [],
+      total, paid, roomTotal: total, serviceTotal: 0,
+      roomCount: +s.roomCount || 1, method: 'online', source: s.regChannel,
+      notes: 'Registered from ' + s.regChannel + (remaining ? ' - balance ' + INR(remaining) + ' to collect at arrival' : ' - paid in full')
+    });
+    Promise.resolve(r).then(res => {
+      if (!res || !res.ok) { this.setState({ regErr: (res && res.error) || 'That could not be saved.' }); return; }
+      this.setState({ regDone: res.ref, regErr: '' });
+    });
+  }
+
+  renderVals() {
+    const s = this.state, n = this.nights(), t = this.totals(), sel = this.selected();
+    const showCounts = this.props.showInventoryCounts ?? true;
+    const wk = this.weekendCount();
+    const stayLine = this.fmtDate(s.checkIn) + ' – ' + this.fmtDate(s.checkOut) + ' · ' + n + (n === 1 ? ' night' : ' nights');
+    const guestLine = s.adults + ' adults' + (s.children ? ', ' + s.children + ' children' : '') + ' · ' + s.roomCount + (s.roomCount === 1 ? ' room' : ' rooms');
+
+    const offers = ROOMS.filter(r => {
+      const p = this.plan(r.id);
+      return !p.stopSell && n >= p.minStay;
+    }).map(r => {
+      /* Counted, not stored: inventory from the rate plan the PMS writes,
+         less the rooms reservations already hold on these nights. It moves
+         when a booking is made and at no other time. */
+      const av = this.avail(r.id);
+      const left = av.left;
+      const want = +s.roomCount || 1;
+      const short = left < want;
+      /* Each room sleeps at most maxAdults and maxChildren, so a party too
+         big for the rooms asked for cannot select it until it adds a room. */
+      const crowded = +s.adults > r.maxAdults * want || +s.children > r.maxChildren * want;
+      const blocked = short || crowded;
+      const sub = this.roomSubtotal(r);
+      const p = this.plan(r.id);
+      return {
+        slotId: 'hs-room-' + r.id,
+        slotHint: r.name + ' — drop photograph',
+        photo: r.photo || '',
+        name: r.name, tagline: r.tagline, desc: r.desc,
+        facts: [r.size, r.bed, r.occ, r.kids, p.minStay > 1 ? p.minStay + '-night minimum' : 'One night welcome'].filter(Boolean),
+        nightly: INR(sub / (n * s.roomCount)),
+        subtotal: sub,
+        totalLine: INR(sub) + ' for ' + n + (n === 1 ? ' night' : ' nights') + ', before tax',
+        leftText: left ? left + ' of ' + av.total + ' left' : 'Fully booked',
+        scarce: showCounts && left <= 3,
+        availText: left === 0 ? 'No ' + r.name + ' free for these nights'
+          : short ? 'Only ' + left + (left === 1 ? ' room' : ' rooms') + ' left — fewer than the ' + want + ' asked for'
+          : crowded ? 'Sleeps ' + r.maxAdults + ' adults and ' + r.maxChildren + ' child per room — add a room for this party'
+          : showCounts ? left + ' of ' + av.total + ' free for these nights'
+          : 'Available for these nights',
+        availColor: blocked ? '#8A5A3F' : '#6E6A5C',
+        soldOut: blocked,
+        isSelected: s.roomId === r.id,
+        cta: short ? (left === 0 ? 'Fully booked' : 'Not enough rooms') : crowded ? 'Too many guests' : s.roomId === r.id ? 'Selected' : 'Select',
+        ctaColor: blocked ? '#A8A290' : '#2C3A2E',
+        ctaCursor: blocked ? 'not-allowed' : 'pointer',
+        select: () => { if (!blocked) this.setState({ roomId: r.id, bookErr: '' }, () => this.go(3)); }
+      };
+    });
+
+    const meals = MEALS().map(m => ({
+      name: m.name, note: m.note, on: s.meal === m.id,
+      priceText: m.pp ? INR(m.pp) + ' pp / night' : 'Included',
+      pick: () => this.setState({ meal: m.id })
+    }));
+
+    const extras = EXTRAS().map(e => ({
+      name: e.name, note: e.note, on: !!s.extras[e.id],
+      priceText: INR(e.price) + (e.per === 'night' ? ' / night' : ''),
+      toggle: () => this.setState(st => ({ extras: { ...st.extras, [e.id]: !st.extras[e.id] } }))
+    }));
+
+    const lines = [];
+    if (sel) lines.push({ label: sel.name + ' × ' + n + ' nights', value: INR(t.room) });
+    const mp = MEALS().find(m => m.id === s.meal);
+    if (mp && mp.pp) lines.push({ label: mp.name + ' plan', value: INR(this.mealTotal()) });
+    EXTRAS().filter(e => s.extras[e.id]).forEach(e => lines.push({ label: e.name, value: INR(e.per === 'night' ? e.price * n : e.price) }));
+    lines.push({ label: 'GST (' + Math.round(t.roomRate * 100) + '% room, ' + Math.round(t.serviceRate * 100) + '% services)', value: INR(t.tax) });
+
+    const labels = ['Dates', 'Rooms', 'Extras', 'Details', 'Summary', 'Payment', 'Confirmed'];
+    const cheapest = offers.length ? Math.min(...offers.map(o => o.subtotal)) : 0;
+    const season = R() ? R().seasonFor(new Date(s.checkIn), s.rates) : null;
+    const barLabel = s.step === 1 ? 'Estimated from' : s.step === 2 ? 'Select a room to continue' : 'Total incl. tax';
+    const barValue = s.step === 1 ? (cheapest ? INR(cheapest) : 'No rate loaded')
+      : s.step === 2 ? (sel ? sel.name + ' selected' : offers.length + ' categories available')
+      : INR(t.total);
+
+    return {
+      isStep1: s.step === 1 && !(s.staff && s.mode === 'register'), isStep2: s.step === 2, isStep3: s.step === 3, isStep4: s.step === 4,
+      isStep5: s.step === 5, isStep6: s.step === 6, isStep7: s.step === 7,
+      stepLabel: labels[s.step - 1], stepCounter: s.step + ' / 7',
+      progressPct: Math.round((s.step / 7) * 100) + '%',
+      checkIn: s.checkIn, checkOut: s.checkOut, adults: String(s.adults), children: String(s.children), roomCount: String(s.roomCount),
+      todayIso: iso(new Date()), checkOutMin: s.checkIn, dateErr: s.dateErr || '',
+      onCheckIn: e => { const v = e.target.value; this.setState({ checkIn: v, checkOut: (this.state.checkOut <= v ? iso(new Date(new Date(v).getTime() + 86400000)) : this.state.checkOut) }); },
+      onCheckOut: e => this.setState({ checkOut: e.target.value }),
+      onAdults: e => this.setState({ adults: +e.target.value }),
+      onChildren: e => this.setState({ children: +e.target.value }),
+      onRoomCount: e => this.setState({ roomCount: +e.target.value }),
+      nights: n, nightsLabel: n === 1 ? 'night' : 'nights',
+      weekendLabel: wk ? wk + ' at weekend rate' : 'all at weekday rate',
+      notes: ['Best rate, booked direct', 'Free cancellation to 72h', 'No booking fee'],
+      stayLine, guestLine, offers, meals, extras, lines,
+      ratesLine: (season ? season.name + ' rates, ' + (season.adjust > 0 ? '+' : '') + season.adjust + '% · ' : '')
+        + 'live from the resort · ' + offers.length + ' of ' + ROOMS.length + ' categories open',
+      noOffers: offers.length === 0,
+      /* Set only when a booking was refused at the moment of writing — the
+         room went while this guest was at the payment step. */
+      hasBookErr: !!s.bookErr,
+      bookErr: s.bookErr || '',
+      /* Desk mode asked for but no operator signed in on this tab. */
+      staffDenied: !!s.staffWanted && !s.staff,
+      selectedName: sel ? sel.name : 'Room',
+      selectedPhoto: (sel && sel.photo) || '',
+      totalText: INR(t.total),
+      payNowText: INR(t.payNow),
+      payLabel: t.deposit ? 'Deposit due now (' + t.depositPct + '%)' : 'Amount due',
+      isStaff: !!s.staff,
+      isCash: !!s.staff && s.payMode === 'cash',
+      isCard: !s.staff || s.payMode === 'card',
+      takeCash: () => this.takeCash(),
+      payModes: [
+        { id: 'card', name: 'Card, UPI or net banking', note: 'Razorpay hosted checkout' },
+        { id: 'cash', name: 'Cash at the desk', note: 'Settled in person, receipt raised' }
+      ].map(m => ({
+        name: m.name, note: m.note,
+        bg: s.payMode === m.id ? '#EFEADD' : '#FFFDF8',
+        border: s.payMode === m.id ? '#8A6E42' : '#E0D9C8',
+        color: '#2C3A2E',
+        pick: () => this.setState({ payMode: m.id })
+      })),
+      orderId: this.orderId(),
+      secure: [
+        { title: 'Your card never touches Hill Stream', body: 'Checkout runs on Razorpay\u2019s hosted page. The resort receives a payment id and a signature, never a card number \u2014 which keeps the property out of PCI scope entirely.' },
+        { title: 'Signature verified before confirmation', body: 'The success response is re-checked server-side against an HMAC SHA-256 signature, and again by webhook. A forged or replayed response cannot confirm a booking.' },
+        { title: '3-D Secure on every card', body: 'Cards are authenticated with your bank\u2019s one-time code, so a stolen card alone cannot complete the payment.' },
+        { title: 'Room held, not released, until settled', body: 'Inventory stays locked while the payment is authorised. If it fails or times out, the hold is released and nothing is charged.' }
+      ],
+      openGateway: () => this.setState({ gw: 'select' }),
+      closeGateway: () => { this.clearTimers(); this.setState({ gw: null }); },
+      gwOpen: !!s.gw,
+      gwSelect: s.gw === 'select',
+      gwCard: s.gw === 'card',
+      gwUpi: s.gw === 'upi',
+      gwOtp: s.gw === 'otp',
+      gwAuth: s.gw === 'auth',
+      gwBack: () => this.setState({ gw: 'select' }),
+      gwSubmitCard: () => this.setState({ gw: 'otp' }),
+      gwVerify: () => this.authorise(),
+      gwMethods: [
+        { abbr: 'UPI', name: 'UPI', note: 'GPay, PhonePe, Paytm, any UPI app', pick: () => { this.setState({ gw: 'upi' }); this.later(() => this.authorise(), 2600); } },
+        { abbr: 'CARD', name: 'Card', note: 'Visa, Mastercard, RuPay, Amex', pick: () => this.setState({ gw: 'card' }) },
+        { abbr: 'NB', name: 'Net banking', note: '58 banks supported', pick: () => this.setState({ gw: 'otp' }) },
+        { abbr: 'W', name: 'Wallet', note: 'Amazon Pay, Freecharge, Mobikwik', pick: () => this.setState({ gw: 'otp' }) }
+      ],
+      gName: s.name, gEmail: s.email, gPhone: s.phone, gCountry: s.country, gNotes: s.notes,
+      onName: e => this.setState({ name: e.target.value }),
+      onEmail: e => this.setState({ email: e.target.value }),
+      onPhone: e => this.setState({ phone: e.target.value }),
+      onCountry: e => this.setState({ country: e.target.value }),
+      onNotes: e => this.setState({ notes: e.target.value }),
+      showBar: s.step < 7 && !(s.staff && s.mode === 'register'), canBack: s.step > 1, barLabel, barValue,
+      nextDisabled: s.step === 2 && !sel,
+      nextLabel: s.step === 6 ? 'Pay securely' : s.step === 5 ? 'Continue to payment' : 'Continue',
+      next: () => (s.step === 6 ? this.setState({ gw: 'select' }) : this.go(Math.min(7, s.step + 1))),
+      back: () => this.go(Math.max(1, s.step - 1)),
+      paying: s.paying,
+      bookingId: s.bookingId || 'HS-26-0000',
+      confirmLine: (s.name ? s.name.split(' ')[0] + ', your' : 'Your') + ' ' + (sel ? sel.name : 'room') + ' is held for ' + stayLine.toLowerCase() + '. A confirmation is on its way to ' + (s.email || 'your inbox') + '.',
+      afterSteps: [
+        'Confirmation email with your invoice and directions from Dehradun.',
+        'WhatsApp message from the front desk two days before arrival.',
+        'Inventory updated — this room is now off the availability calendar.',
+        'Your requests have been passed to housekeeping and the spa.'
+      ],
+      restart: () => this.setState({ step: 1, roomId: null, extras: {}, bookingId: null }),
+
+      showModeToggle: !!s.staff && s.step === 1,
+      isNewMode: s.mode === 'new',
+      isRegister: !!s.staff && s.mode === 'register',
+      newModeBorder: s.mode === 'new' ? '#2C3A2E' : '#D8D0BC',
+      newModeBg: s.mode === 'new' ? '#2C3A2E' : 'transparent',
+      newModeColor: s.mode === 'new' ? '#F2EEE4' : '#6E6A5C',
+      regModeBorder: s.mode === 'register' ? '#2C3A2E' : '#D8D0BC',
+      regModeBg: s.mode === 'register' ? '#2C3A2E' : 'transparent',
+      regModeColor: s.mode === 'register' ? '#F2EEE4' : '#6E6A5C',
+      setModeNew: () => this.setState({ mode: 'new' }),
+      setModeRegister: () => this.setState({ mode: 'register' }),
+      regChannel: s.regChannel,
+      regChannelOptions: OTA_SOURCES,
+      onRegChannel: e => this.setState({ regChannel: e.target.value }),
+      regRoomOptions: [{ value: '', label: 'Select a room' }].concat(ROOMS.map(r => ({ value: r.id, label: r.name + ' · ' + r.tagline }))),
+      regRoom: s.roomId || '',
+      onRegRoom: e => this.setState({ roomId: e.target.value }),
+      regPaid: s.regPaid, onRegPaid: e => this.setState({ regPaid: e.target.value }),
+      regHasBalance: !!s.regHasBalance,
+      toggleRegBalance: e => this.setState({ regHasBalance: !!e.target.checked }),
+      regRemaining: s.regRemaining, onRegRemaining: e => this.setState({ regRemaining: e.target.value }),
+      regPaidText: INR(Math.max(0, Math.round(+s.regPaid || 0))),
+      regRemainingText: INR(Math.max(0, Math.round(+s.regRemaining || 0))),
+      regTotalText: INR(Math.max(0, Math.round(+s.regPaid || 0)) + (s.regHasBalance ? Math.max(0, Math.round(+s.regRemaining || 0)) : 0)),
+      registerExisting: () => this.registerExisting(),
+      regDone: !!s.regDone, regRef: s.regDone || '', regErr: s.regErr || '',
+      regFormOpen: !s.regDone,
+      registerAnother: () => this.setState({ regDone: null, name: '', email: '', phone: '', roomId: null, regPaid: '', regRemaining: '', regHasBalance: false, regErr: '' }),
+
+      recent: (s.feed || []).map(f => ({
+        who: f.who,
+        initial: (f.who || '?').trim().charAt(0).toUpperCase(),
+        line: 'Booked ' + f.room + ' · ' + f.nights + (f.nights === 1 ? ' night' : ' nights'),
+        when: f.from ? this.ago(f.at) + ' · ' + f.from : this.ago(f.at),
+        isMine: !!f.mine
+      })),
+      recentCount: (s.feed || []).length + ' reservations in the last day',
+      hasFeed: !!(s.feed || []).length,
+      toastFade: s.toastOn ? '1' : '0',
+      toastShift: s.toastOn ? 'translateY(0)' : 'translateY(-14px)',
+      toast: (() => {
+        const f = (s.feed || [])[s.toastIdx || 0];
+        if (!f) return { who: '', line: '', when: '', initial: '' };
+        return {
+          who: f.mine ? 'Your reservation' : f.who,
+          initial: (f.who || '?').trim().charAt(0).toUpperCase(),
+          line: (f.mine ? 'Confirmed ' : 'Recently booked ') + f.room + ' · ' +
+            f.nights + (f.nights === 1 ? ' night' : ' nights'),
+          when: this.ago(f.at)
+        };
+      })()
+    };
+  }
+}
+</script>
+</body>
+</html>

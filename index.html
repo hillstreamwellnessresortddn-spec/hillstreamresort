@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="./rates.js"></script>
+<script src="./bookings.js"></script>
+<script src="./reviews.js"></script>
+<script src="./content.js"></script>
+<script src="./image-slot.js"></script>
+<style>
+  /* Phones: tall photographs become squares, and the booking bar keeps only
+     its button so it stops covering a third of the screen. */
+  @media (max-width:640px) {
+    .hs-sq { aspect-ratio:1 / 1 !important; min-height:0 !important; }
+    .hs-bar-info { display:none !important; }
+    .hs-bar-row { padding:10px 16px calc(10px + env(safe-area-inset-bottom, 0px)) !important; }
+    .hs-bar-cta { flex:1 1 auto !important; text-align:center; padding:14px 20px !important; }
+  }
+  /* Plain <img> photographs come in from a blur once loaded. */
+  img[data-hsfade] { opacity:0; filter:blur(16px); transition:opacity 700ms ease, filter 1000ms cubic-bezier(.2,.7,.3,1); }
+  img[data-hsfade][data-hsloaded] { opacity:1; filter:none; }
+  @media (prefers-reduced-motion:reduce) { img[data-hsfade] { opacity:1; filter:none; transition:none; } }
+  /* Navigation: one row on wide screens; below 1080px the links fold into a
+     menu button that opens a panel under the header. */
+  .hs-nav { display:flex; align-items:center; gap:clamp(14px, 2.4vw, 30px); flex:0 0 auto; }
+  .hs-nav-links { display:flex; align-items:center; gap:clamp(18px, 2.2vw, 30px); }
+  .hs-nav-links a { white-space:nowrap; }
+  .hs-menu { display:none; }
+  .hs-menu > summary { list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:center; width:44px; height:44px; border:1px solid currentColor; border-radius:50%; opacity:0.9; transition:opacity 300ms, background 300ms; }
+  .hs-menu > summary::-webkit-details-marker { display:none; }
+  .hs-menu > summary:hover { opacity:1; }
+  .hs-menu .hs-ico-close { display:none; }
+  .hs-menu[open] .hs-ico-open { display:none; }
+  .hs-menu[open] .hs-ico-close { display:block; }
+  .hs-menu-panel { position:absolute; top:100%; left:0; right:0; max-height:calc(100svh - 76px); overflow:auto; background:#1B241C; border-top:1px solid rgba(198,172,124,0.35); box-shadow:0 30px 60px -30px rgba(0,0,0,0.55); padding:10px 24px 28px; animation:hsMenuIn 380ms cubic-bezier(.2,.7,.3,1) both; }
+  .hs-menu-panel a.hs-menu-link { display:flex; align-items:center; justify-content:space-between; padding:18px 2px; border-bottom:1px solid rgba(242,238,228,0.12); font-family:'Marcellus', serif; font-size:24px; letter-spacing:-0.01em; text-decoration:none; color:#F6F3EA; }
+  .hs-menu-panel a.hs-menu-link:hover { color:#D8C39A; }
+  .hs-menu-panel a.hs-menu-link span { font-family:'Jost', sans-serif; font-size:16px; color:#C6AC7C; }
+  .hs-menu-panel a.hs-menu-cta { display:block; margin-top:24px; text-align:center; font-size:11px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:#1B241C; background:#D8C39A; padding:16px 20px; }
+  @keyframes hsMenuIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:none; } }
+  @media (max-width:1080px) {
+    .hs-nav-links { display:none; }
+    .hs-menu { display:block; }
+  }
+  @media (max-width:520px) {
+    .hs-enquire { display:none !important; }
+    .hs-brand-name { font-size:13px !important; letter-spacing:0.22em !important; }
+  }
+
+  html, body { margin:0; padding:0; background:#F4F1E8; }
+  * { box-sizing:border-box; }
+  a { color:#1B241C; }
+  a:hover { color:#96793F; }
+  :focus-visible { outline:1px solid #96793F; outline-offset:4px; }
+  ::selection { background:#DCD5C4; }
+  @keyframes hsBanFade { from { opacity:0; } to { opacity:1; } }
+  @keyframes hsBanIn { from { opacity:0; transform:translateY(26px) scale(0.98); } to { opacity:1; transform:none; } }
+  @keyframes hsUp { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:none; } }
+  @keyframes hsMask { from { opacity:0; clip-path:inset(0 0 102% 0); transform:translateY(26px); } to { opacity:1; clip-path:inset(-24% -24% -24% -24%); transform:none; } }
+  @keyframes hsKen { from { transform:scale(1.02) translate3d(0,0,0); } to { transform:scale(1.13) translate3d(-1.2%,-1.6%,0); } }
+  @keyframes hsCue { 0%,100% { opacity:0.85; transform:scaleY(1); transform-origin:top; } 50% { opacity:0.3; transform:scaleY(0.45); transform-origin:top; } }
+  @keyframes hsDrift { 0% { transform:translate3d(-6%, -4%, 0) scale(1); } 100% { transform:translate3d(6%, 4%, 0) scale(1.15); } }
+  @keyframes hsSheen { 0% { transform:translateX(-120%); } 100% { transform:translateX(220%); } }
+  /* Hero: a word rises out of its own line box, so the headline arrives in
+     reading order rather than all at once. */
+  @keyframes hsWord { from { opacity:0; transform:translateY(0.62em) rotate(1.4deg); } to { opacity:1; transform:none; } }
+  @keyframes hsTrack { from { opacity:0; letter-spacing:0.62em; } to { opacity:1; letter-spacing:0.28em; } }
+  @keyframes hsWipe { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+  /* The live-availability dot, and a slow halo on the booking action. */
+  @keyframes hsPulse { 0%, 100% { opacity:1; transform:scale(1); } 50% { opacity:0.35; transform:scale(0.72); } }
+  @keyframes hsBeacon { 0%, 100% { box-shadow:0 0 0 0 rgba(198,172,124,0.5); } 55% { box-shadow:0 0 0 10px rgba(198,172,124,0); } }
+  /* Ambient firelight — a warm bloom breathing over the fire circle. */
+  @keyframes hsEmber { 0% { opacity:0.28; transform:translate3d(-2%, 1%, 0) scale(1); } 42% { opacity:0.6; transform:translate3d(1%, -1.5%, 0) scale(1.14); } 100% { opacity:0.3; transform:translate3d(2.5%, 1.5%, 0) scale(1.04); } }
+  /* Scroll-linked: the hero copy lifts and dims as the fold leaves. */
+  @keyframes hsHeroLift { from { opacity:1; transform:translate3d(0,0,0); } to { opacity:0; transform:translate3d(0,-13svh,0); } }
+  /* The fixed-background pin. Mapped linearly to document scroll so the
+     compositor moves the photograph in lockstep with the page — a JS pin
+     always lands a frame late, which is what reads as bouncing. The two
+     endpoints are set from JS as custom properties. */
+  @keyframes hsFix { from { transform:translate3d(0, var(--hsA, 0px), 0); } to { transform:translate3d(0, var(--hsB, 0px), 0); } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:1ms !important; animation-delay:1ms !important; transition-duration:1ms !important; }
+  }
+</style>
+<script src="./spotlight.js"></script>
+<script src="./api.js"></script>
+</helmet>
+
+<div style="background:#F4F1E8; color:#1B241C; font-family:'Jost', system-ui, sans-serif; font-weight:300; padding-bottom:88px">
+
+  <header data-hsh="1" style="position:fixed; top:0; left:0; right:0; z-index:60; background:transparent; border-bottom:1px solid transparent; transition:background 700ms cubic-bezier(.2,.7,.3,1), border-color 700ms cubic-bezier(.2,.7,.3,1), backdrop-filter 700ms">
+    <div style="max-width:1240px; margin:0 auto; padding:14px 24px; display:flex; flex-wrap:nowrap; gap:24px; align-items:center; justify-content:space-between">
+      <a href="index.html" style="display:flex; flex-wrap:nowrap; align-items:center; gap:12px; min-width:0; font-family:'Marcellus', serif; font-size:15px; letter-spacing:0.3em; text-transform:uppercase; text-decoration:none; color:var(--hsc, #F4F1E8); transition:color 600ms cubic-bezier(.2,.7,.3,1)">
+        <video src="uploads/Video Project (2).mp4" poster="uploads/photos/logo-mark.png" autoPlay="{{ true }}" muted="{{ true }}" loop="{{ true }}" playsInline="{{ true }}" preload="auto" aria-hidden="true" data-hs-mark-h="48" style="display:block; width:64px; height:48px; opacity:1; flex:0 0 auto; object-fit:contain; transition:opacity 400ms ease; border-radius:4px"></video>
+        <span class="hs-brand-name" style="white-space:nowrap">Hill Stream</span>
+      </a>
+      <nav class="hs-nav" aria-label="Main">
+        <div class="hs-nav-links">
+          <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+            <a href="{{ n.href }}" style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:var(--hsc2, #E3E0D4); padding-bottom:3px; border-bottom:1px solid transparent; transition:color 600ms cubic-bezier(.2,.7,.3,1), border-color 350ms" style-hover="border-color:#C6AC7C">{{ n.label }}</a>
+          </sc-for>
+        </div>
+        <a class="hs-enquire" href="Booking%20Engine.dc.html" style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:#F4F1E8; background:#1B241C; border:1px solid #C6AC7C; padding:11px 18px; white-space:nowrap; transition:background 350ms, color 350ms, border-color 350ms" style-hover="background:#243024; color:#F4F1E8; border-color:#DCC79B">Enquire</a>
+        <details class="hs-menu">
+          <summary aria-label="Menu" title="Menu" style="color:var(--hsc, #F4F1E8)">
+            <svg class="hs-ico-open" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M2 5h14M2 9h14M2 13h14"/></svg>
+            <svg class="hs-ico-close" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>
+          </summary>
+          <div class="hs-menu-panel">
+            <sc-for list="{{ nav }}" as="m" hint-placeholder-count="5">
+              <a class="hs-menu-link" href="{{ m.href }}">{{ m.label }}<span>→</span></a>
+            </sc-for>
+            <a class="hs-menu-cta" href="Booking%20Engine.dc.html">Enquire</a>
+          </div>
+        </details>
+      </nav>
+    </div>
+  </header>
+
+  <section style="position:relative; min-height:100svh; display:flex; flex-direction:column; justify-content:flex-end; overflow:hidden; background:#141A14">
+    <div style="position:absolute; inset:0; filter:brightness(0.95) saturate(1.02); animation:hsKen 32s cubic-bezier(.4,0,.6,1) infinite alternate; will-change:transform">
+      <image-slot id="hs-v2-hero-night" shape="rect" fit="cover" src="uploads/ChatGPT%20Image%20Aug%2023%2C%202026%2C%2010_30_22%20PM.png" placeholder="Hero — the fire circle below the rooms, after dark"></image-slot>
+    </div>
+    <div style="position:absolute; inset:0; pointer-events:none; mix-blend-mode:screen; background:radial-gradient(42% 34% at 50% 72%, rgba(214,148,64,0.34) 0%, rgba(198,124,48,0.14) 42%, rgba(198,124,48,0) 74%); animation:hsEmber 9s ease-in-out infinite alternate; will-change:transform, opacity"></div>
+    <div style="position:absolute; inset:0; backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); mask-image:linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 26%, rgba(0,0,0,0) 40%, rgba(0,0,0,1) 100%); -webkit-mask-image:linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 26%, rgba(0,0,0,0) 40%, rgba(0,0,0,1) 100%)"></div>
+    <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(14,18,16,0.70) 0%, rgba(14,18,16,0.30) 26%, rgba(14,18,16,0.52) 48%, rgba(14,18,16,0.78) 72%, rgba(14,18,16,0.90) 100%)"></div>
+    <div style="position:relative; width:100%; max-width:1240px; margin:0 auto; padding:clamp(92px, 13vh, 150px) 24px clamp(36px, 6vh, 80px); animation:hsHeroLift linear both; animation-timeline:scroll(root); animation-range:8svh 88svh; will-change:transform, opacity">
+      <div style="display:flex; align-items:center; gap:14px; margin:0 0 clamp(20px, 3.4vw, 34px)">
+        <span style="display:block; width:clamp(22px, 5vw, 46px); height:1px; background:#C6AC7C; transform-origin:left; animation:hsWipe 900ms cubic-bezier(.2,.7,.3,1) 80ms both"></span>
+        <p style="margin:0; font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#D8C39A; text-shadow:0 1px 16px rgba(14,18,16,0.95); animation:hsTrack 1500ms cubic-bezier(.2,.7,.3,1) 160ms both">{{ heroKicker }}</p>
+      </div>
+      <h1 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(38px, 8.6vw, 96px); line-height:1.0; letter-spacing:-0.035em; margin:0; max-width:20ch; color:#F6F3EA; text-shadow:0 2px 30px rgba(14,18,16,0.6); text-wrap:pretty; display:flex; flex-wrap:wrap; column-gap:0.26em">
+        <sc-for list="{{ heroWords }}" as="hw" hint-placeholder-count="6">
+          <span style="display:inline-block; overflow:hidden; padding-bottom:0.06em">
+            <span style="display:inline-block; animation:hsWord 1150ms cubic-bezier(.16,.84,.28,1) both; animation-delay:{{ hw.delay }}">{{ hw.text }}</span>
+          </span>
+        </sc-for>
+      </h1>
+      <div style="display:flex; flex-wrap:wrap; gap:clamp(20px, 4vw, 72px); align-items:flex-end; justify-content:space-between; margin-top:clamp(26px, 4vh, 56px); animation:hsUp 1000ms cubic-bezier(.2,.7,.3,1) 640ms both">
+        <p style="margin:0; font-size:clamp(16px, 4.2vw, 21px); line-height:1.7; color:#E2DFD2; text-shadow:0 1px 18px rgba(14,18,16,0.85); max-width:30ch; text-wrap:pretty">{{ heroLede }}</p>
+        <a href="Booking%20Engine.dc.html" style="position:relative; display:inline-flex; align-items:center; gap:10px; font-size:10px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:#F4F1E8; border-bottom:1px solid rgba(198,172,124,0.5); padding-bottom:7px; white-space:nowrap; transition:color 350ms, letter-spacing 450ms cubic-bezier(.2,.7,.3,1), border-color 350ms" style-hover="color:#C6AC7C; letter-spacing:0.3em; border-color:#F4F1E8">{{ heroCta }}<span style="display:inline-block; transition:transform 450ms cubic-bezier(.2,.7,.3,1)" style-hover="transform:translateX(7px)">→</span></a>
+      </div>
+      <a href="Booking%20Engine.dc.html" style="display:inline-flex; align-items:center; gap:11px; margin-top:clamp(20px, 3vh, 32px); padding:10px 16px 10px 13px; text-decoration:none; background:rgba(20,26,20,0.42); border:1px solid rgba(198,172,124,0.45); color:#F1EEE2; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; transition:border-color 400ms, background 400ms, color 400ms; animation:hsUp 1000ms cubic-bezier(.2,.7,.3,1) 780ms both" style-hover="border-color:#C6AC7C; background:rgba(20,26,20,0.62); color:#F6F3EA">
+        <span style="display:block; width:7px; height:7px; border-radius:50%; background:#C6AC7C; flex:0 0 auto; animation:hsPulse 2200ms ease-in-out infinite"></span>{{ urgeLine }}
+      </a>
+      <div style="display:flex; flex-wrap:wrap; gap:14px 24px; align-items:center; margin-top:clamp(26px, 4.2vh, 56px); padding-top:20px; border-top:1px solid rgba(244,241,232,0.22); animation:hsUp 1000ms cubic-bezier(.2,.7,.3,1) 860ms both">
+        <span style="font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:#BFC3B4">The fire circle</span>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width:1240px; margin:0 auto; padding:clamp(80px, 15vw, 184px) 24px">
+    <div data-hsr="group" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:clamp(32px, 7vw, 96px); align-items:start">
+      <div>
+        <p style="margin:0 0 22px; font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#96793F">{{ introKicker }}</p>
+        <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(28px, 6.4vw, 56px); line-height:1.1; letter-spacing:-0.025em; margin:0; text-wrap:pretty">{{ introTitle }}</h2>
+      </div>
+      <p style="margin:0; font-size:clamp(16px, 4.2vw, 19px); line-height:1.85; color:#4E5449; max-width:44ch; text-wrap:pretty">{{ introBody }}</p>
+    </div>
+  </section>
+
+  <section style="position:relative; overflow:hidden; background:#243024; color:#F2EEE4">
+    <div style="position:absolute; inset:0; pointer-events:none; background:radial-gradient(120% 90% at 12% 0%, rgba(150,121,63,0.20) 0%, rgba(150,121,63,0) 46%), radial-gradient(90% 120% at 100% 100%, rgba(44,58,46,0.9) 0%, rgba(20,26,20,0) 55%); animation:hsDrift 26s ease-in-out infinite alternate; will-change:transform"></div>
+    <div style="position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg, rgba(198,172,124,0) 0%, rgba(198,172,124,0.5) 50%, rgba(198,172,124,0) 100%)"></div>
+    <div style="position:relative; max-width:1240px; margin:0 auto; padding:clamp(64px, 12vw, 132px) 24px">
+      <div style="display:flex; align-items:center; gap:16px; margin-bottom:clamp(40px, 7vw, 72px); animation:hsUp 900ms cubic-bezier(.2,.7,.3,1) both">
+        <span style="display:block; width:clamp(24px, 5vw, 44px); height:1px; background:#C6AC7C"></span>
+        <p style="margin:0; font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#C6AC7C">The essentials</p>
+      </div>
+      <div data-hsr="group" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:clamp(20px, 3vw, 40px)">
+        <sc-for list="{{ facts }}" as="f" hint-placeholder-count="4">
+          <div style="position:relative; padding:6px clamp(16px, 3vw, 32px) 4px 0">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:clamp(20px, 4vw, 34px)">
+              <span style="font-family:'Marcellus', serif; font-size:12px; color:#96793F; letter-spacing:0.04em">{{ f.idx }}</span>
+              <span style="flex:1; height:1px; background:linear-gradient(90deg, rgba(159,174,155,0.35) 0%, rgba(159,174,155,0) 100%)"></span>
+            </div>
+            <div style="font-family:'Marcellus', serif; font-size:clamp(22px, 2.9vw, 34px); line-height:1; letter-spacing:-0.02em; white-space:nowrap; color:#F6F3EA">{{ f.value }}</div>
+            <div style="margin-top:14px; font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:#9FAE9B">{{ f.label }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div data-hsr="item" style="position:relative; display:flex; flex-wrap:wrap; gap:16px 32px; align-items:baseline; justify-content:space-between; margin-top:clamp(60px, 11vw, 120px); padding-top:clamp(30px, 6vw, 52px); border-top:1px solid rgba(242,238,228,0.16); overflow:hidden">
+        <div style="position:absolute; top:0; left:0; width:44%; height:1px; background:linear-gradient(90deg, rgba(198,172,124,0.7) 0%, rgba(198,172,124,0) 100%)"></div>
+        <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(28px, 6.4vw, 54px); line-height:1.06; letter-spacing:-0.025em; margin:0; color:#F6F3EA">Seven ways to stay</h2>
+        <a href="Booking%20Engine.dc.html" style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:#D8C39A; border-bottom:1px solid rgba(216,195,154,0.4); padding-bottom:6px; transition:color 350ms, border-color 350ms" style-hover="color:#F6F3EA; border-color:#D8C39A">See every room →</a>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width:1240px; margin:0 auto; padding:clamp(56px, 10vw, 112px) 24px clamp(80px, 15vw, 184px)">
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(268px, 1fr)); gap:clamp(32px, 6vw, 64px) clamp(24px, 4vw, 40px)">
+      <sc-for list="{{ rooms }}" as="room" hint-placeholder-count="4">
+        <a data-hsroom="1" href="Booking%20Engine.dc.html" style="text-decoration:none; color:#1B241C; display:flex; flex-direction:column; gap:20px">
+          <div data-hsrp="photo" class="hs-sq" style="position:relative; aspect-ratio:4 / 5; min-height:240px; overflow:hidden; background:#E5E0D2">
+            <div style="position:absolute; inset:0; transition:transform 1200ms cubic-bezier(.2,.7,.3,1)" style-hover="transform:scale(1.04)">
+              <div data-hsrp="zoom" style="position:absolute; inset:0">
+                <image-slot id="{{ room.slotId }}" shape="rect" fit="cover" src="{{ room.photo }}" placeholder="{{ room.slotHint }}"></image-slot>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div data-hsrp="line" style="display:flex; align-items:baseline; justify-content:space-between; gap:14px">
+              <span style="font-family:'Marcellus', serif; font-size:clamp(20px, 5vw, 27px); letter-spacing:-0.01em">{{ room.name }}</span>
+              <span style="font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#7C8076; white-space:nowrap">{{ room.size }}</span>
+            </div>
+            <p data-hsrp="line" style="margin:12px 0 0; font-size:15px; line-height:1.75; color:#4E5449; text-wrap:pretty">{{ room.short }}</p>
+            <div data-hsrp="line" style="display:flex; flex-wrap:wrap; gap:8px 14px; align-items:baseline; margin-top:16px">
+              <span style="font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#96793F">{{ room.tonight }} · tonight</span>
+              <span style="display:inline-flex; align-items:center; gap:7px; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6B5124; border:1px solid #DCCFAE; background:#F7F1E1; padding:4px 9px">
+                <span style="display:block; width:5px; height:5px; border-radius:50%; background:#B08A3E; animation:hsPulse 2400ms ease-in-out infinite"></span>{{ room.leftLine }}
+              </span>
+            </div>
+          </div>
+        </a>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="position:relative; overflow:hidden; background:#1B241C; color:#F2EEE4">
+    <div style="position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg, rgba(198,172,124,0) 0%, rgba(198,172,124,0.5) 50%, rgba(198,172,124,0) 100%)"></div>
+    <div style="position:relative; max-width:1240px; margin:0 auto; padding:clamp(72px, 12vw, 140px) 24px">
+      <div data-hsr="item" style="text-align:center; max-width:640px; margin:0 auto clamp(44px, 7vw, 72px)">
+        <p style="margin:0 0 18px; font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#C6AC7C">Facilities</p>
+        <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(28px, 6vw, 50px); line-height:1.08; letter-spacing:-0.02em; margin:0; color:#F6F3EA; text-wrap:balance">Facilities at Hill Stream Wellness Resort</h2>
+        <p style="margin:20px 0 0; font-size:15px; line-height:1.75; color:#B9BFB2; text-wrap:pretty">Everything a slow stay needs is on the property: rooms looked after day and night, a kitchen of our own, a pool and a daily yoga practice.</p>
+      </div>
+      <div data-hsr="group" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:clamp(12px, 2vw, 22px)">
+        <div style="display:flex; flex-direction:column; align-items:center; text-align:center; padding:clamp(28px, 4vw, 40px) 14px; border:1px solid rgba(242,238,228,0.14); transition:border-color 400ms, background 400ms" style-hover="border-color:rgba(198,172,124,0.6); background:rgba(242,238,228,0.03)">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C6AC7C" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 19v-6.5A1.5 1.5 0 0 1 4.5 11h15a1.5 1.5 0 0 1 1.5 1.5V19M3 16.5h18M3 19v2M21 19v2M4.5 11V5.5a1 1 0 0 1 1-1h13a1 1 0 0 1 1 1V11M7 11V8.5h4V11M13 11V8.5h4V11"/></svg>
+          <span style="display:block; width:1px; height:30px; margin:20px 0; background:rgba(242,238,228,0.2)"></span>
+          <span style="font-family:'Marcellus', serif; font-size:clamp(17px, 2vw, 20px); color:#F6F3EA">Room Services</span>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; text-align:center; padding:clamp(28px, 4vw, 40px) 14px; border:1px solid rgba(242,238,228,0.14); transition:border-color 400ms, background 400ms" style-hover="border-color:rgba(198,172,124,0.6); background:rgba(242,238,228,0.03)">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C6AC7C" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="14" width="18" height="6" rx="1.2"/><path d="M6.5 17h.01M9 17h.01M11.5 17h.01M17 14V4M7 11.5a5.5 5.5 0 0 1 6.5-1M8.6 13a3 3 0 0 1 3.4-.6"/></svg>
+          <span style="display:block; width:1px; height:30px; margin:20px 0; background:rgba(242,238,228,0.2)"></span>
+          <span style="font-family:'Marcellus', serif; font-size:clamp(17px, 2vw, 20px); color:#F6F3EA">Wi-Fi Internet</span>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; text-align:center; padding:clamp(28px, 4vw, 40px) 14px; border:1px solid rgba(242,238,228,0.14); transition:border-color 400ms, background 400ms" style-hover="border-color:rgba(198,172,124,0.6); background:rgba(242,238,228,0.03)">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C6AC7C" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 20H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h7l3 3v6"/><path d="M7.5 7v3M10 7h1.2v3M7.5 13h1.2v3M10.5 13v3"/><circle cx="16" cy="18" r="2"/><path d="M17.5 16.5l3.5-3.5M19.5 14.5l1 1"/></svg>
+          <span style="display:block; width:1px; height:30px; margin:20px 0; background:rgba(242,238,228,0.2)"></span>
+          <span style="font-family:'Marcellus', serif; font-size:clamp(17px, 2vw, 20px); color:#F6F3EA">Smart Key</span>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; text-align:center; padding:clamp(28px, 4vw, 40px) 14px; border:1px solid rgba(242,238,228,0.14); transition:border-color 400ms, background 400ms" style-hover="border-color:rgba(198,172,124,0.6); background:rgba(242,238,228,0.03)">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C6AC7C" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="3.2"/><path d="M3 3v5a1.5 1.5 0 0 0 1.5 1.5h0A1.5 1.5 0 0 0 6 8V3M4.5 3v18M4.5 9.5V21M20.5 3c-1.4 1-2 3-2 6v3.5h2V21"/></svg>
+          <span style="display:block; width:1px; height:30px; margin:20px 0; background:rgba(242,238,228,0.2)"></span>
+          <span style="font-family:'Marcellus', serif; font-size:clamp(17px, 2vw, 20px); color:#F6F3EA">Restaurant</span>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; text-align:center; padding:clamp(28px, 4vw, 40px) 14px; border:1px solid rgba(242,238,228,0.14); transition:border-color 400ms, background 400ms" style-hover="border-color:rgba(198,172,124,0.6); background:rgba(242,238,228,0.03)">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C6AC7C" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="17" cy="8" r="1.8"/><path d="M5 13l4.5-3.5 3 2.5 3-1.5M2 9h3M3 6.5h3.5"/><path d="M2 16c1.7 0 1.7-1.2 3.3-1.2s1.7 1.2 3.4 1.2 1.6-1.2 3.3-1.2 1.7 1.2 3.3 1.2 1.7-1.2 3.4-1.2 1.6 1.2 3.3 1.2M2 19.5c1.7 0 1.7-1.2 3.3-1.2s1.7 1.2 3.4 1.2 1.6-1.2 3.3-1.2 1.7 1.2 3.3 1.2 1.7-1.2 3.4-1.2 1.6 1.2 3.3 1.2"/></svg>
+          <span style="display:block; width:1px; height:30px; margin:20px 0; background:rgba(242,238,228,0.2)"></span>
+          <span style="font-family:'Marcellus', serif; font-size:clamp(17px, 2vw, 20px); color:#F6F3EA">Swimming Pool</span>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; text-align:center; padding:clamp(28px, 4vw, 40px) 14px; border:1px solid rgba(242,238,228,0.14); transition:border-color 400ms, background 400ms" style-hover="border-color:rgba(198,172,124,0.6); background:rgba(242,238,228,0.03)">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C6AC7C" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="1.8"/><path d="M12 7.5v6M6 9.5l6 2.5 6-2.5M12 13.5c-2.5 0-5.5 1.5-7 4 2 1 4.5 1.5 7 1.5s5-.5 7-1.5c-1.5-2.5-4.5-4-7-4zM4 20.5h16"/></svg>
+          <span style="display:block; width:1px; height:30px; margin:20px 0; background:rgba(242,238,228,0.2)"></span>
+          <span style="font-family:'Marcellus', serif; font-size:clamp(17px, 2vw, 20px); color:#F6F3EA">Yoga Wellness</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <figure style="margin:0; position:relative; width:100%; height:clamp(360px, 72vh, 780px); overflow:hidden; background:#F4F1E8">
+    <div style="position:absolute; inset:0; overflow:hidden; mask-image:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 7%, rgba(0,0,0,1) 22%, rgba(0,0,0,1) 78%, rgba(0,0,0,0.4) 93%, rgba(0,0,0,0) 100%); -webkit-mask-image:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 7%, rgba(0,0,0,1) 22%, rgba(0,0,0,1) 78%, rgba(0,0,0,0.4) 93%, rgba(0,0,0,0) 100%)">
+      <div data-hsp="fixed" style="position:absolute; top:0; left:0; right:0; height:100svh; will-change:transform; animation:hsFix linear both; animation-timeline:scroll(root)">
+        <image-slot id="hs-v2-band-2" shape="rect" fit="cover" src="uploads/photos/g02.jpg" placeholder="Fixed background — the treatment pavilion at first light"></image-slot>
+      </div>
+    </div>
+    <div style="position:absolute; inset:0; pointer-events:none; backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px); mask-image:linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 18%, rgba(0,0,0,0) 82%, rgba(0,0,0,1) 100%); -webkit-mask-image:linear-gradient(180deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 18%, rgba(0,0,0,0) 82%, rgba(0,0,0,1) 100%)"></div>
+    <div style="position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg, rgba(244,241,232,0.9) 0%, rgba(244,241,232,0) 16%, rgba(244,241,232,0) 84%, rgba(244,241,232,0.9) 100%)"></div>
+  </figure>
+
+  <section style="max-width:1240px; margin:0 auto; padding:clamp(80px, 15vw, 184px) 24px">
+    <p style="margin:0 0 clamp(32px, 6vw, 56px); font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#96793F">Elsewhere on the property</p>
+    <div data-hsr="group">
+      <sc-for list="{{ reveals }}" as="rl" hint-placeholder-count="3">
+        <a href="{{ rl.href }}" onMouseEnter="{{ rl.enter }}" onMouseLeave="{{ rl.leave }}" onFocus="{{ rl.enter }}" onBlur="{{ rl.leave }}" style="text-decoration:none; color:#1B241C; display:flex; flex-wrap:wrap; gap:12px 32px; align-items:baseline; justify-content:space-between; padding:clamp(24px, 5vw, 44px) 0; border-top:1px solid #DCD5C4" style-hover="color:#96793F">
+          <span style="font-family:'Marcellus', serif; font-size:clamp(26px, 6.6vw, 56px); line-height:1.02; letter-spacing:-0.03em">{{ rl.title }}</span>
+          <span style="display:flex; gap:20px; align-items:baseline">
+            <span style="font-size:14px; line-height:1.6; color:#4E5449; max-width:34ch; text-wrap:pretty">{{ rl.body }}</span>
+            <span style="font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:#7C8076; white-space:nowrap">{{ rl.cta }}</span>
+          </span>
+        </a>
+      </sc-for>
+      <div style="border-top:1px solid #DCD5C4"></div>
+    </div>
+  </section>
+
+  <section style="max-width:1240px; margin:0 auto; padding:0 24px clamp(80px, 15vw, 184px)">
+    <div style="display:flex; flex-wrap:wrap; gap:16px 32px; align-items:baseline; justify-content:space-between; margin-bottom:clamp(32px, 6vw, 60px)">
+      <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(26px, 6vw, 48px); line-height:1.08; letter-spacing:-0.025em; margin:0">Selected frames</h2>
+      <a href="Gallery.dc.html" style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:#4E5449; border-bottom:1px solid #DCD5C4; padding-bottom:5px" style-hover="color:#1B241C; border-color:#96793F">{{ featuredMeta }} →</a>
+    </div>
+    <div data-hsr="group" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:clamp(14px, 2vw, 22px)">
+      <sc-for list="{{ clips }}" as="cl" hint-placeholder-count="6">
+        <figure style="margin:0; display:block; position:relative">
+          <div data-hsi="1" onMouseEnter="{{ clipIn }}" onMouseLeave="{{ clipOut }}" data-hs-clip="{{ cl.index }}" data-hs-src="{{ cl.src }}" data-hs-caption="{{ cl.caption }}" class="hs-sq" style="position:relative; aspect-ratio:9 / 16; min-height:240px; overflow:hidden; background:#E5E0D2; cursor:pointer; transition:transform 460ms cubic-bezier(.2,.7,.3,1), box-shadow 460ms cubic-bezier(.2,.7,.3,1), filter 460ms ease, opacity 460ms ease; will-change:transform" style-hover="transform:scale(1.3); box-shadow:0 40px 90px -24px rgba(20,26,20,0.58); z-index:3">
+            <div style="position:absolute; inset:0">
+              <image-slot id="{{ cl.slotId }}" shape="rect" fit="cover" src="{{ cl.poster }}" placeholder="{{ cl.posterHint }}"></image-slot>
+            </div>
+            <video data-hs-video="{{ cl.index }}" src="{{ cl.src }}" loop="{{ true }}" playsInline="{{ true }}" preload="metadata" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 520ms cubic-bezier(.2,.7,.3,1)"></video>
+            <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(20,26,20,0) 46%, rgba(20,26,20,0.44) 100%); pointer-events:none"></div>
+          </div>
+        </figure>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="border-top:1px solid #DCD5C4">
+    <div style="max-width:1240px; margin:0 auto; padding:clamp(72px, 14vw, 160px) 24px">
+      <div data-hsr="item" style="display:flex; flex-wrap:wrap; gap:16px 32px; align-items:baseline; justify-content:space-between; margin-bottom:clamp(40px, 7vw, 76px)">
+        <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(28px, 6.4vw, 54px); line-height:1.06; letter-spacing:-0.025em; margin:0">What guests say</h2>
+        <span style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; color:#7C8076">{{ reviewCount }}</span>
+      </div>
+
+      <div data-hsr="group" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); gap:clamp(28px, 4vw, 44px) clamp(28px, 4vw, 56px)">
+        <sc-for list="{{ reviews }}" as="rev" hint-placeholder-count="6">
+          <blockquote style="margin:0; display:flex; flex-direction:column; gap:20px">
+            <span style="display:flex; gap:4px; font-size:15px; line-height:1">
+              <sc-for list="{{ rev.stars }}" as="rs" hint-placeholder-count="5">
+                <span style="color:{{ rs.fill }}">★</span>
+              </sc-for>
+            </span>
+            <p style="margin:0; font-family:'Marcellus', serif; font-size:clamp(16px, 3.6vw, 19px); line-height:1.66; letter-spacing:-0.005em; color:#1B241C; text-wrap:pretty">{{ rev.text }}</p>
+            <footer style="margin-top:auto; display:flex; align-items:center; gap:14px; padding-top:20px; border-top:1px solid #DCD5C4">
+              <span style="flex:none; width:34px; height:34px; border-radius:50%; border:1px solid #DCD5C4; display:flex; align-items:center; justify-content:center; font-family:'Marcellus', serif; font-size:14px; color:#4E5449">{{ rev.initial }}</span>
+              <span style="display:flex; flex-direction:column; gap:5px">
+                <span style="font-size:12px; letter-spacing:0.14em; text-transform:uppercase; color:#1B241C">{{ rev.author }}</span>
+                <span style="font-size:11px; letter-spacing:0.06em; color:#7C8076">{{ rev.when }}</span>
+              </span>
+            </footer>
+
+          </blockquote>
+        </sc-for>
+      </div>
+
+      <div style="display:flex; flex-wrap:wrap; gap:16px 24px; align-items:center; justify-content:space-between; margin-top:clamp(36px, 6vw, 64px); padding-top:24px; border-top:1px solid #DCD5C4">
+        <span style="font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:#7C8076">Reviews from Google</span>
+        <a href="Reviews.dc.html" style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:#1B241C; border-bottom:1px solid #C6AC7C; padding-bottom:6px; transition:border-color 350ms" style-hover="border-color:#1B241C">Read all reviews →</a>
+      </div>
+    </div>
+  </section>
+
+  <section style="background:#ECE7DA; border-top:1px solid #DCD5C4">
+    <div style="max-width:1240px; margin:0 auto; padding:clamp(72px, 12vw, 140px) 24px">
+      <div data-hsr="item" style="display:flex; flex-wrap:wrap; gap:14px 32px; align-items:baseline; justify-content:space-between; margin-bottom:clamp(36px, 6vw, 60px)">
+        <div>
+          <p style="margin:0 0 16px; font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#96793F">From the journal</p>
+          <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(28px, 6.4vw, 54px); line-height:1.06; letter-spacing:-0.025em; margin:0">Around Dhanaulti and Tehri</h2>
+        </div>
+      </div>
+      <div data-hsr="group" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(268px, 1fr)); gap:clamp(20px, 3vw, 32px)">
+        <sc-for list="{{ journal }}" as="j" hint-placeholder-count="3">
+          <article style="display:flex; flex-direction:column; background:#FBF8F1; border:1px solid #E0D9C8; overflow:hidden; transition:transform 620ms cubic-bezier(.2,.7,.3,1), box-shadow 620ms cubic-bezier(.2,.7,.3,1)" style-hover="transform:translateY(-6px); box-shadow:0 34px 70px -40px rgba(20,26,20,0.45)">
+            <div style="position:relative; aspect-ratio:4 / 3; overflow:hidden; background:#E5E0D2">
+              <img data-hsfade="1" src="{{ j.photo }}" alt="{{ j.title }}" loading="lazy" decoding="async" style="width:100%; height:100%; object-fit:cover; display:block">
+            </div>
+            <div style="padding:clamp(20px, 3vw, 28px); display:flex; flex-direction:column; gap:12px">
+              <div style="display:flex; align-items:center; gap:10px; font-size:12px; color:#7C8076">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#96793F" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="1.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+                <span>{{ j.date }}</span>
+              </div>
+              <h3 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(19px, 2.2vw, 23px); line-height:1.25; letter-spacing:-0.01em; margin:0; color:#1B241C; text-wrap:pretty">{{ j.title }}</h3>
+              <p style="margin:0; font-size:14.5px; line-height:1.75; color:#4E5449; text-wrap:pretty">{{ j.body }}</p>
+            </div>
+          </article>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section style="background:#1B241C; color:#F4F1E8">
+    <div data-hsr="group" style="max-width:1240px; margin:0 auto; padding:clamp(80px, 15vw, 176px) 24px">
+      <p style="margin:0 0 clamp(28px, 5vw, 44px); font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#C6AC7C">Reservations</p>
+      <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(32px, 8vw, 76px); line-height:1.02; letter-spacing:-0.03em; margin:0; max-width:22ch; text-wrap:pretty">Forty-four rooms. We answer every enquiry ourselves.</h2>
+      <div style="display:flex; flex-wrap:wrap; gap:clamp(24px, 5vw, 56px); align-items:flex-end; justify-content:space-between; margin-top:clamp(44px, 9vw, 88px)">
+        <p style="margin:0; font-size:clamp(15px, 4vw, 18px); line-height:1.8; color:#CBCFC2; max-width:38ch; text-wrap:pretty">{{ rateLine }}</p>
+        <div style="display:flex; flex-wrap:wrap; gap:14px">
+          <a href="Booking%20Engine.dc.html" style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:#1B241C; background:#F4F1E8; border:1px solid #F4F1E8; padding:17px 30px" style-hover="background:#C6AC7C; border-color:#C6AC7C">Check availability</a>
+          <a href="Visit.dc.html" style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:#F4F1E8; border:1px solid #4E5449; padding:17px 30px" style-hover="border-color:#C6AC7C; color:#C6AC7C">Getting here</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer style="background:#1B241C; color:#CBCFC2; border-top:1px solid #2E382D">
+    <div style="max-width:1240px; margin:0 auto; padding:clamp(48px, 9vw, 88px) 24px clamp(32px, 6vw, 48px); display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:clamp(28px, 6vw, 56px)">
+      <div>
+        <div style="font-family:'Marcellus', serif; font-size:14px; letter-spacing:0.3em; text-transform:uppercase; color:#F4F1E8">Hill Stream</div>
+        <p style="margin:18px 0 0; font-size:13px; line-height:1.85">Village Ghatti, Tehri Road<br>Near Rishikesh, Uttarakhand 249192<br>India</p>
+      </div>
+      <div>
+        <div style="font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:#7C8076">Reservations</div>
+        <p style="margin:16px 0 0; font-size:13px; line-height:1.9">+91 98765 43210<br><a href="mailto:stay@hillstream.in" style="color:#CBCFC2; text-decoration:none; border-bottom:1px solid #4E5449" style-hover="color:#C6AC7C">stay@hillstream.in</a></p>
+      </div>
+      <div>
+        <div style="font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:#7C8076">Pages</div>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px">
+          <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+            <a href="{{ n.href }}" style="font-size:13px; text-decoration:none; color:#CBCFC2" style-hover="color:#C6AC7C">{{ n.label }}</a>
+          </sc-for>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:#7C8076">Tonight</div>
+        <p style="margin:16px 0 0; font-family:'Marcellus', serif; font-size:24px; color:#F4F1E8; letter-spacing:-0.01em">{{ barRate }}</p>
+        <p style="margin:8px 0 0; font-size:12px; color:#7C8076">{{ barLabel }}</p>
+      </div>
+    </div>
+    <div style="max-width:1240px; margin:0 auto; padding:0 24px clamp(36px, 7vw, 56px)">
+      <p style="margin:0; padding-top:24px; border-top:1px solid #2E382D; font-size:11px; letter-spacing:0.06em; color:#7C8076">Hill Stream Resort · Est. 2019 · Reviews shown from Google</p>
+    </div>
+  </footer>
+
+
+
+  <div data-hsbar="1" style="position:fixed; left:0; right:0; bottom:0; z-index:55; transform:translateY(115%); transition:transform 760ms cubic-bezier(.2,.7,.3,1); background:rgba(27,36,28,0.96); backdrop-filter:saturate(140%) blur(16px); will-change:transform">
+    <div style="height:1px; background:linear-gradient(90deg, rgba(198,172,124,0) 0%, rgba(198,172,124,0.8) 48%, rgba(198,172,124,0) 100%)"></div>
+    <div class="hs-bar-row" style="max-width:1240px; margin:0 auto; padding:13px 24px; display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; justify-content:space-between">
+      <div class="hs-bar-info" style="display:flex; flex-wrap:wrap; gap:4px 18px; align-items:baseline; min-width:0">
+        <span style="display:flex; align-items:baseline; gap:9px; font-family:'Marcellus', serif; font-size:21px; letter-spacing:-0.01em; color:#F6F3EA">{{ barRate }}<span style="font-family:'Jost', system-ui, sans-serif; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#9FAE9B">tonight, from</span></span>
+        <span style="display:inline-flex; align-items:center; gap:8px; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#D8C39A">
+          <span style="display:block; width:6px; height:6px; border-radius:50%; background:#C6AC7C; animation:hsPulse 2200ms ease-in-out infinite"></span>{{ urgeLine }}
+        </span>
+      </div>
+      <a class="hs-bar-cta" href="Booking%20Engine.dc.html" style="flex:0 0 auto; font-size:10px; letter-spacing:0.22em; text-transform:uppercase; text-decoration:none; color:#1B241C; background:#C6AC7C; border:1px solid #C6AC7C; padding:15px 26px; animation:hsBeacon 3200ms ease-in-out infinite; transition:background 350ms, letter-spacing 450ms cubic-bezier(.2,.7,.3,1)" style-hover="background:#D9C39B; letter-spacing:0.28em">Check availability</a>
+    </div>
+  </div>
+
+  <sc-if value="{{ bannerOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ bannerBackdrop }}" role="dialog" aria-modal="true" aria-label="Special offer" style="position:fixed; inset:0; z-index:90; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(14,19,14,0.72); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); animation:hsBanFade 420ms ease both">
+      <div style="position:relative; width:100%; max-width:760px; max-height:calc(100svh - 32px); overflow:auto; background:#1B241C; color:#F2EEE4; border:1px solid rgba(198,172,124,0.35); box-shadow:0 40px 90px -30px rgba(0,0,0,0.6); animation:hsBanIn 620ms cubic-bezier(.2,.7,.3,1) both">
+        <button onClick="{{ bannerClose }}" aria-label="Close the offer" title="Close" style="position:absolute; top:10px; right:10px; z-index:2; width:40px; height:40px; display:flex; align-items:center; justify-content:center; cursor:pointer; border:1px solid rgba(242,238,228,0.4); border-radius:50%; background:rgba(14,19,14,0.6); color:#F6F3EA; transition:background 250ms, border-color 250ms" style-hover="background:#96793F; border-color:#96793F">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>
+        </button>
+        <img src="{{ bannerImage }}" alt="{{ bannerTitle }}" style="display:block; width:100%; max-height:62svh; object-fit:cover; background:#141A14">
+        <sc-if value="{{ bannerHasText }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:clamp(22px, 4vw, 34px) clamp(20px, 4vw, 36px) clamp(26px, 4vw, 36px)">
+            <p style="margin:0 0 12px; font-size:10px; letter-spacing:0.26em; text-transform:uppercase; color:#C6AC7C">{{ bannerKicker }}</p>
+            <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(24px, 5vw, 36px); line-height:1.12; letter-spacing:-0.02em; margin:0; color:#F6F3EA; text-wrap:balance">{{ bannerTitle }}</h2>
+            <p style="margin:12px 0 0; font-size:15px; line-height:1.7; color:#C9CDBF; text-wrap:pretty">{{ bannerText }}</p>
+            <div style="display:flex; flex-wrap:wrap; gap:12px 20px; align-items:center; margin-top:22px">
+              <sc-if value="{{ bannerHasCta }}" hint-placeholder-val="{{ true }}">
+                <a href="{{ bannerHref }}" style="display:inline-block; font-size:10px; letter-spacing:0.22em; text-transform:uppercase; text-decoration:none; color:#1B241C; background:#D8C39A; padding:14px 24px; transition:background 300ms" style-hover="background:#F6F3EA; color:#1B241C">{{ bannerCta }}</a>
+              </sc-if>
+              <button onClick="{{ bannerClose }}" style="cursor:pointer; background:none; border:none; padding:6px 0; font-family:inherit; font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:#9FAE9B; border-bottom:1px solid rgba(159,174,155,0.4)" style-hover="color:#F6F3EA">Continue to the website</button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <div ref="{{ revealRef }}" style="position:fixed; top:0; left:0; z-index:40; width:236px; height:296px; pointer-events:none; opacity:0; overflow:hidden; background:#E5E0D2; box-shadow:0 30px 70px rgba(20,26,20,0.32); transition:opacity 420ms cubic-bezier(.2,.7,.3,1)">
+    <sc-if value="{{ hasReveal }}" hint-placeholder-val="{{ false }}">
+      <image-slot id="{{ revealSlot }}" shape="rect" fit="cover" src="{{ revealSrc }}" placeholder="{{ revealCaption }}"></image-slot>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844}}">
+const R = () => (typeof window !== 'undefined' && window.HSRates) || null;
+const RV = () => (typeof window !== 'undefined' && window.HSReviews) || null;
+const CT = () => (typeof window !== 'undefined' && window.HSContent) || null;
+
+const NAV = [
+  { label: 'Wellness', href: 'Wellness.dc.html' },
+  { label: 'Dining', href: 'Dining.dc.html' },
+  { label: 'Gallery', href: 'Gallery.dc.html' },
+  { label: 'Reviews', href: 'Reviews.dc.html' },
+  { label: 'Getting here', href: 'Visit.dc.html' }
+];
+
+/* total/held mirror the booking engine's inventory, so what the home page
+   claims is open is what the guest finds when they click through. */
+/* Prose only. The name, the size, the price, how many exist and how many are
+   left all come from the record the PMS writes — this is just the sentence
+   that does not belong in a rate plan. A category with no line here still
+   gets a card. */
+const ROOM_COPY = {
+  'deluxe-view': 'A comfortable, peaceful room looking out over the hills.',
+  'premium-valley': 'Wide views across the valleys and hills, with a sitting area.',
+  'deluxe-suite': 'Extra comfort, space and privacy, in the quiet of the hills.',
+  'jungle-view': 'Lush greenery outside the window. A refreshing retreat.',
+  'premium-suite': 'A spacious suite with refined interiors and a dining corner.',
+  'stream-view': 'Overlooking the natural stream, with the water always in earshot.',
+  signature: 'The resort’s own signature room, built around warmth and calm.'
+};
+
+/* The frame each room type is photographed in, the same files the booking
+   engine shows. The drop sidecar is a dot-file and server.js does not serve it. */
+const ROOM_PHOTOS = {
+  'deluxe-view': 'uploads/photos/rooms/room1.jpg',
+  'premium-valley': 'uploads/photos/rooms/room2.jpg',
+  'deluxe-suite': 'uploads/photos/rooms/room7.jpg',
+  'jungle-view': 'uploads/photos/rooms/room6.jpg',
+  'premium-suite': 'uploads/photos/rooms/room3.jpg',
+  'stream-view': 'uploads/photos/rooms/room5.jpg',
+  signature: 'uploads/photos/rooms/room4.jpg'
+};
+
+const B = () => (typeof window !== 'undefined' && window.HSBookings) || null;
+
+/* Today, as the book writes dates. */
+const ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') +
+  '-' + String(d.getDate()).padStart(2, '0');
+
+const WORDS = ['no', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight'];
+
+/* The three link rows that carry the cursor-following reveal. Each names the
+   gallery frame it borrows, so a photograph dropped once in the CMS appears
+   here too. */
+const REVEALS = [
+  { title: 'The pavilion', href: 'Wellness.dc.html', cta: 'Treatments', frame: 'g03',
+    body: 'Two therapists, four rooms, and a consultation before anything is booked.' },
+  { title: 'The games room', href: 'Gallery.dc.html', cta: 'Leisure', frame: 'g05',
+    body: 'Billiards and cards in the long room, once dinner has been cleared.' },
+  { title: 'The slow last hour', href: 'Visit.dc.html', cta: 'Directions', frame: 'g06',
+    body: 'Three hours from Dehradun, and the final two kilometres are unpaved.' }
+];
+
+const starRow = n => Array.from({ length: 5 }, (_, i) => ({ fill: i < Math.round(n) ? '#96793F' : '#D3CCBB' }));
+
+const trim = (t, max) => (t.length <= max ? t : t.slice(0, t.lastIndexOf(' ', max)) + '…');
+
+/* Travel notes for the area, shown as cards on the home page. */
+const JOURNAL = [
+  { photo: 'uploads/photos/journal/j1.jpg', date: 'Oct 17, 2026',
+    title: 'Best Hotels in Dhanaulti – Where to Stay for a Comfortable Trip',
+    body: 'Dhanaulti is a peaceful hill destination in Uttarakhand, known for its refreshing mountain air, lush forests, scenic views and relaxing surroundings. Away from the crowds of busy hill stations, it gives travellers a chance to slow down and reconnect with nature.' },
+  { photo: 'uploads/photos/journal/j2.jpg', date: 'Oct 17, 2026',
+    title: '10 Best Places to Visit in Dhanaulti, Tehri Garhwal',
+    body: 'Explore the best of Dhanaulti and Tehri Garhwal: Dhanaulti Eco Park, Surkanda Devi Temple, Kanatal, Tehri Lake, Chamba, Koti Colony, Dobra Chanti Bridge, Kunjapuri Temple, New Tehri and Tehri Dam, for nature, spirituality, adventure and mountain views.' },
+  { photo: 'uploads/photos/journal/j3.jpg', date: 'Oct 17, 2026',
+    title: 'Best Spiritual and Wellness Getaways in Uttarakhand',
+    body: 'Discover the best spiritual and wellness getaways in Uttarakhand, from peaceful temples and yoga retreats to quiet mountain destinations like Dhanaulti, Kanatal and Tehri Garhwal, made for relaxation, rejuvenation and inner peace.' }
+];
+
+const BANNER_KEY = 'hs_banner_closed';
+
+/* Short and stable: enough of the banner to tell one promotion from the next. */
+const bannerSig = b => {
+  const s = [b.image, b.title, b.text, b.ctaLabel, b.ctaHref].join('|');
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return String(h);
+};
+
+class Component extends DCLogic {
+  state = {
+    rates: R() ? R().get() : null,
+    content: CT() ? CT().published() : null,
+    bookRev: 0,
+    reveal: null,
+    /* The banner a visitor closed this visit, by signature — a banner the
+       PMS changes afterwards is a new one and opens again. */
+    bannerClosed: (() => { try { return sessionStorage.getItem(BANNER_KEY) || ''; } catch (e) { return ''; } })()
+  };
+
+  closeBanner(sig) {
+    try { sessionStorage.setItem(BANNER_KEY, sig); } catch (e) {}
+    this.setState({ bannerClosed: sig });
+  }
+
+  componentDidMount() {
+    this._wireMark();
+    this._wireClips();
+    this._reveal = React.createRef();
+    this.forceUpdate();
+    if (R()) this._unsub = R().subscribe(rates => this.setState({ rates }));
+    /* A reservation taken in this tab, in the booking engine or at the desk
+       changes what is left tonight, so the cards follow it. */
+    if (B()) this._unsubB = B().subscribe(() => this.setState(x => ({ bookRev: (x.bookRev || 0) + 1 })));
+    this.fadeImgs();
+    this._onKey = e => { if (e.key === 'Escape' && this._bannerOpen) this.closeBanner(this._bannerSig); };
+    window.addEventListener('keydown', this._onKey);
+    this.bind(0);
+
+    this._reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    /* Scroll timelines let the compositor own the pin, which is the only way to
+       remove the frame of lag that reads as bouncing. */
+    this._cssFix = !!(window.CSS && CSS.supports && CSS.supports('animation-timeline', 'scroll(root)'));
+
+    /* The follower is moved by writing transform straight onto the node, so a
+       mousemove never costs a React render. It eases toward the pointer rather
+       than pinning to it. */
+    this._p = { x: 0, y: 0, tx: 0, ty: 0, seeded: false };
+    this._move = (e) => {
+      const p = this._p;
+      p.tx = e.clientX + 24;
+      p.ty = e.clientY - 150;
+      if (!p.seeded) { p.x = p.tx; p.y = p.ty; p.seeded = true; }
+    };
+    window.addEventListener('mousemove', this._move, { passive: true });
+
+    /* The next frame is booked BEFORE any work: scheduling last means one
+       throw ends the loop for good and every scroll effect dies silently. */
+    this._tick = () => {
+      this._raf = requestAnimationFrame(this._tick);
+      try {
+        const p = this._p, el = this._reveal && this._reveal.current;
+        const k = this._reduce ? 1 : 0.13;
+        p.x += (p.tx - p.x) * k;
+        p.y += (p.ty - p.y) * k;
+        if (el && p.seeded) {
+          const s = this.state.reveal === null ? 0.92 : 1;
+          el.style.transform = 'translate3d(' + p.x.toFixed(1) + 'px,' + p.y.toFixed(1) + 'px,0) scale(' + s + ')';
+        }
+        this.paintFrame();
+      } catch (err) {
+        if (!this._logged) { this._logged = 1; console.error('hs motion frame', err); }
+      }
+    };
+    this._raf = requestAnimationFrame(this._tick);
+
+    this._onScroll = () => {
+      this._dirty = true;
+      if (this._queued) return;
+      this._queued = true;
+      requestAnimationFrame(() => { this._queued = false; this.paintScroll(); });
+    };
+    window.addEventListener('scroll', this._onScroll, { passive: true });
+    window.addEventListener('resize', this._onScroll, { passive: true });
+
+    /* The reveal must never depend on animation frames alone — a hidden or
+       backgrounded tab suspends rAF, and the page would come back blank. A
+       timer sweep (timers still fire) and the visibility events cover it, and
+       the sweep stops itself once nothing is waiting. */
+    this._sweep = setInterval(() => {
+      this.release();
+      if (!this._pend || !this._pend.length) { clearInterval(this._sweep); this._sweep = null; }
+    }, 220);
+    this._wake = () => { this._dirty = true; this.release(); };
+    document.addEventListener('visibilitychange', this._wake);
+    window.addEventListener('pageshow', this._wake);
+
+    this.paintScroll();
+    this.scan();
+  }
+
+  /* Header goes from transparent-over-photograph to a cream bar; the mid-page
+     band drifts against the scroll. */
+  paintScroll() {
+    this.release();
+    const h = document.querySelector('[data-hsh]');
+    if (h) {
+      const on = window.scrollY > 80;
+      /* Transparent state still carries a top-anchored dark wash so nav text
+         reads over any hero frame — a bright patch (fire, sky) would otherwise
+         swallow cream type. Scrolled, it becomes the cream bar. */
+      h.style.background = on
+        ? 'rgba(244,241,232,0.94)'
+        : 'linear-gradient(180deg, rgba(12,16,14,0.62) 0%, rgba(12,16,14,0.22) 62%, rgba(12,16,14,0) 100%)';
+      h.style.backdropFilter = on ? 'saturate(150%) blur(14px)' : 'none';
+      h.style.borderBottomColor = on ? '#DCD5C4' : 'transparent';
+      h.style.setProperty('--hsc', on ? '#1B241C' : '#F6F3EA');
+      h.style.setProperty('--hsc2', on ? '#4E5449' : '#EDEADD');
+      h.style.setProperty('--hscb', on ? '#C6AC7C' : 'rgba(246,243,234,0.6)');
+    }
+    /* The rate bar stays out of the hero's way, then rides up once the fold is
+       behind you and the guest is reading rooms. */
+    const bar = document.querySelector('[data-hsbar]');
+    if (bar) {
+      const show = window.scrollY > window.innerHeight * 0.75;
+      const t = show ? 'translateY(0)' : 'translateY(115%)';
+      if (bar._hsT !== t) { bar._hsT = t; bar.style.transform = t; }
+    }
+    /* Parallax is driven from here, the scroll path — the persistent rAF loop
+       proved unreliable across hot-reloads, and this runs on every scroll
+       (rAF-throttled) plus once at mount, which is all the drift needs. */
+    this.paintDrift();
+  }
+
+  paintDrift() {
+    if (this._reduce) return;
+    const vh = window.innerHeight;
+
+    /* The image holds still while the window scrolls over it, so a different
+       slice of the photograph shows as the window moves. Where scroll timelines
+       exist the compositor drives it (see hsFix) and JS only keeps the two
+       endpoints current; elsewhere JS moves it directly. */
+    document.querySelectorAll('[data-hsp="fixed"]').forEach(el => {
+      if (this._cssFix) { this.syncFix(el); return; }
+      const box = el.parentElement.getBoundingClientRect();
+      if (box.bottom < -vh || box.top > vh * 1.5) return;
+      this.wT(el, 'translate3d(0,' + (-box.top).toFixed(1) + 'px,0)');
+    });
+  }
+
+  /* Everything scroll-driven runs from the one animation frame, never from the
+     scroll event itself: reading layout as the event fires lands a frame behind
+     the compositor, which is what reads as jitter. Writes are guarded on the
+     value actually changing, and blur is quantised, so an idle or slow scroll
+     costs no repaint at all. */
+  paintFrame() {
+    if (this._reduce) return;
+    const y = window.scrollY;
+    if (y === this._lastY && !this._dirty) return;
+    this._lastY = y;
+    this._dirty = false;
+    const vh = window.innerHeight;
+
+    if (!this._layers) this._layers = Array.from(document.querySelectorAll('[data-hsp]'));
+    this._layers.forEach(el => {
+      const box = el.parentElement.getBoundingClientRect();
+      if (box.bottom < -240 || box.top > vh + 240) return;
+      if (el.getAttribute('data-hsp') === 'drift') {
+        /* The image drifts INSIDE a sticky-locked window. The window itself is
+           compositor-pinned, so it never bounces; the inner drift is slow and
+           subtle enough that a frame of lag is invisible — the parallax reads,
+           the rubber-band does not. Progress runs across the pinned section. */
+        const sec = el.closest('[data-hsband]');
+        if (!sec) return;
+        const r = sec.getBoundingClientRect();
+        const span = r.height - vh;
+        const p = span > 0 ? Math.min(Math.max(-r.top / span, 0), 1) : 0;
+        const travel = el.offsetHeight * 0.14;
+        this.wT(el, 'translate3d(0,' + ((0.5 - p) * 2 * travel).toFixed(1) + 'px,0)');
+        return;
+      }
+      const off = (box.top + box.height / 2 - vh / 2) / vh;
+      const b = Math.round(Math.min(Math.max(Math.abs(off) - 0.3, 0) * 9, 3) * 2) / 2;
+      this.wT(el, 'translate3d(0,' + (off * -56).toFixed(1) + 'px,0)');
+      this.wF(el, b < 0.4 ? 'none' : 'blur(' + b + 'px)');
+    });
+
+    this._fc = (this._fc | 0) + 1;
+    if (this._fc % 3 === 0) this.release();
+  }
+
+  /* translateY must equal (scrollY - figureTop) for the photograph to sit still
+     in the viewport. Expressed as a scroll-timeline animation that runs from
+     -figureTop to (maxScroll - figureTop), which is exactly linear in scrollY.
+     Recomputed only when the page's height or width actually changes — never
+     per frame — so images finishing loading can't leave the rate stale. */
+  syncFix(el) {
+    const doc = document.scrollingElement || document.documentElement;
+    const h = doc.scrollHeight, w = window.innerWidth, vh = window.innerHeight;
+    const fig = el.parentElement;
+    let top = 0, n = fig;
+    while (n) { top += n.offsetTop; n = n.offsetParent; }
+    const key = h + ':' + w + ':' + vh + ':' + top;
+    if (el._fixKey === key) return;
+    el._fixKey = key;
+    const max = Math.max(h - vh, 1);
+    el.style.setProperty('--hsA', (-top) + 'px');
+    el.style.setProperty('--hsB', (max - top) + 'px');
+  }
+
+  wT(el, v) { if (el._wt !== v) { el._wt = v; el.style.transform = v; } }
+  wF(el, v) { if (el._wf !== v) { el._wf = v; el.style.filter = v; } }
+
+  /* Anything marked data-hsr below the fold starts lowered and eases in as it
+     arrives; groups stagger their children. Runs again as CMS content lands. */
+  scan() {
+    if (this._reduce) return;
+    this._layers = null;
+    this._dirty = true;
+    const vh = window.innerHeight;
+    if (!this._pend) this._pend = [];
+
+    /* Copy blocks rise and sharpen; groups stagger their children. */
+    document.querySelectorAll('[data-hsr]').forEach(node => {
+      const items = node.getAttribute('data-hsr') === 'group'
+        ? Array.from(node.children)
+        : [node];
+      items.forEach((el, i) => {
+        if (el._hsr || el.getBoundingClientRect().top < vh * 0.85) return;
+        el._hsr = true;
+        el._hsrKind = 'text';
+        el._hsrLine = 0.85;
+        el._hsrDelay = Math.min(i, 4) * 100;
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(34px)';
+        el.style.filter = 'blur(9px)';
+        el.style.transition = 'opacity 1100ms cubic-bezier(.2,.7,.3,1), transform 1100ms cubic-bezier(.2,.7,.3,1), filter 1100ms cubic-bezier(.2,.7,.3,1)';
+        this._pend.push(el);
+      });
+    });
+
+    /* Photographs wipe open from the bottom edge and come out of focus. */
+    document.querySelectorAll('[data-hsi]').forEach((el, i) => {
+      if (el._hsr || el.getBoundingClientRect().top < vh * 0.92) return;
+      el._hsr = true;
+      el._hsrKind = 'image';
+      el._hsrLine = 0.92;
+      el._hsrDelay = Math.min(i % 4, 3) * 110;
+      el.style.opacity = '0';
+      el.style.clipPath = 'inset(0 0 100% 0)';
+      el.style.filter = 'blur(14px)';
+      el.style.transition = 'opacity 900ms cubic-bezier(.2,.7,.3,1), clip-path 1400ms cubic-bezier(.2,.7,.3,1), filter 1300ms cubic-bezier(.2,.7,.3,1)';
+      this._pend.push(el);
+    });
+
+    /* Room cards get their own entrance: the card rises (columns in a row one
+       after another), the photograph wipes open from the bottom while settling
+       out of a close zoom, then the name, line and price follow in turn. */
+    document.querySelectorAll('[data-hsroom]').forEach(card => {
+      if (card._hsr || card.getBoundingClientRect().top < vh * 0.9) return;
+      const row = Array.from(document.querySelectorAll('[data-hsroom]')).filter(c => c.offsetTop === card.offsetTop);
+      const ease = 'cubic-bezier(.2,.7,.3,1)';
+      card._hsr = true;
+      card._hsrKind = 'room';
+      card._hsrLine = 0.9;
+      card._hsrDelay = Math.max(0, row.indexOf(card)) * 160;
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(90px)';
+      card.style.transition = `opacity 900ms ${ease}, transform 1300ms ${ease}`;
+      const photo = card.querySelector('[data-hsrp="photo"]');
+      const zoom = card.querySelector('[data-hsrp="zoom"]');
+      if (photo) {
+        photo.style.clipPath = 'inset(100% 0 0 0)';
+        photo.style.transition = 'clip-path 1400ms cubic-bezier(.75,0,.2,1) 120ms';
+      }
+      if (zoom) {
+        zoom.style.transform = 'scale(1.28)';
+        zoom.style.transition = `transform 2400ms ${ease} 120ms`;
+      }
+      card.querySelectorAll('[data-hsrp="line"]').forEach((p, i) => {
+        const d = 650 + i * 140;
+        p.style.opacity = '0';
+        p.style.transform = 'translateY(22px)';
+        p.style.transition = `opacity 800ms ease ${d}ms, transform 1000ms ${ease} ${d}ms`;
+      });
+      this._pend.push(card);
+    });
+
+    this.release();
+    /* Content arriving late (CMS copy, gallery frames) queues new items after
+       the sweep has retired, so bring it back. */
+    if (!this._sweep && this._pend && this._pend.length) {
+      this._sweep = setInterval(() => {
+        this.release();
+        if (!this._pend || !this._pend.length) { clearInterval(this._sweep); this._sweep = null; }
+      }, 220);
+    }
+  }
+
+  /* One release path for copy and photographs alike, walked from the animation
+     frame. An observer only speaks for what it samples: anything that crossed
+     the trigger between two samples never intersects again and would stay
+     hidden for good, so everything already past the line finishes at once and
+     only what is still arriving gets its stagger. */
+  release() {
+    const vh = window.innerHeight;
+    const rest = [];
+    (this._pend || []).forEach(el => {
+      const box = el.getBoundingClientRect();
+      if (box.top > vh * (el._hsrLine || 0.88)) { rest.push(el); return; }
+      const wait = box.bottom < 0 ? 0 : (el._hsrDelay || 0);
+      setTimeout(() => {
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+        el.style.filter = 'none';
+        if (el._hsrKind === 'image') el.style.clipPath = 'inset(0 0 0 0)';
+        if (el._hsrKind === 'room') {
+          const photo = el.querySelector('[data-hsrp="photo"]');
+          const zoom = el.querySelector('[data-hsrp="zoom"]');
+          if (photo) photo.style.clipPath = 'inset(0 0 0 0)';
+          if (zoom) zoom.style.transform = 'scale(1)';
+          el.querySelectorAll('[data-hsrp="line"]').forEach(p => { p.style.opacity = '1'; p.style.transform = 'none'; });
+        }
+        el._hsrDone = true;
+      }, wait);
+    });
+    this._pend = rest;
+  }
+
+  componentDidUpdate() { this.scan(); this.fadeImgs(); }
+
+  /* Plain <img data-hsfade> photographs sharpen out of a blur once loaded. */
+  fadeImgs() {
+    document.querySelectorAll('img[data-hsfade]:not([data-hsloaded])').forEach(img => {
+      const done = () => img.setAttribute('data-hsloaded', '');
+      if (img.complete && img.naturalWidth) { done(); return; }
+      if (img._hsFade) return;
+      img._hsFade = true;
+      img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', done, { once: true });
+    });
+  }
+
+  bind(tries) {
+    if (!CT()) {
+      if (tries < 60) this._t = setTimeout(() => this.bind(tries + 1), 50);
+      return;
+    }
+    this.setState({ content: CT().published() });
+    this._unsubC = CT().subscribe(content => this.setState({ content }));
+  }
+
+  componentWillUnmount() {
+    if (this._unsub) this._unsub();
+    if (this._unsubC) this._unsubC();
+    clearTimeout(this._t);
+    cancelAnimationFrame(this._raf);
+    clearInterval(this._sweep);
+    document.removeEventListener('visibilitychange', this._wake);
+    window.removeEventListener('pageshow', this._wake);
+    window.removeEventListener('mousemove', this._move);
+    window.removeEventListener('scroll', this._onScroll);
+    window.removeEventListener('resize', this._onScroll);
+    window.removeEventListener('keydown', this._onKey);
+  }
+
+  showReveal(i) {
+    const el = this._reveal && this._reveal.current;
+    if (el) el.style.opacity = '1';
+    this.setState({ reveal: i });
+  }
+
+  hideReveal() {
+    const el = this._reveal && this._reveal.current;
+    if (el) el.style.opacity = '0';
+    this.setState({ reveal: null });
+  }
+
+  /* Six home-page clips. src stays empty until real footage lands; the poster
+     slot carries the frame in the meantime and hover simply does nothing. */
+  _clips = [
+    { slotId: 'hs-v2-clip-1', poster: 'uploads/photos/g01.jpg', src: 'uploads/Escape the Chaos_ Find Peace at Haut Monde Hill Stream Resort & Spa.mp4', caption: 'The stream, below the rooms', group: 'Grounds', duration: '0:24', posterHint: 'Clip 1 poster — the stream below the rooms' },
+    { slotId: 'hs-v2-clip-2', poster: 'uploads/photos/g03.jpg', src: 'uploads/Go Out, Breathe In, Bliss Out 🌄 _ Haut Monde Hill Stream Resort_1080p.mp4', caption: 'Treatment pavilion', group: 'Wellness', duration: '0:31', posterHint: 'Clip 2 poster — treatment pavilion at first light' },
+    { slotId: 'hs-v2-clip-3', poster: 'uploads/photos/g16.jpg', src: 'uploads/mountains-over-netflix-n-chill-haut-monde-hill-stream-resort-spa-dehradun-1920-ytshorts.savetube.me.mp4', caption: 'The long table', group: 'Kitchen', duration: '0:18', posterHint: 'Clip 3 poster — the long table laid for dinner' },
+    { slotId: 'hs-v2-clip-4', poster: 'uploads/photos/g04.jpg', src: 'uploads/Just Another Day at Haut Monde 💚_720p.mp4', caption: 'The window seat', group: 'Rooms', duration: '0:27', posterHint: 'Clip 4 poster — a room window seat' },
+    { slotId: 'hs-v2-clip-5', poster: 'uploads/photos/g15.jpg', src: 'uploads/My Project_6.mp4', caption: 'Approach road in monsoon', group: 'Grounds', duration: '0:42', posterHint: 'Clip 5 poster — the approach road in monsoon' },
+    { slotId: 'hs-v2-clip-6', poster: 'uploads/photos/g07.jpg', src: 'uploads/My Project_7.mp4', caption: 'The valley, from the doorway', group: 'Rooms', duration: '0:36', posterHint: 'Clip 6 poster — the valley from a room doorway' }
+  ];
+
+  /* Hover previews: the poster holds the frame until the pointer arrives, then
+     the muted clip fades over it and rewinds when the pointer leaves. */
+  _wireClips() {
+    const cells = (this._root || document).querySelectorAll('[data-hs-clip]');
+    for (const cell of cells) {
+      const v = cell.querySelector('video');
+      if (!v || !v.getAttribute('src')) continue;
+      if (!v._hsAudio) { v._hsAudio = true; v.muted = true; }
+      v.style.opacity = '1';
+      const slot = cell.querySelector('image-slot');
+      if (slot) slot.style.display = 'none';
+    }
+  }
+
+  _clipFocus(cell) {
+    const cells = (this._root || document).querySelectorAll('[data-hs-clip]');
+    for (const c of cells) {
+      const on = cell && c !== cell;
+      c.style.filter = on ? 'blur(3.5px) saturate(0.72)' : 'none';
+      c.style.opacity = on ? '0.55' : '1';
+    }
+  }
+
+  _clipIn = (e) => {
+    const cell = e.currentTarget;
+    this._clipFocus(cell);
+    const v = cell.querySelector('video');
+    if (!v || !v.getAttribute('src')) return;
+    /* Only the hovered clip is audible; if the browser refuses sound without a
+       click, it falls back to a muted preview rather than not playing at all. */
+    for (const o of (this._root || document).querySelectorAll('[data-hs-clip] video')) {
+      if (o !== v) { o.muted = true; o.pause(); }
+    }
+    v.muted = false;
+    v.volume = 1;
+    const p = v.play();
+    if (p && p.catch) p.catch(() => { v.muted = true; const q = v.play(); if (q && q.catch) q.catch(() => {}); });
+  };
+  _clipOut = (e) => {
+    this._clipFocus(null);
+    const v = e.currentTarget.querySelector('video');
+    if (!v) return;
+    v.pause();
+    v.muted = true;
+  };
+
+  /* The clip's own aspect drives the box, autoplay is armed from script (the muted
+     attribute must exist before Chrome's gate reads it), and the reveal re-asserts
+     on every render so a re-stamp of the template cannot hide it. */
+  _wireMark() {
+    const v = (this._root || document).querySelector('video[data-hs-mark-h]');
+    if (!v) return;
+    if (!v._hsWired) {
+      v._hsWired = true;
+      v.muted = true;
+      v.defaultMuted = true;
+      v.setAttribute('muted', '');
+      const kick = () => { const p = v.play(); if (p && p.catch) p.catch(() => {}); };
+      v.addEventListener('loadeddata', () => { this._wireMark(); kick(); });
+      v.addEventListener('canplay', () => { this._wireMark(); kick(); });
+      kick();
+    }
+    if (!v.videoWidth) return;
+    const h = parseFloat(v.dataset.hsMarkH);
+    v.style.height = h + 'px';
+    v.style.width = Math.round(h * (v.videoWidth / v.videoHeight)) + 'px';
+    v.style.opacity = '1';
+  }
+
+  renderVals() {
+    const r = R(), st = this.state.rates, today = new Date();
+    const rv = RV() ? RV().get() : null;
+
+    const ct = this.state.content || (CT() ? CT().DEFAULTS : null);
+    const hm = ct ? ct.home : {};
+    const feat = ct ? ct.gallery.frames.filter(f => f.featured).slice(0, 3) : [];
+    const byId = id => (ct ? ct.gallery.frames.find(f => f.id === id) : null);
+
+    const season = r && st ? r.seasonFor(today, st) : null;
+    const open = r && st ? st.categories.filter(c => !c.stopSell) : [];
+    const low = open.length ? Math.min(...open.map(c => r.rateFor(c.id, today, st))) : null;
+
+    /* One card per category in the rate plan, so a category the PMS adds,
+       renames, reprices, restocks or stops selling turns up here without this
+       file being touched. What is left tonight is counted from the book — the
+       same count the booking engine refuses to oversell against — and falls
+       back to the plan's own room count when the book has not loaded. */
+    const avail = B() ? B().availabilityAll(ymd(today), 1) : {};
+    const cards = (st ? st.categories : []).map(c => {
+      const a = avail[c.id];
+      const closed = !!c.stopSell;
+      return {
+        id: c.id, name: c.name, size: c.size, short: ROOM_COPY[c.id] || '',
+        rate: r ? r.rateFor(c.id, today, st) : 0,
+        closed: closed,
+        left: closed ? 0 : (a ? a.left : Math.max(0, +c.rooms || 0))
+      };
+    });
+    const roomTotal = (st ? st.categories : []).reduce((a, c) => a + Math.max(0, +c.rooms || 0), 0);
+
+    const rIdx = this.state.reveal;
+    const rFrame = rIdx === null ? null : byId(REVEALS[rIdx].frame);
+
+    /* The promotion opens only when the PMS has it switched on and has given
+       it an image, and only until the visitor closes it. */
+    const bn = (ct && ct.banner) || {};
+    const bnSig = bannerSig(bn);
+    const bnOpen = bn.on !== false && !!bn.image && this.state.bannerClosed !== bnSig;
+    this._bannerOpen = bnOpen;
+    this._bannerSig = bnSig;
+
+    return {
+      journal: JOURNAL,
+      bannerOpen: bnOpen,
+      bannerImage: bn.image || '',
+      bannerKicker: bn.kicker || '',
+      bannerTitle: bn.title || '',
+      bannerText: bn.text || '',
+      bannerHasText: !!(bn.kicker || bn.title || bn.text || bn.ctaLabel),
+      bannerHasCta: !!bn.ctaLabel,
+      bannerCta: bn.ctaLabel || '',
+      bannerHref: bn.ctaHref || 'Booking%20Engine.dc.html',
+      bannerClose: () => this.closeBanner(bnSig),
+      bannerBackdrop: e => { if (e.target === e.currentTarget) this.closeBanner(bnSig); },
+      nav: NAV,
+      heroKicker: hm.heroKicker || '',
+      heroTitle: hm.heroTitle || '',
+      /* One span per word so the headline can arrive in reading order; the
+         delay is per-word, which CSS alone cannot stagger. */
+      heroWords: (hm.heroTitle || '').split(/\s+/).filter(Boolean).map((w, i) => ({
+        text: w, delay: (260 + i * 110) + 'ms'
+      })),
+      heroLede: hm.heroLede || '',
+      heroCta: hm.heroCta || 'Check availability',
+      introKicker: hm.introKicker || '',
+      introTitle: hm.introTitle || '',
+      introBody: hm.introBody || '',
+      facts: [
+        { idx: '01', value: roomTotal ? String(roomTotal) : '—', label: 'Rooms' },
+        { idx: '02', value: '1,840 m', label: 'Elevation' },
+        { idx: '03', value: '06:30', label: 'Yoga, daily' },
+        { idx: '04', value: '20:00', label: 'One sitting' }
+      ],
+      rooms: cards.map(c => ({
+        slotId: 'hs-web-' + c.id,
+        slotHint: c.name + ' — drop photograph',
+        photo: ROOM_PHOTOS[c.id] || '',
+        name: c.name, size: c.size, short: c.short,
+        tonight: c.closed ? 'Closed' : (c.rate ? r.inr(c.rate) : '—'),
+        leftLine: c.closed ? 'Closed for the season'
+          : c.left === 0 ? 'Fully booked tonight'
+          : c.left === 1 ? 'One left tonight'
+          : c.left + ' left tonight',
+        leftColor: c.left > 0 && c.left <= 2 ? '#8C3B22' : '#96793F'
+      })),
+      urgeLine: (() => {
+        const sellable = cards.filter(c => !c.closed);
+        const total = sellable.reduce((a, c) => a + c.left, 0);
+        if (!sellable.length || !total) return 'Nothing open tonight — write to us for the next window.';
+        const scarcest = sellable.reduce((a, b) => (a.left <= b.left ? a : b));
+        return (WORDS[Math.min(scarcest.left, 8)] || scarcest.left) + ' ' + scarcest.name +
+          ' left tonight · ' + total + ' of ' + roomTotal + ' rooms open';
+      })(),
+      reveals: REVEALS.map((x, i) => ({
+        title: x.title, body: x.body, cta: x.cta, href: x.href,
+        enter: () => this.showReveal(i),
+        leave: () => this.hideReveal()
+      })),
+      revealRef: this._reveal,
+      hasReveal: !!rFrame,
+      revealSlot: rFrame ? 'hs-gal-' + rFrame.id : '',
+      revealCaption: rFrame ? rFrame.caption : '',
+      revealSrc: (rFrame && rFrame.src) || '',
+      featuredMeta: 'Full gallery',
+      clips: this._clips.map((c, i) => Object.assign({ index: String(i) }, c, { src: c.src || undefined })),
+      clipIn: this._clipIn,
+      clipOut: this._clipOut,
+      rating: rv ? rv.place.rating.toFixed(1) : '—',
+      ratingStars: starRow(rv ? rv.place.rating : 0),
+      reviewCount: rv ? rv.place.total.toLocaleString('en-IN') + ' reviews on Google' : '',
+      reviews: rv ? rv.reviews.map(x => ({
+        author: x.author_name.split(' ')[0] + ' ' + x.author_name.split(' ').slice(-1)[0][0] + '.',
+        initial: x.author_name.trim().charAt(0),
+        when: x.relative_time_description,
+        stars: starRow(x.rating),
+        text: trim(x.text, 300)
+      })) : [],
+
+      rateLine: low
+        ? 'From ' + r.inr(low) + ' a night tonight, breakfast extra. Free cancellation to seventy-two hours.'
+        : 'Write to us and we will hold a room while you decide.',
+      barRate: low ? r.inr(low) : '—',
+      barLabel: season ? season.name : 'Lowest rate available'
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="./rates.js"></script>
+</helmet>
+
+<div style="font-family:'Jost', system-ui, sans-serif; font-weight:300">
+  <footer style="background:#2C3A2E; color:#F2EEE4; padding:clamp(48px, 12vw, 88px) 0 96px">
+    <div style="max-width:1180px; margin:0 auto; padding:0 20px; display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:clamp(28px, 6vw, 48px)">
+      <div>
+        <div style="font-family:'Marcellus', serif; font-size:16px; letter-spacing:0.22em; text-transform:uppercase">Hill Stream</div>
+        <p style="margin:14px 0 0; font-size:13px; line-height:1.75; color:#D9D3C4">Village Ghatti, Tehri Road<br>Near Rishikesh, Uttarakhand 249192<br>India</p>
+      </div>
+      <div>
+        <div style="font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#A8B3A4">Reservations</div>
+        <p style="margin:12px 0 0; font-size:13px; line-height:1.85; color:#D9D3C4">+91 135 000 0000<br>stay@hillstream.example<br>Nine to seven, daily</p>
+      </div>
+      <div>
+        <div style="font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#A8B3A4">Visit</div>
+        <div style="display:flex; flex-direction:column; gap:9px; margin-top:12px">
+          <sc-for list="{{ links }}" as="l" hint-placeholder-count="6">
+            <a href="{{ l.href }}" style="font-size:13px; color:#D9D3C4; text-decoration:none" style-hover="color:#F2EEE4">{{ l.label }}</a>
+          </sc-for>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#A8B3A4">Rates</div>
+        <p style="margin:12px 0 18px; font-size:13px; line-height:1.7; color:#D9D3C4">{{ ratesNote }}</p>
+        <a href="Booking%20Engine.dc.html" style="display:inline-block; border:1px solid #7A8A76; color:#F2EEE4; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; padding:13px 18px; text-decoration:none; transition:background 200ms" style-hover="background:#3A4A3C">Book a stay</a>
+      </div>
+    </div>
+    <div style="max-width:1180px; margin:clamp(36px, 8vw, 56px) auto 0; padding:20px 20px 0; border-top:1px solid #43523F; font-size:11px; letter-spacing:0.1em; color:#A8B3A4">Demo content · Hill Stream Wellness Resort</div>
+  </footer>
+
+  <div style="position:fixed; left:0; right:0; bottom:0; z-index:45; background:rgba(246,243,234,0.96); backdrop-filter:blur(10px); border-top:1px solid #DED6C4">
+    <div style="max-width:1180px; margin:0 auto; padding:11px 20px; display:flex; align-items:center; gap:14px">
+      <div style="flex:1 1 auto; min-width:0">
+        <div style="font-size:9px; letter-spacing:0.18em; text-transform:uppercase; color:#6E6A5C">{{ barLabel }}</div>
+        <div style="font-family:'Marcellus', serif; font-size:18px; line-height:1.25; color:#2C3A2E; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ barRate }} <span style="font-family:'Jost', sans-serif; font-size:12px; color:#6E6A5C">per night</span></div>
+      </div>
+      <a href="Booking%20Engine.dc.html" style="flex:none; border:1px solid #2C3A2E; background:#2C3A2E; color:#F2EEE4; font-size:11px; letter-spacing:0.16em; text-transform:uppercase; padding:15px 20px; white-space:nowrap; text-decoration:none; transition:background 200ms" style-hover="background:#1F2A21">Check availability</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const R = () => (typeof window !== 'undefined' && window.HSRates) || null;
+
+const PAGES = [
+  { label: 'Home', href: 'index.html' },
+  { label: 'Wellness', href: 'Wellness.dc.html' },
+  { label: 'Dining', href: 'Dining.dc.html' },
+  { label: 'Gallery', href: 'Gallery.dc.html' },
+  { label: 'Guest reviews', href: 'Reviews.dc.html' },
+  { label: 'Getting here', href: 'Visit.dc.html' }
+];
+
+class Component extends DCLogic {
+  state = { rates: R() ? R().get() : null };
+
+  componentDidMount() { this.bind(0); }
+
+  /* Helmet scripts load asynchronously, so rates.js may not have executed by
+     the time this mounts. Retry until it has, then read and subscribe once. */
+  bind(tries) {
+    if (!R()) {
+      if (tries < 60) this._t = setTimeout(() => this.bind(tries + 1), 50);
+      return;
+    }
+    this.setState({ rates: R().get() });
+    this._unsub = R().subscribe(rates => this.setState({ rates }));
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this._t);
+    if (this._unsub) this._unsub();
+  }
+
+  renderVals() {
+    const r = R(), s = this.state.rates;
+    const today = new Date();
+    const season = r && s ? r.seasonFor(today, s) : null;
+    /* The lowest rate actually selling tonight, season adjustment included —
+       so the bar never disagrees with the label above it. */
+    const open = r && s ? s.categories.filter(c => !c.stopSell) : [];
+    const low = open.length ? Math.min(...open.map(c => r.rateFor(c.id, today, s))) : null;
+    return {
+      links: PAGES,
+      barLabel: season ? 'Tonight · ' + season.name : 'Tonight, from',
+      barRate: low ? r.inr(low) : '—',
+      ratesNote: low
+        ? 'From ' + r.inr(low) + ' tonight, breakfast extra. Free cancellation to 72 hours.'
+        : 'Rates on request. Free cancellation to 72 hours.'
+    };
+  }
+}
+</script>
+</body>
+</html>

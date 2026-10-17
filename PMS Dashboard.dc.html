@@ -1,0 +1,2685 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Marcellus&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="./rates.js"></script>
+<script src="./content.js"></script>
+<script src="./guests.js"></script>
+<script src="./profiles.js"></script>
+<script src="./bookings.js"></script>
+<script src="./auth.js"></script>
+<script src="./image-slot.js"></script>
+<script src="./api.js"></script>
+<style>
+  html, body { margin:0; padding:0; background:#161826; }
+  * { box-sizing:border-box; }
+  a { color:#d2cefd; text-decoration:none; }
+  a:hover { color:#b5abfc; }
+  input, select, button, textarea { font-family:"Inter", system-ui, sans-serif; }
+  :focus-visible { outline:2px solid #9184d9; outline-offset:2px; }
+  ::selection { background:#423a6a; }
+  ::-webkit-scrollbar { height:8px; width:8px; }
+  ::-webkit-scrollbar-thumb { background:#3f424d; border-radius:8px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  @keyframes ncFade { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  @keyframes ncSlide { from { transform:translateX(24px); opacity:0; } to { transform:none; opacity:1; } }
+</style>
+</helmet>
+
+<sc-if value="{{ locked }}" hint-placeholder-val="{{ true }}">
+  <div style="position:fixed; inset:0; z-index:200; background:#161826; color:#e9e9ed; font-family:'Inter', system-ui, sans-serif; font-size:13px; display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); overflow:auto">
+
+    <div style="position:relative; display:flex; flex-direction:column; justify-content:space-between; padding:clamp(24px,4vw,44px); background:#1b1d2b; border-right:1px solid #292b31; overflow:hidden">
+      <div style="position:absolute; inset:auto -20% -30% -10%; height:70%; background:radial-gradient(60% 60% at 30% 70%, rgba(145,132,217,0.22), transparent 70%); pointer-events:none"></div>
+      <div style="position:relative">
+        <div style="font-family:'Marcellus', serif; font-size:15px; letter-spacing:0.22em; text-transform:uppercase">Hill Stream</div>
+        <div style="font-size:11px; color:#75798c; margin-top:4px; letter-spacing:0.04em">Property management</div>
+      </div>
+      <div style="position:relative; max-width:34ch">
+        <h1 style="font-weight:500; font-size:clamp(24px,3.4vw,34px); line-height:1.18; margin:0 0 10px; letter-spacing:-0.02em">Operator access</h1>
+        <p style="margin:0; font-size:13px; line-height:1.7; color:#a3a6b8; text-wrap:pretty">Rates, inventory and published content are written from here. Sign in with the resort account to continue.</p>
+      </div>
+      <div style="position:relative; display:flex; gap:8px; align-items:center; font-size:11px; color:#75798c">
+        <span style="width:24px; height:1px; background:linear-gradient(to right, transparent, #3f424d, transparent)"></span>
+        <span>Session ends when the tab closes</span>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:center; padding:clamp(24px,4vw,44px)">
+      <form onSubmit="{{ onSubmit }}" style="width:100%; max-width:340px; display:flex; flex-direction:column; gap:14px; animation:ncFade 420ms ease both">
+        <div>
+          <div style="font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:#75798c">Sign in</div>
+          <h2 style="font-weight:500; font-size:19px; margin:6px 0 0; letter-spacing:-0.01em">Resort account</h2>
+        </div>
+
+        <label style="display:flex; flex-direction:column; gap:6px">
+          <span style="font-size:11px; color:#a3a6b8">Email</span>
+          <input type="email" value="{{ email }}" onChange="{{ onEmail }}" disabled="{{ busy }}" autoComplete="username" placeholder="you@example.com" style="width:100%; background:#232532; border:1px solid {{ fieldBorder }}; border-radius:8px; color:#e9e9ed; font-size:13px; padding:10px 12px; transition:border-color 200ms"></input>
+        </label>
+
+        <label style="display:flex; flex-direction:column; gap:6px">
+          <span style="font-size:11px; color:#a3a6b8">Password</span>
+          <input type="password" value="{{ password }}" onChange="{{ onPassword }}" disabled="{{ busy }}" autoComplete="current-password" placeholder="••••••••" style="width:100%; background:#232532; border:1px solid {{ fieldBorder }}; border-radius:8px; color:#e9e9ed; font-size:13px; padding:10px 12px; transition:border-color 200ms"></input>
+        </label>
+
+        <sc-if value="{{ authError }}" hint-placeholder-val="{{ false }}">
+          <div role="alert" style="font-size:12px; color:#f0a8a8; background:#2e2230; border:1px solid #5c3a45; border-radius:8px; padding:8px 11px; animation:ncFade 240ms ease both">{{ authError }}</div>
+        </sc-if>
+
+        <button type="submit" disabled="{{ busy }}" style="cursor:pointer; border:1px solid #9184d9; background:transparent; color:#d2cefd; font-size:13px; font-weight:500; padding:11px 14px; border-radius:8px; transition:background 180ms" style-hover="background:#2b2741" style-active="background:#3a3466">{{ submitLabel }}</button>
+
+        <div style="border-top:1px solid #292b31; padding-top:12px; font-size:11px; line-height:1.7; color:#75798c">
+          {{ signInNote }}
+        </div>
+      </form>
+    </div>
+
+  </div>
+</sc-if>
+
+<!-- Nothing below this line exists until an operator is signed in. The gate is
+     an sc-if, not an overlay: an unauthenticated visitor gets no reservations,
+     no guest names and no rates in the DOM to read around a covering panel. -->
+<sc-if value="{{ unlocked }}" hint-placeholder-val="{{ true }}">
+<div style="min-height:100vh; background:#161826; color:#e9e9ed; font-family:'Inter', system-ui, sans-serif; font-size:13px; display:flex; flex-wrap:wrap; align-items:stretch">
+
+  <aside style="flex:0 1 216px; min-width:180px; background:#1b1d2b; border-right:1px solid #292b31; padding:16.8px 11.2px; display:flex; flex-direction:column; gap:22.4px">
+    <div style="padding:5.6px 8.4px">
+      <div style="font-size:13px; font-weight:600; letter-spacing:0.02em">Hill Stream</div>
+      <div style="font-size:11px; color:#75798c; margin-top:2.8px">Property manager</div>
+    </div>
+    <nav style="display:flex; flex-direction:column; gap:2.8px">
+      <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="4">
+        <button onClick="{{ item.go }}" style="cursor:pointer; flex:1 1 auto; text-align:left; border:1px solid {{ item.border }}; background:{{ item.bg }}; color:{{ item.color }}; font-size:13px; font-weight:500; padding:8.4px 11.2px; border-radius:8px; display:flex; align-items:center; justify-content:space-between; gap:8.4px; transition:background 160ms, color 160ms" style-hover="background:#2b2741; color:#e9e9ed">
+          <span>{{ item.label }}</span>
+          <span style="font-size:11px; color:#75798c; font-variant-numeric:tabular-nums">{{ item.badge }}</span>
+        </button>
+      </sc-for>
+    </nav>
+    <div style="margin-top:auto; display:flex; align-items:center; gap:8.4px; padding:8.4px; border:1px solid #292b31; border-radius:8px; background:#232532">
+      <span style="flex:0 0 auto; width:26px; height:26px; border-radius:8px; background:#2b2741; border:1px solid #3f424d; color:#d2cefd; font-size:11px; font-weight:500; display:flex; align-items:center; justify-content:center">{{ userInitials }}</span>
+      <span style="flex:1 1 auto; min-width:0; display:flex; flex-direction:column">
+        <span style="font-size:12px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ userName }}</span>
+        <span style="font-size:11px; color:#75798c; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ userTitle }}</span>
+      </span>
+      <button onClick="{{ onSignOut }}" title="Sign out" style="cursor:pointer; flex:0 0 auto; border:1px solid #3f424d; background:transparent; color:#a3a6b8; font-size:11px; padding:5px 8px; border-radius:4px; transition:background 160ms, color 160ms" style-hover="background:#2b2741; color:#e9e9ed">Sign out</button>
+    </div>
+
+    <div style="padding:11.2px; border:1px solid #292b31; border-radius:8px; background:#232532">
+      <div style="font-size:11px; color:#75798c">Night audit</div>
+      <div style="font-size:13px; font-weight:500; margin-top:2.8px">{{ auditLine }}</div>
+      <button onClick="{{ runAudit }}" style="cursor:pointer; margin-top:8.4px; width:100%; border:1px solid #5d5294; background:transparent; color:#d2cefd; font-size:12px; font-weight:500; padding:6px 10px; border-radius:4px; transition:background 160ms" style-hover="background:#2b2741">{{ auditCta }}</button>
+    </div>
+  </aside>
+
+  <main style="flex:1 1 640px; min-width:320px; display:flex; flex-direction:column">
+
+    <header style="position:sticky; top:0; z-index:20; background:rgba(22,24,38,0.94); backdrop-filter:blur(8px); border-bottom:1px solid #292b31; padding:14px 22.4px; display:flex; flex-wrap:wrap; align-items:center; gap:11.2px">
+      <div style="flex:1 1 240px; min-width:0">
+        <h1 style="font-family:'Inter', system-ui, sans-serif; font-weight:500; font-size:19px; margin:0; letter-spacing:-0.01em">{{ viewTitle }}</h1>
+        <p style="margin:2.8px 0 0; font-size:12px; color:#75798c">{{ viewSub }}</p>
+      </div>
+      <div style="display:flex; align-items:center; gap:8.4px; flex-wrap:wrap">
+        <input value="{{ query }}" onChange="{{ onQuery }}" placeholder="Search guest or room" style="width:190px; background:#232532; border:1px solid #3f424d; border-radius:8px; color:#e9e9ed; font-size:12px; padding:8px 11.2px">
+        <a href="Booking%20Engine.dc.html?staff=1" style="cursor:pointer; border:1px solid #9184d9; background:transparent; color:#d2cefd; font-size:12px; font-weight:500; padding:8px 14px; border-radius:8px; white-space:nowrap; text-decoration:none; transition:background 160ms" style-hover="background:#2b2741">New booking</a>
+      </div>
+    </header>
+
+    <div style="padding:22.4px; display:flex; flex-direction:column; gap:22.4px">
+
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex; flex-direction:column; gap:22.4px; animation:ncFade 340ms ease 40ms forwards">
+
+          <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(148px, 1fr)); gap:11.2px">
+            <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="6">
+              <div style="background:#232532; border:1px solid #292b31; border-radius:8px; padding:14px">
+                <div style="font-size:11px; color:#75798c; letter-spacing:0.02em">{{ k.label }}</div>
+                <div style="font-size:24px; font-weight:500; margin-top:5.6px; font-variant-numeric:tabular-nums; letter-spacing:-0.02em">{{ k.value }}</div>
+                <div style="font-size:11px; color:{{ k.deltaColor }}; margin-top:2.8px">{{ k.delta }}</div>
+              </div>
+            </sc-for>
+          </section>
+
+          <section style="display:flex; flex-wrap:wrap; gap:11.2px; align-items:flex-start">
+            <div style="flex:1 1 300px; background:#232532; border:1px solid #292b31; border-radius:8px; overflow:hidden">
+              <div style="padding:11.2px 14px; border-bottom:1px solid #292b31; display:flex; align-items:baseline; justify-content:space-between; gap:8.4px">
+                <span style="font-size:13px; font-weight:500">Arrivals today</span>
+                <span style="font-size:11px; color:#75798c">{{ arrivalsMeta }}</span>
+              </div>
+              <sc-for list="{{ arrivals }}" as="a" hint-placeholder-count="4">
+                <div style="padding:11.2px 14px; border-bottom:1px solid #202230; display:flex; align-items:center; gap:11.2px">
+                  <div style="flex:1 1 auto; min-width:0">
+                    <div style="font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ a.guest }}</div>
+                    <div style="font-size:11px; color:#75798c; margin-top:2px">{{ a.meta }}</div>
+                  </div>
+                  <span style="font-size:11px; font-weight:500; color:{{ a.tagColor }}; background:{{ a.tagBg }}; border:1px solid {{ a.tagBorder }}; padding:3px 8px; border-radius:4px; white-space:nowrap">{{ a.tag }}</span>
+                  <button onClick="{{ a.act }}" disabled="{{ a.done }}" style="cursor:pointer; border:1px solid {{ a.btnBorder }}; background:transparent; color:{{ a.btnColor }}; font-size:11px; font-weight:500; padding:5px 10px; border-radius:4px; white-space:nowrap; transition:background 160ms" style-hover="background:#2b2741">{{ a.btn }}</button>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="flex:1 1 300px; background:#232532; border:1px solid #292b31; border-radius:8px; overflow:hidden">
+              <div style="padding:11.2px 14px; border-bottom:1px solid #292b31; display:flex; align-items:baseline; justify-content:space-between; gap:8.4px">
+                <span style="font-size:13px; font-weight:500">Departures today</span>
+                <span style="font-size:11px; color:#75798c">{{ departuresMeta }}</span>
+              </div>
+              <sc-for list="{{ departures }}" as="d" hint-placeholder-count="3">
+                <div style="padding:11.2px 14px; border-bottom:1px solid #202230; display:flex; align-items:center; gap:11.2px">
+                  <div style="flex:1 1 auto; min-width:0">
+                    <div style="font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ d.guest }}</div>
+                    <div style="font-size:11px; color:#75798c; margin-top:2px">{{ d.meta }}</div>
+                  </div>
+                  <span style="font-size:12px; font-variant-numeric:tabular-nums; color:#b2b6ca; white-space:nowrap">{{ d.folio }}</span>
+                  <button onClick="{{ d.act }}" disabled="{{ d.done }}" style="cursor:pointer; border:1px solid {{ d.btnBorder }}; background:transparent; color:{{ d.btnColor }}; font-size:11px; font-weight:500; padding:5px 10px; border-radius:4px; white-space:nowrap; transition:background 160ms" style-hover="background:#2b2741">{{ d.btn }}</button>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+
+          <section style="background:#232532; border:1px solid #292b31; border-radius:8px; padding:14px">
+            <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8.4px; margin-bottom:14px">
+              <span style="font-size:13px; font-weight:500">Occupancy, next 14 nights</span>
+              <span style="font-size:11px; color:#75798c">{{ occSummary }}</span>
+            </div>
+            <div style="display:flex; align-items:flex-end; gap:4px; height:104px">
+              <sc-for list="{{ occBars }}" as="b" hint-placeholder-count="14">
+                <div style="flex:1 1 0; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:5.6px; height:100%">
+                  <span style="font-size:10px; color:#75798c; font-variant-numeric:tabular-nums">{{ b.pctLabel }}</span>
+                  <div style="width:100%; border-radius:4px 4px 0 0; background:{{ b.fill }}; height:{{ b.h }}"></div>
+                  <span style="font-size:10px; color:{{ b.dayColor }}">{{ b.day }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isCalendar }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:ncFade 340ms ease 40ms forwards">
+          <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin-bottom:14px">
+            <sc-for list="{{ legend }}" as="l" hint-placeholder-count="5">
+              <span style="display:flex; align-items:center; gap:5.6px; font-size:11px; color:#9397ab">
+                <span style="width:10px; height:10px; border-radius:2px; background:{{ l.color }}; display:block"></span>{{ l.label }}
+              </span>
+            </sc-for>
+          </div>
+          <div style="background:#232532; border:1px solid #292b31; border-radius:8px; overflow:auto">
+            <div style="min-width:900px">
+              <div style="display:grid; grid-template-columns:repeat(14, minmax(52px, 1fr)); border-bottom:1px solid #292b31; position:sticky; top:0; background:#232532; z-index:2">
+                <sc-for list="{{ days }}" as="d" hint-placeholder-count="14">
+                  <div style="padding:8.4px 4px; text-align:center; border-right:1px solid #202230; background:{{ d.bg }}">
+                    <div style="font-size:10px; color:#75798c; text-transform:uppercase; letter-spacing:0.04em">{{ d.dow }}</div>
+                    <div style="font-size:12px; font-weight:500; color:{{ d.color }}; margin-top:1px; font-variant-numeric:tabular-nums">{{ d.num }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <sc-for list="{{ rows }}" as="row" hint-placeholder-count="12">
+                <div style="display:grid; grid-template-columns:repeat(14, minmax(52px, 1fr)); border-bottom:1px solid #202230; min-height:42px">
+                  <div style="grid-column:1 / span 14; position:relative; display:grid; grid-template-columns:repeat(14, 1fr)">
+                    <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="14">
+                      <div style="border-right:1px solid #202230; background:{{ c.bg }}"></div>
+                    </sc-for>
+                    <sc-for list="{{ row.bars }}" as="bar" hint-placeholder-count="1">
+                      <button onClick="{{ bar.open }}" style="cursor:pointer; position:absolute; top:5px; bottom:5px; left:{{ bar.left }}; width:{{ bar.width }}; border:1px solid {{ bar.border }}; background:{{ bar.bg }}; color:{{ bar.color }}; border-radius:4px; font-size:11px; font-weight:500; text-align:left; padding:0 8px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; transition:filter 160ms" style-hover="filter:brightness(1.18)">{{ bar.label }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isReservations }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:ncFade 340ms ease 40ms forwards; background:#232532; border:1px solid #292b31; border-radius:8px; overflow:auto">
+          <table style="width:100%; border-collapse:collapse; min-width:720px">
+            <thead>
+              <tr style="border-bottom:1px solid #3f424d">
+                <sc-for list="{{ resCols }}" as="col" hint-placeholder-count="7">
+                  <th style="text-align:left; font-size:11px; font-weight:500; color:#75798c; padding:10px 14px; white-space:nowrap">{{ col }}</th>
+                </sc-for>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ resRows }}" as="r" hint-placeholder-count="10">
+                <tr onClick="{{ r.open }}" style="border-bottom:1px solid #202230; cursor:pointer; transition:background 140ms" style-hover="background:#2b2741">
+                  <td style="padding:11.2px 14px; font-size:12px; font-variant-numeric:tabular-nums; color:#b2b6ca; white-space:nowrap">{{ r.ref }}</td>
+                  <td style="padding:11.2px 14px; font-size:13px; font-weight:500">{{ r.guest }}</td>
+                  <td style="padding:11.2px 14px; font-size:12px; color:#b2b6ca; white-space:nowrap">{{ r.room }}</td>
+                  <td style="padding:11.2px 14px; font-size:12px; color:#b2b6ca; white-space:nowrap">{{ r.dates }}</td>
+                  <td style="padding:11.2px 14px; font-size:12px; color:#b2b6ca">{{ r.source }}</td>
+                  <td style="padding:11.2px 14px; white-space:nowrap">
+                    <span style="font-size:11px; font-weight:500; color:{{ r.tagColor }}; background:{{ r.tagBg }}; border:1px solid {{ r.tagBorder }}; padding:3px 8px; border-radius:4px">{{ r.status }}</span>
+                  </td>
+                  <td style="padding:11.2px 14px; font-size:12px; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap">{{ r.total }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+
+    <sc-if value="{{ isGuests }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex; flex-direction:column; gap:11.2px; animation:ncFade 340ms ease 40ms forwards">
+        <sc-if value="{{ guestsEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#232532; border:1px solid #292b31; border-radius:8px; padding:28px; text-align:center; font-size:12px; color:#75798c">Nobody is in a room right now. Guests appear here once they check in.</div>
+        </sc-if>
+        <sc-for list="{{ inHouseRows }}" as="g" hint-placeholder-count="4">
+          <div style="background:#232532; border:1px solid #292b31; border-left:2px solid #3f7a5a; border-radius:8px; padding:14px 16px; display:flex; flex-direction:column; gap:12px">
+            <div style="display:flex; flex-wrap:wrap; gap:10px 14px; align-items:flex-start">
+              <div style="width:74px; flex:none">
+                <div style="font-size:19px; font-weight:500; font-variant-numeric:tabular-nums">{{ g.room }}</div>
+                <div style="font-size:10px; color:#75798c; margin-top:1px">{{ g.category }}</div>
+              </div>
+              <div style="flex:1 1 220px; min-width:0">
+                <button onClick="{{ g.open }}" style="cursor:pointer; border:0; background:transparent; padding:0; color:#e9e9ed; font-size:15px; font-weight:500; text-align:left; transition:color 160ms" style-hover="color:#d2cefd">{{ g.guest }}</button>
+                <div style="font-size:12px; color:#9397ab; margin-top:3px">{{ g.where }}</div>
+                <div style="font-size:11px; color:#75798c; margin-top:3px">{{ g.stay }}</div>
+              </div>
+              <span style="font-size:11px; font-weight:500; color:{{ g.statusColor }}; border:1px solid #3f424d; padding:4px 9px; border-radius:4px; white-space:nowrap">{{ g.statusLabel }}</span>
+            </div>
+            <sc-if value="{{ g.hasCharges }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:5px; padding-left:74px">
+                <sc-for list="{{ g.charges }}" as="c" hint-placeholder-count="1">
+                  <div style="display:flex; justify-content:space-between; gap:11.2px; font-size:12px; max-width:360px">
+                    <span style="color:#9397ab">{{ c.label }}</span>
+                    <span style="font-variant-numeric:tabular-nums">{{ c.value }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding-top:11px; border-top:1px solid #202230">
+              <span style="font-size:11px; color:#75798c">Post a charge</span>
+              <select value="{{ g.pick }}" onChange="{{ g.onPick }}" style="background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px; min-width:220px">
+                <option value="">Choose an extra</option>
+                <sc-for list="{{ extrasList }}" as="x" hint-placeholder-count="5">
+                  <option value="{{ x.value }}">{{ x.label }}</option>
+                </sc-for>
+              </select>
+              <button onClick="{{ g.post }}" style="cursor:pointer; border:1px solid #5d5294; background:transparent; color:#d2cefd; font-size:11px; font-weight:500; padding:7px 14px; border-radius:4px; transition:background 160ms" style-hover="background:#2b2741">Add to folio</button>
+              <span style="flex:1 1 auto"></span>
+              <span style="font-size:11px; color:#75798c">{{ g.postedLine }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+      <sc-if value="{{ isLive }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:ncFade 340ms ease 40ms forwards; display:flex; flex-direction:column; gap:14px">
+          <div style="background:#232532; border:1px solid #292b31; border-radius:8px; padding:14px 16px; display:flex; flex-direction:column; gap:14px">
+            <div style="display:flex; flex-wrap:wrap; gap:11.2px; align-items:center">
+              <div style="flex:1 1 auto; min-width:0">
+                <div style="font-size:13px; font-weight:500">Take a booking at the desk</div>
+                <div style="font-size:11px; color:#75798c; margin-top:2px">Priced from the same rate plan as the website, on any channel</div>
+              </div>
+              <button onClick="{{ nb.toggle }}" style="cursor:pointer; border:1px solid #5d5294; background:transparent; color:#d2cefd; font-size:11px; font-weight:500; padding:8px 14px; border-radius:4px; transition:background 160ms" style-hover="background:#2b2741">New booking</button>
+            </div>
+            <sc-if value="{{ nb.open }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; flex-direction:column; gap:14px; padding-top:12px; border-top:1px solid #202230">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:11.2px">
+                  <label style="display:flex; flex-direction:column; gap:5px; font-size:11px; color:#75798c">Guest name
+                    <input value="{{ nb.fields.guest }}" onChange="{{ nb.setGuest }}" placeholder="Full name" style="background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:8px 9px">
+                  </label>
+                  <label style="display:flex; flex-direction:column; gap:5px; font-size:11px; color:#75798c">Booked through
+                    <select value="{{ nb.fields.source }}" onChange="{{ nb.setSource }}" style="background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:8px 9px">
+                      <sc-for list="{{ nb.sourceOptions }}" as="o" hint-placeholder-count="13">
+                        <option value="{{ o.value }}">{{ o.label }}</option>
+                      </sc-for>
+                    </select>
+                  </label>
+                  <label style="display:flex; flex-direction:column; gap:5px; font-size:11px; color:#75798c">Email
+                    <input value="{{ nb.fields.email }}" onChange="{{ nb.setEmail }}" placeholder="name@example.com" style="background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:8px 9px">
+                  </label>
+                  <label style="display:flex; flex-direction:column; gap:5px; font-size:11px; color:#75798c">Phone
+                    <input value="{{ nb.fields.phone }}" onChange="{{ nb.setPhone }}" placeholder="+91" style="background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:8px 9px">
+                  </label>
+                  <label style="display:flex; flex-direction:column; gap:5px; font-size:11px; color:#75798c">Room type
+                    <select value="{{ nb.fields.category }}" onChange="{{ nb.setCategory }}" style="background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:8px 9px">
+                      <sc-for list="{{ nb.catOptions }}" as="o" hint-placeholder-count="4">
+                        <option value="{{ o.value }}">{{ o.label }}</option>
+                      </sc-for>
+                    </select>
+                  </label>
+                  <label style="display:flex; flex-direction:column; gap:5px; font-size:11px; color:#75798c">Board
+                    <select value="{{ nb.fields.meal }}" onChange="{{ nb.setMeal }}" style="background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:8px 9px">
+                      <sc-for list="{{ nb.mealOptions }}" as="o" hint-placeholder-count="4">
+                        <option value="{{ o.value }}">{{ o.label }}</option>
+                      </sc-for>
+                    </select>
+                  </label>
+                  <label style="display:flex; flex-direction:column; gap:5px; font-size:11px; color:#75798c">Check in
+                    <input type="date" value="{{ nb.fields.checkIn }}" onChange="{{ nb.setCheckIn }}" style="background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:8px 9px">
+                  </label>
+                  <label style="display:flex; flex-direction:column; gap:5px; font-size:11px; color:#75798c">Nights
+                    <input type="number" min="1" max="30" value="{{ nb.fields.nights }}" onChange="{{ nb.setNights }}" style="background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:8px 9px; font-variant-numeric:tabular-nums">
+                  </label>
+                  <label style="display:flex; flex-direction:column; gap:5px; font-size:11px; color:#75798c">Adults
+                    <input type="number" min="1" max="8" value="{{ nb.fields.adults }}" onChange="{{ nb.setAdults }}" style="background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:8px 9px; font-variant-numeric:tabular-nums">
+                  </label>
+                  <label style="display:flex; flex-direction:column; gap:5px; font-size:11px; color:#75798c">Children
+                    <input type="number" min="0" max="6" value="{{ nb.fields.children }}" onChange="{{ nb.setChildren }}" style="background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:8px 9px; font-variant-numeric:tabular-nums">
+                  </label>
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:flex-start">
+                  <div style="flex:1 1 260px; min-width:0; display:flex; flex-direction:column; gap:6px">
+                    <sc-for list="{{ nb.lines }}" as="l" hint-placeholder-count="3">
+                      <div style="display:flex; justify-content:space-between; gap:11.2px; font-size:12px">
+                        <span style="color:#9397ab">{{ l.label }}</span>
+                        <span style="font-variant-numeric:tabular-nums">{{ l.value }}</span>
+                      </div>
+                    </sc-for>
+                    <div style="display:flex; justify-content:space-between; align-items:baseline; gap:11.2px; padding-top:8px; border-top:1px solid #3f424d">
+                      <span style="font-size:11px; color:#75798c">Total</span>
+                      <span style="font-size:19px; font-weight:500; font-variant-numeric:tabular-nums">{{ nb.total }}</span>
+                    </div>
+                  </div>
+                  <div style="flex:1 1 220px; display:flex; flex-direction:column; gap:9px">
+                    <div style="display:flex; gap:8px; flex-wrap:wrap">
+                      <button onClick="{{ nb.setFull }}" style="cursor:pointer; border:1px solid {{ nb.fullBorder }}; background:transparent; color:{{ nb.fullColor }}; font-size:11px; font-weight:500; padding:7px 12px; border-radius:4px">Pay in full</button>
+                      <button onClick="{{ nb.setDeposit }}" style="cursor:pointer; border:1px solid {{ nb.partBorder }}; background:transparent; color:{{ nb.partColor }}; font-size:11px; font-weight:500; padding:7px 12px; border-radius:4px">25% deposit</button>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap">
+                      <button onClick="{{ nb.setCash }}" style="cursor:pointer; border:1px solid {{ nb.cashBorder }}; background:transparent; color:{{ nb.cashColor }}; font-size:11px; font-weight:500; padding:7px 12px; border-radius:4px">Cash at the desk</button>
+                      <button onClick="{{ nb.setOnline }}" style="cursor:pointer; border:1px solid {{ nb.onlineBorder }}; background:transparent; color:{{ nb.onlineColor }}; font-size:11px; font-weight:500; padding:7px 12px; border-radius:4px">Card / online</button>
+                    </div>
+                    <div style="font-size:11px; color:#75798c">{{ nb.payLabel }} · <span style="color:#b2b6ca; font-variant-numeric:tabular-nums">{{ nb.payValue }}</span></div>
+                    <div style="font-size:11px; color:{{ nb.availColor }}">{{ nb.availLine }}</div>
+                    <button onClick="{{ nb.submit }}" style="cursor:pointer; border:1px solid #3f7a5a; background:transparent; color:#7fc79b; font-size:12px; font-weight:500; padding:9px 14px; border-radius:8px; transition:background 160ms" style-hover="background:#1e3229">Confirm booking</button>
+                    <div style="font-size:11px; color:#e08b8b">{{ nb.error }}</div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+          <sc-if value="{{ liveEmpty }}" hint-placeholder-val="{{ true }}">
+            <div style="background:#232532; border:1px solid #292b31; border-radius:8px; padding:22px">
+              <div style="font-size:14px; font-weight:500">No reservations have come through yet</div>
+              <div style="font-size:12px; color:#75798c; margin-top:6px; line-height:1.65; max-width:58ch">Bookings paid on the website, and any taken at the desk through New booking, land here the moment they clear — with the guest's details, what they paid and how.</div>
+            </div>
+          </sc-if>
+          <sc-for list="{{ liveRows }}" as="lb" hint-placeholder-count="2">
+            <div style="background:#232532; border:1px solid #292b31; border-left:2px solid {{ lb.edge }}; border-radius:8px; padding:14px 16px; display:flex; flex-direction:column; gap:12px">
+              <div style="display:flex; flex-wrap:wrap; gap:10px 14px; align-items:flex-start">
+                <div style="flex:1 1 240px; min-width:0">
+                  <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:8px">
+                    <span style="font-size:15px; font-weight:500">{{ lb.guest }}</span>
+                    <span style="font-size:11px; color:#75798c; font-variant-numeric:tabular-nums">{{ lb.ref }}</span>
+                  </div>
+                  <div style="font-size:12px; color:#9397ab; margin-top:3px">{{ lb.stay }}</div>
+                  <div style="font-size:11px; color:#75798c; margin-top:3px">{{ lb.contact }}</div>
+                  <!-- Only for somebody the guest book already knows. -->
+                  <sc-if value="{{ lb.returning }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ lb.openProfile }}" style="cursor:pointer; margin-top:6px; border:1px solid #5d5294; background:transparent; color:#d2cefd; font-size:11px; padding:4px 9px; border-radius:4px; transition:background 160ms" style-hover="background:#2b2741">{{ lb.historyLabel }}</button>
+                  </sc-if>
+                </div>
+                <div style="text-align:right; min-width:120px">
+                  <div style="font-size:15px; font-weight:500; font-variant-numeric:tabular-nums">{{ lb.total }}</div>
+                  <div style="font-size:11px; color:{{ lb.paidColor }}; margin-top:3px">{{ lb.paidLine }}</div>
+                </div>
+                <span style="font-size:11px; font-weight:500; color:{{ lb.statusColor }}; border:1px solid #3f424d; padding:4px 9px; border-radius:4px; white-space:nowrap">{{ lb.statusLabel }}</span>
+              </div>
+              <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding-top:11px; border-top:1px solid #202230">
+                <span style="font-size:11px; color:#75798c">Room</span>
+                <select value="{{ lb.room }}" onChange="{{ lb.onRoom }}" disabled="{{ lb.departed }}" style="background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px; min-width:120px">
+                  <option value="">Not assigned</option>
+                  <sc-for list="{{ lb.roomOptions }}" as="ro" hint-placeholder-count="4">
+                    <option value="{{ ro.value }}">{{ ro.label }}</option>
+                  </sc-for>
+                </select>
+                <sc-if value="{{ lb.inHouse }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size:11px; color:#75798c; margin-left:6px">Nights stayed</span>
+                  <input type="number" min="1" max="{{ lb.nights }}" value="{{ lb.nightsBilled }}" onChange="{{ lb.onNights }}" disabled="{{ lb.departed }}" style="width:66px; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px; font-variant-numeric:tabular-nums">
+                  <button onClick="{{ lb.departEarly }}" disabled="{{ lb.departed }}" style="cursor:{{ lb.departCursor }}; border:1px solid {{ lb.departBorder }}; background:transparent; color:{{ lb.departColor }}; font-size:11px; font-weight:500; padding:6px 12px; border-radius:4px; white-space:nowrap; transition:background 160ms" style-hover="background:#2b2741">{{ lb.departLabel }}</button>
+                </sc-if>
+                <sc-if value="{{ lb.canCheckIn }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ lb.onCheckIn }}" style="cursor:pointer; border:1px solid #3f7a5a; background:transparent; color:#7fc79b; font-size:11px; font-weight:500; padding:6px 12px; border-radius:4px; white-space:nowrap; transition:background 160ms" style-hover="background:#1e3229">Check in</button>
+                </sc-if>
+                <span style="flex:1 1 auto"></span>
+                <span style="font-size:11px; color:#75798c">{{ lb.note }}</span>
+              </div>
+              <sc-if value="{{ lb.preview }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:11px; color:{{ lb.previewColor }}; margin-top:-4px">{{ lb.preview }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- The guest book. Nothing is entered here by hand: the rows arrive
+           because somebody booked, and the notes and flags are what the desk
+           adds on top. -->
+      <sc-if value="{{ isGuestBook }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:ncFade 340ms ease 40ms forwards; display:flex; flex-direction:column; gap:14px">
+
+          <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:11.2px">
+            <sc-for list="{{ gbTallies }}" as="gt" hint-placeholder-count="4">
+              <div style="background:#232532; border:1px solid #292b31; border-radius:8px; padding:14px">
+                <div style="font-size:11px; color:#75798c">{{ gt.label }}</div>
+                <div style="font-size:24px; font-weight:500; margin-top:5.6px; font-variant-numeric:tabular-nums; letter-spacing:-0.02em; color:{{ gt.color }}">{{ gt.value }}</div>
+              </div>
+            </sc-for>
+          </section>
+
+          <div style="display:flex; flex-wrap:wrap; gap:11.2px; align-items:center">
+            <input value="{{ gbQuery }}" onChange="{{ onGbQuery }}" placeholder="Search a name, email, phone or reference" style="flex:1 1 280px; background:#232532; border:1px solid #3f424d; border-radius:8px; color:#e9e9ed; font-size:12px; padding:9px 12px">
+            <span style="font-size:11px; color:#75798c">{{ gbCount }}</span>
+          </div>
+
+          <sc-if value="{{ gbEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#232532; border:1px dashed #3f424d; border-radius:8px; padding:26px; text-align:center">
+              <div style="font-size:14px; font-weight:500">Nobody in the book yet</div>
+              <div style="font-size:12px; color:#75798c; margin-top:6px; line-height:1.65; max-width:62ch; margin-left:auto; margin-right:auto">{{ gbEmptyNote }}</div>
+            </div>
+          </sc-if>
+
+          <sc-for list="{{ gbRows }}" as="p" hint-placeholder-count="3">
+            <div style="background:#232532; border:1px solid #292b31; border-radius:8px; padding:14px 16px; display:flex; flex-direction:column; gap:12px">
+
+              <div style="display:flex; flex-wrap:wrap; gap:10px 14px; align-items:flex-start">
+                <div style="flex:1 1 240px; min-width:0">
+                  <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:8px">
+                    <span style="font-size:15px; font-weight:500">{{ p.name }}</span>
+                    <span style="font-size:11px; color:{{ p.ordinalColor }}; border:1px solid {{ p.ordinalBorder }}; padding:3px 8px; border-radius:4px; white-space:nowrap">{{ p.ordinal }}</span>
+                    <span style="font-size:11px; color:#75798c">{{ p.where }}</span>
+                  </div>
+                  <div style="font-size:12px; color:#9397ab; margin-top:4px">{{ p.contact }}</div>
+                  <div style="font-size:11px; color:#75798c; margin-top:3px">{{ p.lastLine }}</div>
+                  <sc-if value="{{ p.cancelledLine }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:11px; color:#75798c; margin-top:3px">{{ p.cancelledLine }}</div>
+                  </sc-if>
+                </div>
+                <div style="text-align:right; min-width:130px">
+                  <div style="font-size:15px; font-weight:500; font-variant-numeric:tabular-nums">{{ p.spend }}</div>
+                  <div style="font-size:11px; color:#75798c; margin-top:3px">{{ p.nightsLine }}</div>
+                  <sc-if value="{{ p.outstanding }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:11px; color:#c0a06a; margin-top:3px">{{ p.outstanding }}</div>
+                  </sc-if>
+                </div>
+              </div>
+
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:11.2px; padding-top:11px; border-top:1px solid #202230">
+                <label style="display:flex; flex-direction:column; gap:5px; font-size:11px; color:#75798c">Flags the desk should see
+                  <input value="{{ p.tagText }}" onChange="{{ p.onTags }}" placeholder="quiet room, no dairy, steep path" style="background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:8px 9px">
+                </label>
+                <label style="display:flex; flex-direction:column; gap:5px; font-size:11px; color:#75798c">Notes on this guest
+                  <input value="{{ p.notes }}" onChange="{{ p.onNotes }}" placeholder="What the desk learned last time" style="background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:8px 9px">
+                </label>
+              </div>
+
+              <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center">
+                <button onClick="{{ p.toggle }}" style="cursor:pointer; border:1px solid #3f424d; background:transparent; color:#b2b6ca; font-size:11px; font-weight:500; padding:6px 12px; border-radius:4px; transition:background 160ms" style-hover="background:#2b2741">{{ p.toggleLabel }}</button>
+                <span style="flex:1 1 auto"></span>
+                <button onClick="{{ p.forget }}" title="Erase this person, keeping the reservations" style="cursor:pointer; border:1px solid #3f424d; background:transparent; color:#75798c; font-size:11px; padding:6px 12px; border-radius:4px; transition:color 160ms, border-color 160ms" style-hover="color:#e08b8b; border-color:#5c3a45">Erase from the book</button>
+              </div>
+
+              <sc-if value="{{ p.isOpen }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex; flex-direction:column; gap:0; border:1px solid #292b31; border-radius:8px; overflow:hidden">
+                  <sc-for list="{{ p.stays }}" as="st" hint-placeholder-count="2">
+                    <div style="display:flex; flex-wrap:wrap; gap:8px 14px; align-items:baseline; padding:10px 12px; border-bottom:1px solid #202230; background:#1b1d2b">
+                      <span style="font-size:11px; color:#75798c; font-variant-numeric:tabular-nums; min-width:120px">{{ st.ref }}</span>
+                      <span style="font-size:12px; min-width:110px">{{ st.when }}</span>
+                      <span style="flex:1 1 200px; font-size:12px; color:#9397ab">{{ st.what }}</span>
+                      <span style="font-size:11px; color:#75798c">{{ st.source }}</span>
+                      <span style="font-size:12px; font-variant-numeric:tabular-nums; min-width:80px; text-align:right">{{ st.value }}</span>
+                      <span style="font-size:11px; color:{{ st.statusColor }}; min-width:72px; text-align:right">{{ st.status }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isRevenue }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:ncFade 340ms ease 40ms forwards; display:flex; flex-direction:column; gap:22.4px">
+          <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:11.2px">
+            <sc-for list="{{ revKpis }}" as="rk" hint-placeholder-count="4">
+              <div style="background:#232532; border:1px solid #292b31; border-radius:8px; padding:14px">
+                <div style="font-size:11px; color:#75798c">{{ rk.label }}</div>
+                <div style="font-size:24px; font-weight:500; margin-top:5.6px; font-variant-numeric:tabular-nums; letter-spacing:-0.02em">{{ rk.value }}</div>
+                <div style="font-size:11px; color:#75798c; margin-top:2.8px">{{ rk.note }}</div>
+              </div>
+            </sc-for>
+          </section>
+
+          <div style="background:#232532; border:1px solid #292b31; border-radius:8px">
+            <div style="padding:11.2px 14px; border-bottom:1px solid #292b31; display:flex; align-items:baseline; justify-content:space-between; gap:8.4px">
+              <span style="font-size:13px; font-weight:500">Where the money came from</span>
+              <span style="font-size:11px; color:#75798c">{{ revSplitNote }}</span>
+            </div>
+            <sc-for list="{{ revSplit }}" as="rs" hint-placeholder-count="3">
+              <div style="padding:11.2px 14px; border-bottom:1px solid #202230; display:flex; align-items:center; gap:12px">
+                <span style="flex:0 0 140px; font-size:12px; color:#b2b6ca">{{ rs.label }}</span>
+                <span style="flex:1 1 auto; height:6px; border-radius:3px; background:#1b1d2b; overflow:hidden">
+                  <span style="display:block; height:6px; border-radius:3px; background:{{ rs.fill }}; width:{{ rs.pct }}"></span>
+                </span>
+                <span style="flex:0 0 auto; font-size:12px; font-variant-numeric:tabular-nums; min-width:92px; text-align:right">{{ rs.value }}</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="background:#232532; border:1px solid #292b31; border-radius:8px; overflow:auto">
+            <div style="padding:11.2px 14px; border-bottom:1px solid #292b31; font-size:13px; font-weight:500">Booked through the site and the desk</div>
+            <table style="width:100%; border-collapse:collapse; min-width:640px">
+              <thead>
+                <tr style="border-bottom:1px solid #3f424d">
+                  <th style="text-align:left; font-size:11px; font-weight:500; color:#75798c; padding:9px 14px">Reference</th>
+                  <th style="text-align:left; font-size:11px; font-weight:500; color:#75798c; padding:9px 14px">Guest</th>
+                  <th style="text-align:left; font-size:11px; font-weight:500; color:#75798c; padding:9px 14px">Taken</th>
+                  <th style="text-align:left; font-size:11px; font-weight:500; color:#75798c; padding:9px 14px">Method</th>
+                  <th style="text-align:right; font-size:11px; font-weight:500; color:#75798c; padding:9px 14px">Paid</th>
+                  <th style="text-align:right; font-size:11px; font-weight:500; color:#75798c; padding:9px 14px">Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ revRows }}" as="rv" hint-placeholder-count="4">
+                  <tr style="border-bottom:1px solid #202230">
+                    <td style="padding:11.2px 14px; font-size:12px; color:#b2b6ca; font-variant-numeric:tabular-nums; white-space:nowrap">{{ rv.ref }}</td>
+                    <td style="padding:11.2px 14px; font-size:13px">{{ rv.guest }}</td>
+                    <td style="padding:11.2px 14px; font-size:12px; color:#9397ab; white-space:nowrap">{{ rv.when }}</td>
+                    <td style="padding:11.2px 14px; font-size:12px; color:#9397ab">{{ rv.method }}</td>
+                    <td style="padding:11.2px 14px; font-size:12px; text-align:right; font-variant-numeric:tabular-nums">{{ rv.paid }}</td>
+                    <td style="padding:11.2px 14px; font-size:12px; text-align:right; font-variant-numeric:tabular-nums; color:{{ rv.balanceColor }}">{{ rv.balance }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isRates }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:ncFade 340ms ease 40ms forwards; display:flex; flex-direction:column; gap:22.4px">
+
+          <div style="display:flex; flex-wrap:wrap; gap:11.2px; align-items:center; justify-content:space-between; background:#232532; border:1px solid #292b31; border-radius:8px; padding:11.2px 14px">
+            <div>
+              <div style="font-size:12px; color:#b2b6ca">{{ seasonNote }}</div>
+              <div style="font-size:11px; color:{{ savedColor }}; margin-top:2.8px">{{ savedNote }}</div>
+            </div>
+            <button onClick="{{ resetRates }}" style="cursor:pointer; border:1px solid #3f424d; background:transparent; color:#b2b6ca; font-size:11px; font-weight:500; padding:6px 12px; border-radius:4px; white-space:nowrap; transition:background 160ms" style-hover="background:#2b2741">Reset to published rates</button>
+          </div>
+
+          <div style="background:#232532; border:1px solid #292b31; border-radius:8px; overflow:auto">
+            <div style="padding:11.2px 14px; border-bottom:1px solid #292b31; display:flex; align-items:baseline; justify-content:space-between; gap:8.4px">
+              <span style="font-size:13px; font-weight:500">Rate plan by category</span>
+              <span style="font-size:11px; color:#75798c; font-variant-numeric:tabular-nums">{{ inventoryTotal }}</span>
+            </div>
+            <table style="width:100%; border-collapse:collapse; min-width:760px">
+              <thead>
+                <tr style="border-bottom:1px solid #3f424d">
+                  <th style="text-align:left; font-size:11px; font-weight:500; color:#75798c; padding:9px 14px">Category</th>
+                  <th style="text-align:left; font-size:11px; font-weight:500; color:#75798c; padding:9px 14px">Rooms</th>
+                  <th style="text-align:left; font-size:11px; font-weight:500; color:#75798c; padding:9px 14px">Weekday</th>
+                  <th style="text-align:left; font-size:11px; font-weight:500; color:#75798c; padding:9px 14px">Weekend</th>
+                  <th style="text-align:left; font-size:11px; font-weight:500; color:#75798c; padding:9px 14px">Min stay</th>
+                  <th style="text-align:right; font-size:11px; font-weight:500; color:#75798c; padding:9px 14px">Sells tonight</th>
+                  <th style="text-align:right; font-size:11px; font-weight:500; color:#75798c; padding:9px 14px">Inventory</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ rateRows }}" as="rr" hint-placeholder-count="4">
+                  <tr style="border-bottom:1px solid #202230">
+                    <td style="padding:11.2px 14px">
+                      <div style="font-size:13px; font-weight:500">{{ rr.name }}</div>
+                      <div style="font-size:11px; color:#75798c; margin-top:2px">{{ rr.size }}</div>
+                    </td>
+                    <td style="padding:11.2px 14px">
+                      <input type="number" min="0" max="99" value="{{ rr.roomCount }}" onChange="{{ rr.onRooms }}" style="width:62px; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px; font-variant-numeric:tabular-nums">
+                    </td>
+                    <td style="padding:11.2px 14px">
+                      <input type="number" step="100" value="{{ rr.base }}" onChange="{{ rr.onBase }}" style="width:96px; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px; font-variant-numeric:tabular-nums">
+                    </td>
+                    <td style="padding:11.2px 14px">
+                      <input type="number" step="100" value="{{ rr.weekend }}" onChange="{{ rr.onWeekend }}" style="width:96px; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px; font-variant-numeric:tabular-nums">
+                    </td>
+                    <td style="padding:11.2px 14px">
+                      <input type="number" min="1" max="14" value="{{ rr.minStay }}" onChange="{{ rr.onMinStay }}" style="width:62px; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px; font-variant-numeric:tabular-nums">
+                    </td>
+                    <td style="padding:11.2px 14px; text-align:right; font-size:14px; font-weight:500; font-variant-numeric:tabular-nums; white-space:nowrap">{{ rr.tonight }}</td>
+                    <td style="padding:11.2px 14px; text-align:right">
+                      <button onClick="{{ rr.toggleSell }}" style="cursor:pointer; border:1px solid {{ rr.sellBorder }}; background:transparent; color:{{ rr.sellColor }}; font-size:11px; font-weight:500; padding:5px 11px; border-radius:4px; white-space:nowrap; transition:background 160ms" style-hover="background:#2b2741">{{ rr.sellLabel }}</button>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="background:#232532; border:1px solid #292b31; border-radius:8px">
+            <div style="padding:11.2px 14px; border-bottom:1px solid #292b31; display:flex; align-items:baseline; justify-content:space-between; gap:8.4px">
+              <span style="font-size:13px; font-weight:500">Seasons</span>
+              <span style="font-size:11px; color:#75798c">Applied on top of the weekday and weekend rates</span>
+            </div>
+            <sc-for list="{{ seasonRows }}" as="sr" hint-placeholder-count="3">
+              <div style="padding:11.2px 14px; border-bottom:1px solid #202230; display:flex; flex-wrap:wrap; align-items:center; gap:11.2px">
+                <div style="flex:1 1 180px; min-width:0">
+                  <div style="font-size:13px; font-weight:500">{{ sr.name }}</div>
+                  <sc-if value="{{ sr.active }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:11px; color:#d2cefd; margin-top:2px">In effect today</div>
+                  </sc-if>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px">
+                  <input value="{{ sr.from }}" onChange="{{ sr.onFrom }}" placeholder="MM-DD" style="width:74px; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px; text-align:center; font-variant-numeric:tabular-nums">
+                  <span style="color:#75798c; font-size:12px">→</span>
+                  <input value="{{ sr.to }}" onChange="{{ sr.onTo }}" placeholder="MM-DD" style="width:74px; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px; text-align:center; font-variant-numeric:tabular-nums">
+                </div>
+                <div style="display:flex; align-items:center; gap:6px">
+                  <input type="number" step="5" value="{{ sr.adjust }}" onChange="{{ sr.onAdjust }}" style="width:70px; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px; text-align:right; font-variant-numeric:tabular-nums">
+                  <span style="font-size:12px; color:{{ sr.adjustColor }}; min-width:44px">{{ sr.adjustLabel }}</span>
+                </div>
+              </div>
+            </sc-for>
+            <div style="padding:11.2px 14px; font-size:11px; color:#75798c; line-height:1.6">Season windows are month and day, so they repeat every year. A window whose end falls before its start wraps across the new year.</div>
+          </div>
+
+          <div style="background:#232532; border:1px solid #292b31; border-radius:8px">
+            <div style="padding:11.2px 14px; border-bottom:1px solid #292b31; display:flex; align-items:baseline; justify-content:space-between; gap:8.4px">
+              <span style="font-size:13px; font-weight:500">Meal plans</span>
+              <span style="font-size:11px; color:#75798c">Per guest, per night · children at half</span>
+            </div>
+            <sc-for list="{{ mealRows }}" as="mr" hint-placeholder-count="4">
+              <div style="padding:11.2px 14px; border-bottom:1px solid #202230; display:flex; flex-wrap:wrap; align-items:center; gap:11.2px">
+                <div style="flex:1 1 220px; min-width:0">
+                  <div style="font-size:13px; font-weight:500">{{ mr.name }}</div>
+                  <div style="font-size:11px; color:#75798c; margin-top:2px">{{ mr.note }}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span style="font-size:11px; color:#75798c">₹</span>
+                  <input type="number" min="0" step="100" value="{{ mr.pp }}" onChange="{{ mr.onPrice }}" style="width:96px; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px; text-align:right; font-variant-numeric:tabular-nums">
+                  <span style="font-size:11px; color:#75798c; min-width:92px">{{ mr.perLabel }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="background:#232532; border:1px solid #292b31; border-radius:8px">
+            <div style="padding:11.2px 14px; border-bottom:1px solid #292b31; display:flex; align-items:baseline; justify-content:space-between; gap:8.4px">
+              <span style="font-size:13px; font-weight:500">Extras and services</span>
+              <span style="font-size:11px; color:#75798c">Charged once per stay unless set to per night</span>
+            </div>
+            <sc-for list="{{ extraRows }}" as="er" hint-placeholder-count="7">
+              <div style="padding:11.2px 14px; border-bottom:1px solid #202230; display:flex; flex-wrap:wrap; align-items:center; gap:11.2px">
+                <div style="flex:1 1 220px; min-width:0">
+                  <div style="font-size:13px; font-weight:500">{{ er.name }}</div>
+                  <div style="font-size:11px; color:#75798c; margin-top:2px">{{ er.note }}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span style="font-size:11px; color:#75798c">₹</span>
+                  <input type="number" min="0" step="100" value="{{ er.price }}" onChange="{{ er.onPrice }}" style="width:104px; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px; text-align:right; font-variant-numeric:tabular-nums">
+                  <button onClick="{{ er.togglePer }}" style="cursor:pointer; border:1px solid #3f424d; background:transparent; color:#b2b6ca; font-size:11px; font-weight:500; padding:6px 11px; border-radius:4px; white-space:nowrap; min-width:78px; transition:background 160ms" style-hover="background:#2b2741">{{ er.perLabel }}</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="background:#232532; border:1px solid #292b31; border-radius:8px">
+            <div style="padding:11.2px 14px; border-bottom:1px solid #292b31; display:flex; align-items:baseline; justify-content:space-between; gap:8.4px">
+              <span style="font-size:13px; font-weight:500">Tax and deposit</span>
+              <span style="font-size:11px; color:#75798c">{{ taxSummary }}</span>
+            </div>
+            <div style="padding:14px; display:flex; flex-wrap:wrap; gap:14px">
+              <sc-for list="{{ taxFields }}" as="tf" hint-placeholder-count="5">
+                <label style="flex:1 1 150px; min-width:0; display:flex; flex-direction:column; gap:6px">
+                  <span style="font-size:11px; color:#75798c">{{ tf.label }}</span>
+                  <input type="number" min="0" step="{{ tf.step }}" value="{{ tf.value }}" onChange="{{ tf.onChange }}" style="width:100%; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:8px 9px; font-variant-numeric:tabular-nums">
+                  <span style="font-size:11px; color:#75798c">{{ tf.hint }}</span>
+                </label>
+              </sc-for>
+            </div>
+          </div>
+
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isContent }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:ncFade 340ms ease 40ms forwards; display:flex; flex-direction:column; gap:14px">
+
+          <div style="display:flex; flex-wrap:wrap; gap:11.2px; align-items:center; justify-content:space-between; background:#232532; border:1px solid {{ pubBorder }}; border-radius:8px; padding:11.2px 14px">
+            <div>
+              <div style="font-size:12px; color:{{ pubColor }}; font-weight:500">{{ pubNote }}</div>
+              <div style="font-size:11px; color:#75798c; margin-top:2.8px">{{ pubSub }}</div>
+            </div>
+            <div style="display:flex; gap:8.4px; flex-wrap:wrap">
+              <button onClick="{{ discard }}" style="cursor:pointer; border:1px solid #3f424d; background:transparent; color:#b2b6ca; font-size:11px; font-weight:500; padding:7px 12px; border-radius:4px; white-space:nowrap" style-hover="background:#2b2741">Discard draft</button>
+              <button onClick="{{ publish }}" style="cursor:pointer; border:1px solid #5d5294; background:{{ publishBg }}; color:#d2cefd; font-size:11px; font-weight:500; padding:7px 14px; border-radius:4px; white-space:nowrap" style-hover="background:#2b2741">{{ publishLabel }}</button>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-wrap:wrap; gap:2.8px">
+            <sc-for list="{{ sections }}" as="sec" hint-placeholder-count="5">
+              <button onClick="{{ sec.go }}" style="cursor:pointer; border:1px solid {{ sec.border }}; background:{{ sec.bg }}; color:{{ sec.color }}; font-size:12px; font-weight:500; padding:7px 13px; border-radius:4px; display:flex; align-items:center; gap:6px">
+                <span>{{ sec.label }}</span>
+                <span style="font-size:10px; color:{{ sec.dotColor }}">{{ sec.dot }}</span>
+              </button>
+            </sc-for>
+          </div>
+
+          <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:flex-start">
+
+            <div style="flex:1 1 400px; min-width:280px; display:flex; flex-direction:column; gap:14px">
+
+              <div style="background:#232532; border:1px solid #292b31; border-radius:8px">
+                <div style="padding:11.2px 14px; border-bottom:1px solid #292b31; display:flex; align-items:baseline; justify-content:space-between; gap:8.4px">
+                  <span style="font-size:13px; font-weight:500">{{ panelTitle }}</span>
+                  <span style="font-size:11px; color:#75798c">{{ panelMeta }}</span>
+                </div>
+                <div style="padding:14px; display:flex; flex-direction:column; gap:14px">
+                  <sc-for list="{{ fields }}" as="fd" hint-placeholder-count="4">
+                    <label style="display:flex; flex-direction:column; gap:5.6px">
+                      <span style="font-size:11px; color:#9397ab; letter-spacing:0.02em">{{ fd.label }}</span>
+                      <sc-if value="{{ fd.long }}" hint-placeholder-val="{{ false }}">
+                        <textarea value="{{ fd.value }}" onChange="{{ fd.onEdit }}" rows="4" style="width:100%; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; line-height:1.6; padding:9px 10px; resize:vertical"></textarea>
+                      </sc-if>
+                      <sc-if value="{{ fd.short }}" hint-placeholder-val="{{ true }}">
+                        <input value="{{ fd.value }}" onChange="{{ fd.onEdit }}" style="width:100%; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:8px 10px">
+                      </sc-if>
+                      <span style="font-size:10px; color:#9397ab">{{ fd.hint }}</span>
+                    </label>
+                  </sc-for>
+                </div>
+              </div>
+
+              <sc-if value="{{ isGallery }}" hint-placeholder-val="{{ false }}">
+                <div style="background:#232532; border:1px solid #292b31; border-radius:8px">
+                  <div style="padding:11.2px 14px; border-bottom:1px solid #292b31; display:flex; flex-wrap:wrap; gap:8.4px; align-items:center; justify-content:space-between">
+                    <span style="font-size:13px; font-weight:500">Frames</span>
+                    <div style="display:flex; align-items:center; gap:11.2px">
+                      <span style="font-size:11px; color:#75798c">{{ frameMeta }}</span>
+                      <button onClick="{{ addFrame }}" style="cursor:pointer; border:1px solid #5d5294; background:transparent; color:#d2cefd; font-size:11px; font-weight:500; padding:6px 12px; border-radius:4px; white-space:nowrap" style-hover="background:#2b2741">Add frame</button>
+                    </div>
+                  </div>
+                  <sc-for list="{{ frameRows }}" as="fr" hint-placeholder-count="6">
+                    <div style="padding:11.2px 14px; border-bottom:1px solid #202230; display:flex; flex-wrap:wrap; gap:11.2px; align-items:flex-start">
+                      <div style="position:relative; width:64px; height:64px; flex:0 0 auto; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; overflow:hidden">
+                        <image-slot id="{{ fr.slotId }}" shape="rect" fit="cover" src="{{ fr.src }}" placeholder="Drop"></image-slot>
+                      </div>
+                      <div style="flex:1 1 220px; min-width:180px; display:flex; flex-direction:column; gap:6px">
+                        <input value="{{ fr.caption }}" onChange="{{ fr.onCaption }}" placeholder="Caption" style="width:100%; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px">
+                        <div style="display:flex; gap:6px; flex-wrap:wrap">
+                          <select value="{{ fr.group }}" onChange="{{ fr.onGroup }}" style="flex:1 1 110px; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 8px">
+                            <sc-for list="{{ groupOpts }}" as="go" hint-placeholder-count="4">
+                              <option value="{{ go }}">{{ go }}</option>
+                            </sc-for>
+                          </select>
+                          <input value="{{ fr.season }}" onChange="{{ fr.onSeason }}" placeholder="Season" style="flex:1 1 92px; min-width:80px; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px">
+                        </div>
+                      </div>
+                      <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center">
+                        <button onClick="{{ fr.toggleFeatured }}" title="Show on the home page" style="cursor:pointer; border:1px solid {{ fr.featBorder }}; background:{{ fr.featBg }}; color:{{ fr.featColor }}; font-size:11px; font-weight:500; padding:6px 11px; border-radius:4px; white-space:nowrap">{{ fr.featLabel }}</button>
+                        <button onClick="{{ fr.remove }}" title="Delete this frame" style="cursor:pointer; border:1px solid #3f424d; background:transparent; color:#b2b6ca; font-size:11px; font-weight:500; padding:6px 10px; border-radius:4px" style-hover="background:#3a2630; color:#e9c9d2">Delete</button>
+                      </div>
+                    </div>
+                  </sc-for>
+                  <div style="padding:11.2px 14px; font-size:11px; color:#75798c; line-height:1.6">Drop an image on a thumbnail to set that frame's photograph. Featured frames appear on the home page as well as in the gallery.</div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ isBanner }}" hint-placeholder-val="{{ false }}">
+                <div style="background:#232532; border:1px solid #292b31; border-radius:8px">
+                  <div style="padding:11.2px 14px; border-bottom:1px solid #292b31; display:flex; flex-wrap:wrap; gap:8.4px; align-items:center; justify-content:space-between">
+                    <span style="font-size:13px; font-weight:500">Banner image</span>
+                    <button onClick="{{ bnToggle }}" title="Show or hide the banner on the website" style="cursor:pointer; border:1px solid {{ bnOnBorder }}; background:{{ bnOnBg }}; color:{{ bnOnColor }}; font-size:11px; font-weight:500; padding:6px 12px; border-radius:4px; white-space:nowrap">{{ bnOnLabel }}</button>
+                  </div>
+                  <div style="padding:14px; display:flex; flex-wrap:wrap; gap:14px; align-items:flex-start">
+                    <div style="width:150px; height:100px; flex:0 0 auto; background:#1b1d2b; border:1px dashed #3f424d; border-radius:4px; overflow:hidden; display:flex; align-items:center; justify-content:center">
+                      <sc-if value="{{ bnHasImage }}" hint-placeholder-val="{{ false }}">
+                        <img src="{{ bnImage }}" alt="" style="width:100%; height:100%; object-fit:cover; display:block">
+                      </sc-if>
+                      <sc-if value="{{ bnNoImage }}" hint-placeholder-val="{{ true }}">
+                        <span style="font-size:11px; color:#75798c">No image</span>
+                      </sc-if>
+                    </div>
+                    <div style="flex:1 1 220px; min-width:180px; display:flex; flex-direction:column; gap:8px">
+                      <div style="display:flex; gap:6px; flex-wrap:wrap">
+                        <label style="cursor:pointer; border:1px solid #5d5294; background:transparent; color:#d2cefd; font-size:11px; font-weight:500; padding:6px 12px; border-radius:4px; white-space:nowrap">
+                          {{ bnUploadLabel }}
+                          <input type="file" accept="image/*" onChange="{{ bnUpload }}" style="display:none">
+                        </label>
+                        <sc-if value="{{ bnHasImage }}" hint-placeholder-val="{{ false }}">
+                          <button onClick="{{ bnRemove }}" style="cursor:pointer; border:1px solid #3f424d; background:transparent; color:#b2b6ca; font-size:11px; font-weight:500; padding:6px 10px; border-radius:4px">Remove image</button>
+                        </sc-if>
+                      </div>
+                      <input value="{{ bnPath }}" onChange="{{ bnOnPath }}" placeholder="…or a path / URL, e.g. uploads/photos/offer.jpg" style="width:100%; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px">
+                      <span style="font-size:10px; color:#9397ab">{{ bnNote }}</span>
+                    </div>
+                  </div>
+                  <div style="padding:11.2px 14px; border-top:1px solid #292b31; font-size:11px; color:#75798c; line-height:1.6">The banner opens over the home page. With no image it is not shown at all. Visitors close it with × and are not shown it again that visit. Publish to put changes live.</div>
+                </div>
+              </sc-if>
+
+            </div>
+
+            <div style="flex:0 0 auto; width:390px; max-width:100%; position:sticky; top:14px">
+              <div style="display:flex; align-items:baseline; justify-content:space-between; gap:8.4px; margin-bottom:8.4px">
+                <span style="font-size:11px; color:#9397ab">Draft preview · {{ panelTitle }}</span>
+                <span style="font-size:10px; color:#9397ab">390px</span>
+              </div>
+              <div style="border:1px solid #292b31; border-radius:8px; overflow:hidden; background:#F2EEE4">
+                <div key="{{ previewKey }}" style="max-height:620px; overflow:auto; font-family:'Jost', system-ui, sans-serif; font-weight:300; color:#2C3A2E">
+                  <sc-if value="{{ pv.hasImage }}" hint-placeholder-val="{{ false }}">
+                    <img src="{{ pv.image }}" alt="" style="width:100%; display:block; max-height:300px; object-fit:cover">
+                  </sc-if>
+                  <div style="background:{{ pv.bg }}; color:{{ pv.fg }}; padding:26px 20px 22px">
+                    <p style="margin:0 0 12px; font-size:9px; letter-spacing:0.24em; text-transform:uppercase; color:{{ pv.kickerColor }}">{{ pv.kicker }}</p>
+                    <h1 style="font-family:'Marcellus', serif; font-weight:400; font-size:30px; line-height:1.1; letter-spacing:-0.02em; margin:0 0 12px">{{ pv.title }}</h1>
+                    <p style="margin:0; font-size:14px; line-height:1.65; color:{{ pv.ledeColor }}; text-wrap:pretty">{{ pv.lede }}</p>
+                    <sc-if value="{{ pv.hasCta }}" hint-placeholder-val="{{ false }}">
+                      <span style="display:inline-block; margin-top:20px; border:1px solid #F2EEE4; color:#F6F3EA; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; padding:13px 22px">{{ pv.cta }}</span>
+                    </sc-if>
+                  </div>
+                  <sc-if value="{{ pv.hasIntro }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:28px 20px; border-top:1px solid #E0D9C8">
+                      <p style="margin:0 0 14px; font-size:9px; letter-spacing:0.24em; text-transform:uppercase; color:#8A6E42">{{ pv.introKicker }}</p>
+                      <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:22px; line-height:1.24; margin:0 0 14px; text-wrap:pretty">{{ pv.introTitle }}</h2>
+                      <p style="margin:0; font-size:13px; line-height:1.7; color:#4A4A40; text-wrap:pretty">{{ pv.introBody }}</p>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ pv.hasFrames }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding:20px; border-top:1px solid #E0D9C8">
+                      <p style="margin:0 0 12px; font-size:9px; letter-spacing:0.24em; text-transform:uppercase; color:#8A6E42">{{ pv.framesLabel }}</p>
+                      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
+                        <sc-for list="{{ pv.frames }}" as="pf" hint-placeholder-count="6">
+                          <figure style="margin:0; display:flex; flex-direction:column; gap:6px">
+                            <div style="position:relative; aspect-ratio:{{ pf.ratio }}; min-height:100px; background:#E6DFCE; overflow:hidden">
+                              <image-slot id="{{ pf.slotId }}" shape="rect" fit="cover" src="{{ pf.src }}" placeholder="{{ pf.caption }}"></image-slot>
+                            </div>
+                            <figcaption style="font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:#4A4A40">{{ pf.caption }}</figcaption>
+                          </figure>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isGuestReviews }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:ncFade 340ms ease 40ms forwards; display:flex; flex-direction:column; gap:14px">
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(168px, 1fr)); gap:11.2px">
+            <sc-for list="{{ grTallies }}" as="t" hint-placeholder-count="4">
+              <div style="background:#232532; border:1px solid #292b31; border-radius:8px; padding:14px">
+                <div style="font-size:11px; color:#75798c">{{ t.label }}</div>
+                <div style="font-size:24px; font-weight:500; margin-top:5.6px; font-variant-numeric:tabular-nums; letter-spacing:-0.02em; color:{{ t.color }}">{{ t.value }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:flex; flex-wrap:wrap; gap:8.4px; align-items:center; justify-content:space-between">
+            <div style="display:flex; flex-wrap:wrap; gap:2.8px">
+              <sc-for list="{{ grFilters }}" as="f" hint-placeholder-count="4">
+                <button onClick="{{ f.go }}" style="cursor:pointer; border:1px solid {{ f.border }}; background:{{ f.bg }}; color:{{ f.color }}; font-size:12px; font-weight:500; padding:7px 13px; border-radius:4px; white-space:nowrap">{{ f.label }}</button>
+              </sc-for>
+            </div>
+            <span style="font-size:11px; color:#75798c">Guest submissions · separate from Google</span>
+          </div>
+
+          <sc-if value="{{ grEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#232532; border:1px solid #292b31; border-radius:8px; padding:28px 14px; text-align:center; font-size:12px; color:#75798c">{{ grEmptyNote }}</div>
+          </sc-if>
+
+          <sc-for list="{{ grRows }}" as="r" hint-placeholder-count="3">
+            <div style="background:#232532; border:1px solid #292b31; border-radius:8px; overflow:hidden">
+              <div style="padding:11.2px 14px; border-bottom:1px solid #292b31; display:flex; flex-wrap:wrap; gap:8.4px 14px; align-items:baseline">
+                <span style="font-size:14px; font-weight:500">{{ r.author }}</span>
+                <span style="font-size:11px; color:#75798c">{{ r.meta }}</span>
+                <span style="font-size:12px; color:#c0a06a; letter-spacing:0.08em">{{ r.starText }}</span>
+                <span style="margin-left:auto; font-size:11px; font-weight:500; color:{{ r.tagColor }}; border:1px solid {{ r.tagBorder }}; padding:3px 8px; border-radius:4px; white-space:nowrap">{{ r.tagLabel }}</span>
+              </div>
+
+              <div style="padding:14px; display:flex; flex-wrap:wrap; gap:14px">
+                <div style="flex:1 1 320px; min-width:260px; display:flex; flex-direction:column; gap:11.2px">
+                  <p style="margin:0; font-size:13px; line-height:1.72; color:#b2b6ca; text-wrap:pretty">{{ r.text }}</p>
+                  <div style="font-size:11px; color:{{ r.consentColor }}">{{ r.consentLabel }}</div>
+                  <label style="display:flex; flex-direction:column; gap:5.6px">
+                    <span style="font-size:11px; color:#9397ab">Reply, shown under the review</span>
+                    <textarea value="{{ r.reply }}" onChange="{{ r.onReply }}" rows="2" placeholder="Optional — a sentence from the resort" style="width:100%; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; line-height:1.6; padding:9px 10px; resize:vertical"></textarea>
+                  </label>
+                </div>
+
+                <sc-if value="{{ r.hasPhotos }}" hint-placeholder-val="{{ false }}">
+                  <div style="flex:1 1 260px; min-width:220px">
+                    <div style="font-size:11px; color:#9397ab; margin-bottom:8.4px">{{ r.photoMeta }}</div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:8.4px">
+                      <sc-for list="{{ r.photos }}" as="p" hint-placeholder-count="2">
+                        <div style="border:1px solid {{ p.ring }}; border-radius:4px; overflow:hidden; background:#1b1d2b">
+                          <div style="position:relative; aspect-ratio:1">
+                            <div style="position:absolute; inset:0; background-image:{{ p.css }}; background-size:cover; background-position:center; opacity:{{ p.dim }}; transition:opacity 240ms"></div>
+                            <sc-if value="{{ p.plays }}" hint-placeholder-val="{{ false }}">
+                              <video data-hs-mod-clip="1" src="{{ p.url }}" poster="{{ p.poster }}" autoPlay="{{ true }}" muted="{{ true }}" loop="{{ true }}" playsInline="{{ true }}" preload="metadata" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; opacity:{{ p.dim }}"></video>
+                            </sc-if>
+                            <sc-if value="{{ p.isClip }}" hint-placeholder-val="{{ false }}">
+                              <span style="position:absolute; left:4px; bottom:4px; display:flex; align-items:center; gap:4px; padding:2px 5px; border-radius:3px; background:rgba(11,12,18,0.78); color:#d2cefd; font-size:9px; font-weight:500; pointer-events:none">
+                                <svg width="5" height="6" viewBox="0 0 7 8" aria-hidden="true"><path d="M0 0l7 4-7 4z" fill="#d2cefd"></path></svg>{{ p.clipLabel }}
+                              </span>
+                            </sc-if>
+                          </div>
+                          <div style="display:flex; border-top:1px solid {{ p.ring }}">
+                            <button onClick="{{ p.use }}" style="cursor:pointer; flex:1 1 0; border:none; background:{{ p.useBg }}; color:{{ p.useColor }}; font-size:10px; font-weight:500; padding:6px 0">Use</button>
+                            <button onClick="{{ p.hold }}" style="cursor:pointer; flex:1 1 0; border:none; border-left:1px solid {{ p.ring }}; background:transparent; color:#9397ab; font-size:10px; font-weight:500; padding:6px 0">Hold</button>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+
+              <div style="padding:11.2px 14px; border-top:1px solid #292b31; display:flex; flex-wrap:wrap; gap:8.4px; align-items:center">
+                <button onClick="{{ r.publish }}" style="cursor:pointer; border:1px solid #5d5294; background:#2b2741; color:#d2cefd; font-size:11px; font-weight:500; padding:7px 14px; border-radius:4px" style-hover="background:#332e4d">{{ r.publishLabel }}</button>
+                <button onClick="{{ r.hold }}" style="cursor:pointer; border:1px solid #3f424d; background:transparent; color:#b2b6ca; font-size:11px; font-weight:500; padding:7px 12px; border-radius:4px" style-hover="background:#2b2741">Hold back</button>
+                <button onClick="{{ r.remove }}" style="cursor:pointer; margin-left:auto; border:1px solid #3f424d; background:transparent; color:#9397ab; font-size:11px; font-weight:500; padding:7px 12px; border-radius:4px" style-hover="background:#3a2630; color:#e9c9d2">Delete</button>
+              </div>
+            </div>
+          </sc-for>
+
+          <div style="font-size:11px; color:#75798c; line-height:1.7; max-width:78ch">Publishing sends the review to the website immediately. Photographs are approved one at a time, so a review can go up with only some of its pictures. Hold back is for abuse, another guest's privacy, or a photograph the guest had no right to give — not for criticism.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:ncFade 340ms ease 40ms forwards; display:flex; flex-direction:column; gap:14px; max-width:520px">
+
+          <div style="background:#232532; border:1px solid #292b31; border-radius:8px; padding:16.8px">
+            <div style="font-size:13px; font-weight:500">Change the password</div>
+            <div style="font-size:11px; color:#75798c; line-height:1.7; margin-top:4px">{{ pwStatus }}</div>
+
+            <form onSubmit="{{ onChangePw }}" style="display:flex; flex-direction:column; gap:11.2px; margin-top:14px">
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:11px; color:#a3a6b8">Authorisation code</span>
+                <input type="password" value="{{ pwCode }}" onChange="{{ onPwCode }}" disabled="{{ pwBusy }}" autoComplete="one-time-code" inputMode="numeric" placeholder="10-digit code" style="width:100%; background:#1b1d2b; border:1px solid {{ pwBorder }}; border-radius:8px; color:#e9e9ed; font-size:13px; padding:10px 12px; font-variant-numeric:tabular-nums; transition:border-color 200ms"></input>
+              </label>
+
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:11px; color:#a3a6b8">New password</span>
+                <input type="password" value="{{ pwNew }}" onChange="{{ onPwNew }}" disabled="{{ pwBusy }}" autoComplete="new-password" placeholder="At least 8 characters" style="width:100%; background:#1b1d2b; border:1px solid {{ pwBorder }}; border-radius:8px; color:#e9e9ed; font-size:13px; padding:10px 12px; transition:border-color 200ms"></input>
+              </label>
+
+              <label style="display:flex; flex-direction:column; gap:6px">
+                <span style="font-size:11px; color:#a3a6b8">Confirm new password</span>
+                <input type="password" value="{{ pwConfirm }}" onChange="{{ onPwConfirm }}" disabled="{{ pwBusy }}" autoComplete="new-password" placeholder="Type it again" style="width:100%; background:#1b1d2b; border:1px solid {{ pwBorder }}; border-radius:8px; color:#e9e9ed; font-size:13px; padding:10px 12px; transition:border-color 200ms"></input>
+              </label>
+
+              <sc-if value="{{ pwError }}" hint-placeholder-val="{{ false }}">
+                <div role="alert" style="font-size:12px; color:#f0a8a8; background:#2e2230; border:1px solid #5c3a45; border-radius:8px; padding:8px 11px; animation:ncFade 240ms ease both">{{ pwError }}</div>
+              </sc-if>
+
+              <sc-if value="{{ pwDone }}" hint-placeholder-val="{{ false }}">
+                <div role="status" style="font-size:12px; color:#8fc4a6; background:#1f2b28; border:1px solid #33544a; border-radius:8px; padding:8px 11px; animation:ncFade 240ms ease both">{{ pwDone }}</div>
+              </sc-if>
+
+              <button type="submit" disabled="{{ pwBusy }}" style="cursor:pointer; align-self:flex-start; border:1px solid #9184d9; background:transparent; color:#d2cefd; font-size:13px; font-weight:500; padding:10px 16px; border-radius:8px; transition:background 180ms" style-hover="background:#2b2741" style-active="background:#3a3466">{{ pwLabel }}</button>
+            </form>
+          </div>
+
+          <div style="background:#232532; border:1px solid #292b31; border-radius:8px; padding:16.8px">
+            <div style="font-size:13px; font-weight:500">Where this password lives</div>
+            <div style="font-size:11px; color:#75798c; line-height:1.7; margin-top:6px">In the property's database, on the server — not in this browser. It follows you to any machine that can reach the server, and clearing this site's data does nothing to it. It is held as a PBKDF2 digest at 310,000 iterations, never as text, and nothing that reaches a browser can be turned back into it.</div>
+            <div style="font-size:11px; color:#75798c; line-height:1.7; margin-top:8px">Changing it signs out every other session for this account, everywhere. This one stays open.</div>
+          </div>
+
+          <div style="background:#232532; border:1px solid #292b31; border-radius:8px; padding:16.8px">
+            <div style="font-size:13px; font-weight:500">Signed in as</div>
+            <div style="font-size:12px; color:#b2b6ca; line-height:1.7; margin-top:6px">{{ acctEmail }}<br><span style="color:#75798c">{{ acctTitle }} · {{ sessionNote }}</span></div>
+          </div>
+
+        </div>
+      </sc-if>
+
+    </div>
+  </main>
+
+  <sc-if value="{{ detailOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; z-index:60; background:rgba(10,11,18,0.6); display:flex; justify-content:flex-end">
+      <div onClick="{{ closeDetail }}" style="flex:1 1 auto; cursor:pointer"></div>
+      <div style="width:392px; max-width:100%; height:100%; overflow-y:auto; background:#232532; border-left:1px solid #3f424d; box-shadow:0 16px 40px rgba(0,0,0,0.65); animation:ncSlide 240ms cubic-bezier(.4,0,.2,1) 40ms forwards">
+        <div style="padding:16.8px; border-bottom:1px solid #292b31; display:flex; align-items:flex-start; gap:11.2px">
+          <div style="flex:1 1 auto; min-width:0">
+            <div style="font-size:11px; color:#75798c; font-variant-numeric:tabular-nums">{{ detail.ref }}</div>
+            <div style="font-size:17px; font-weight:500; margin-top:2.8px">{{ detail.guest }}</div>
+            <div style="font-size:12px; color:#9397ab; margin-top:2.8px">{{ detail.sub }}</div>
+          </div>
+          <button onClick="{{ closeDetail }}" style="cursor:pointer; border:1px solid #3f424d; background:transparent; color:#9397ab; font-size:14px; line-height:1; width:28px; height:28px; border-radius:4px; flex:none; transition:background 160ms" style-hover="background:#2b2741">×</button>
+        </div>
+        <div style="padding:16.8px; display:flex; flex-direction:column; gap:16.8px">
+          <div style="display:flex; flex-wrap:wrap; gap:8.4px">
+            <sc-for list="{{ detail.chips }}" as="c" hint-placeholder-count="3">
+              <span style="font-size:11px; color:#b2b6ca; border:1px solid #3f424d; padding:4px 9px; border-radius:4px">{{ c }}</span>
+            </sc-for>
+          </div>
+          <div>
+            <div style="font-size:11px; color:#75798c; margin-bottom:8.4px">Folio</div>
+            <div style="display:flex; flex-direction:column; gap:6px">
+              <sc-for list="{{ detail.folio }}" as="f" hint-placeholder-count="4">
+                <div style="display:flex; justify-content:space-between; gap:11.2px; font-size:12px">
+                  <span style="color:#9397ab">{{ f.label }}</span>
+                  <span style="font-variant-numeric:tabular-nums; white-space:nowrap">{{ f.value }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:11.2px; padding-top:8.4px; border-top:1px solid #3f424d; display:flex; justify-content:space-between; align-items:baseline">
+              <span style="font-size:11px; color:#75798c">{{ detail.balanceLabel }}</span>
+              <span style="font-size:19px; font-weight:500; font-variant-numeric:tabular-nums; color:{{ detail.balanceColor }}">{{ detail.balance }}</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px; color:#75798c; margin-bottom:8.4px">Stay</div>
+            <div style="display:flex; flex-direction:column; gap:8.4px">
+              <label style="display:flex; align-items:center; gap:11.2px; font-size:12px; color:#9397ab">
+                <span style="width:88px; flex:none">Room</span>
+                <select value="{{ detail.room }}" onChange="{{ detail.onRoom }}" disabled="{{ detail.roomLocked }}" style="flex:1 1 auto; min-width:0; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px">
+                  <sc-for list="{{ detail.roomOptions }}" as="ro" hint-placeholder-count="4">
+                    <option value="{{ ro.value }}">{{ ro.label }}</option>
+                  </sc-for>
+                </select>
+              </label>
+              <sc-if value="{{ detail.inHouse }}" hint-placeholder-val="{{ false }}">
+                <label style="display:flex; align-items:center; gap:11.2px; font-size:12px; color:#9397ab">
+                  <span style="width:88px; flex:none">Nights stayed</span>
+                  <input type="number" min="1" max="{{ detail.nightsMax }}" value="{{ detail.nightsUsed }}" onChange="{{ detail.onNights }}" disabled="{{ detail.roomLocked }}" style="width:72px; background:#1b1d2b; border:1px solid #3f424d; border-radius:4px; color:#e9e9ed; font-size:12px; padding:7px 9px; font-variant-numeric:tabular-nums">
+                  <button onClick="{{ detail.departEarly }}" disabled="{{ detail.roomLocked }}" style="cursor:{{ detail.departCursor }}; border:1px solid {{ detail.departBorder }}; background:transparent; color:{{ detail.departColor }}; font-size:11px; font-weight:500; padding:7px 12px; border-radius:4px; white-space:nowrap; transition:background 160ms" style-hover="background:#2b2741">{{ detail.departLabel }}</button>
+                </label>
+              </sc-if>
+              <div style="font-size:11px; color:{{ detail.stayNoteColor }}">{{ detail.stayNote }}</div>
+              <sc-if value="{{ detail.settling }}" hint-placeholder-val="{{ false }}">
+                <div style="border:1px solid #5a4a2c; background:#26232c; border-radius:8px; padding:12px 14px; display:flex; flex-direction:column; gap:9px">
+                  <div style="font-size:11px; color:#75798c">Settle the folio</div>
+                  <div style="font-size:13px; font-weight:500; color:{{ detail.settleColor }}">{{ detail.settleLine }}</div>
+                  <div style="font-size:11px; color:#75798c">{{ detail.settleNote }}</div>
+                  <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:2px">
+                    <button onClick="{{ detail.confirmDepart }}" style="cursor:pointer; flex:1 1 150px; border:1px solid #3f7a5a; background:transparent; color:#7fc79b; font-size:11px; font-weight:500; padding:8px 12px; border-radius:4px; transition:background 160ms" style-hover="background:#1e3229">{{ detail.settleLabel }}</button>
+                    <button onClick="{{ detail.cancelDepart }}" style="cursor:pointer; border:1px solid #3f424d; background:transparent; color:#9397ab; font-size:11px; font-weight:500; padding:8px 12px; border-radius:4px; transition:background 160ms" style-hover="background:#2b2741">Cancel</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px; color:#75798c; margin-bottom:8.4px">Notes</div>
+            <p style="margin:0; font-size:12px; line-height:1.6; color:#b2b6ca; text-wrap:pretty">{{ detail.notes }}</p>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:8.4px">
+            <sc-if value="{{ detail.hasPrimary }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ detail.primary }}" style="cursor:pointer; flex:1 1 130px; border:1px solid #9184d9; background:transparent; color:#d2cefd; font-size:12px; font-weight:500; padding:9px 14px; border-radius:8px; transition:background 160ms" style-hover="background:#2b2741">{{ detail.primaryLabel }}</button>
+            </sc-if>
+            <button onClick="{{ closeDetail }}" style="cursor:pointer; flex:1 1 100px; border:1px solid #3f424d; background:transparent; color:#b2b6ca; font-size:12px; font-weight:500; padding:9px 14px; border-radius:8px; transition:background 160ms" style-hover="background:#2b2741">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:860},&quot;showRevenue&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Behaviour&quot;}}">
+const INR = n => '₹' + Math.round(n).toLocaleString('en-IN');
+const DAYS = 14;
+
+const R = () => (typeof window !== 'undefined' && window.HSRates) || null;
+const CT = () => (typeof window !== 'undefined' && window.HSContent) || null;
+const G = () => (typeof window !== 'undefined' && window.HSGuestReviews) || null;
+/* The guest book: one record per person, written by every booking taken. */
+const GB = () => (typeof window !== 'undefined' && window.HSGuests) || null;
+
+const SECTION_DEFS = [
+  { id: 'home', label: 'Home' },
+  { id: 'gallery', label: 'Gallery' },
+  { id: 'rooms', label: 'Rooms' },
+  { id: 'wellness', label: 'Wellness' },
+  { id: 'dining', label: 'Dining' },
+  { id: 'banner', label: 'Banner' }
+];
+
+/* Which fields each section exposes, in the order they are edited. */
+const FIELD_DEFS = {
+  home: [
+    { key: 'heroKicker', label: 'Hero kicker', hint: 'Above the headline, in small caps' },
+    { key: 'heroTitle', label: 'Hero headline', hint: 'Keep it under about seven words' },
+    { key: 'heroLede', label: 'Hero line', hint: 'One sentence, sits under the headline', long: true },
+    { key: 'heroCta', label: 'Hero button', hint: 'Links to the booking engine' },
+    { key: 'introKicker', label: 'Intro kicker', hint: '' },
+    { key: 'introTitle', label: 'Intro heading', hint: '' },
+    { key: 'introBody', label: 'Intro paragraph', hint: 'Two or three sentences reads best', long: true }
+  ],
+  gallery: [
+    { key: 'kicker', label: 'Page kicker', hint: '' },
+    { key: 'title', label: 'Page heading', hint: '' },
+    { key: 'lede', label: 'Page intro', hint: 'Mentioning the frame count keeps it honest', long: true }
+  ],
+  rooms: [
+    { key: 'kicker', label: 'Page kicker', hint: '' },
+    { key: 'title', label: 'Page heading', hint: '' },
+    { key: 'lede', label: 'Page intro', hint: 'Rates below are pulled live from the rate plan', long: true }
+  ],
+  wellness: [
+    { key: 'kicker', label: 'Page kicker', hint: '' },
+    { key: 'title', label: 'Page heading', hint: '' },
+    { key: 'lede', label: 'Page intro', hint: '', long: true }
+  ],
+  dining: [
+    { key: 'kicker', label: 'Page kicker', hint: '' },
+    { key: 'title', label: 'Page heading', hint: '' },
+    { key: 'lede', label: 'Page intro', hint: '', long: true }
+  ],
+  banner: [
+    { key: 'kicker', label: 'Small label', hint: 'Above the headline, e.g. Special offer' },
+    { key: 'title', label: 'Headline', hint: 'e.g. 20% off weekday stays this winter' },
+    { key: 'text', label: 'Details', hint: 'Dates, conditions, a code — one or two sentences', long: true },
+    { key: 'ctaLabel', label: 'Button text', hint: 'Leave empty for no button' },
+    { key: 'ctaHref', label: 'Button link', hint: 'Booking%20Engine.dc.html, a page, or a full URL' }
+  ]
+};
+
+/* A banner photograph is stored in the content record itself, so it is cut
+   down in the browser first: no wider than 1600px, as a JPEG. */
+const shrinkImage = file => new Promise((resolve, reject) => {
+  const fr = new FileReader();
+  fr.onerror = () => reject(new Error('Could not read that file.'));
+  fr.onload = () => {
+    const img = new Image();
+    img.onerror = () => reject(new Error('That file is not an image.'));
+    img.onload = () => {
+      const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * scale);
+      c.height = Math.round(img.height * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      resolve(c.toDataURL('image/jpeg', 0.82));
+    };
+    img.src = fr.result;
+  };
+  fr.readAsDataURL(file);
+});
+const FALLBACK = { name: '—', base: 0, weekend: 0, minStay: 1, stopSell: false };
+
+/* Categories, rates and seasons all come from rates.js — the same table the
+   booking engine and the public website read. Nothing is priced locally. */
+const catById = id => (R() ? R().cat(id) : null) || FALLBACK;
+const catOf = roomNumber => {
+  const room = ROOMS.find(r => r.n === roomNumber);
+  return room ? catById(room.c) : FALLBACK;
+};
+
+/* The floor list is generated from the rate plan, so the number of rooms the
+   operator sets under Rates is the number the calendar and the occupancy
+   figures work from. Each category keeps its floor prefix, so room
+   numbers stay stable as counts grow (premium-valley 101…, deluxe-view 001…). */
+const FLOOR = {
+  'deluxe-view': '0', 'premium-valley': '1', 'deluxe-suite': '2', 'jungle-view': '3',
+  'premium-suite': '4', 'stream-view': '5', signature: '6'
+};
+const ROOM_ORDER = ['deluxe-view', 'premium-valley', 'deluxe-suite', 'jungle-view', 'premium-suite', 'stream-view', 'signature'];
+const FALLBACK_COUNTS = {
+  'deluxe-view': 8, 'premium-valley': 8, 'deluxe-suite': 6, 'jungle-view': 6,
+  'premium-suite': 6, 'stream-view': 6, signature: 4
+};
+
+const buildRooms = () => {
+  const cats = (R() ? R().get().categories : []) || [];
+  const out = [];
+  ROOM_ORDER.forEach(id => {
+    const c = cats.filter(x => x.id === id)[0];
+    const n = c ? (+c.rooms || 0) : FALLBACK_COUNTS[id];
+    for (let i = 1; i <= n; i++) {
+      out.push({ n: (FLOOR[id] || '9') + String(i).padStart(2, '0'), c: id });
+    }
+  });
+  return out;
+};
+
+const ROOMS = buildRooms();
+
+const BOOKINGS = [
+  { id: 'HS-26-4102', room: '101', guest: 'Ananya Rao', start: -2, nights: 4, src: 'Direct', meal: 'Half board', notes: 'Returning guest, third stay. Prefers the window seat made up as a reading nook. Anniversary on the second night.' },
+  { id: 'HS-26-4118', room: '102', guest: 'Devlin Marsh', start: 0, nights: 3, src: 'Booking.com', meal: 'Breakfast', notes: 'Arriving on the 16:40 train from Haridwar, has asked for a transfer from the station.' },
+  { id: 'HS-26-4131', room: '103', guest: 'Elif Demir', start: 0, nights: 2, src: 'Direct', meal: 'Breakfast', notes: 'First stay. Booked a stream stone therapy for the afternoon of arrival.' },
+  { id: 'HS-26-4140', room: '103', guest: 'Priya Nadar', start: 5, nights: 2, src: 'Direct', meal: 'Room only', notes: 'Working stay, has asked about desk space and the wifi in the room.' },
+  { id: 'HS-26-4096', room: '201', guest: 'The Okonkwo family', start: -1, nights: 5, src: 'Direct', meal: 'Full board', notes: 'Two adults, two children. Extra bed in place. Nut allergy noted for the kitchen.' },
+  { id: 'HS-26-4127', room: '202', guest: 'Ines Marchetti', start: 0, nights: 6, src: 'Agoda', meal: 'Half board', notes: 'Three-day reset package. Consultation booked for the morning after arrival.' },
+  { id: 'HS-26-4079', room: '301', guest: 'Tobias Vale', start: -3, nights: 3, src: 'Direct', meal: 'Breakfast', notes: 'Departing this morning, car ordered for 11:00 to Dehradun airport.' },
+  { id: 'HS-26-4144', room: '301', guest: 'Rhea Kulkarni', start: 1, nights: 4, src: 'Direct', meal: 'Half board', notes: 'Requested the room furthest from the road. Late arrival, after 21:00.' },
+  { id: 'HS-26-4109', room: '302', guest: 'Sam Oyelaran', start: -1, nights: 2, src: 'Expedia', meal: 'Breakfast', notes: 'OTA booking, card on file pre-authorised only. Collect balance at check-out.' },
+  { id: 'HS-26-4137', room: '303', guest: 'Hana Ito', start: 2, nights: 3, src: 'Direct', meal: 'Full board', notes: 'Vegetarian, no dairy. Yoga each morning at 06:30.' },
+  { id: 'HS-26-4088', room: '011', guest: 'Marcus Feld', start: -2, nights: 2, src: 'Direct', meal: 'Room only', notes: 'Departing today. Folio open, bar charges from last night not yet posted.' },
+  { id: 'HS-26-4152', room: '011', guest: 'Lila Fontaine', start: 3, nights: 5, src: 'Direct', meal: 'Half board', notes: 'Honeymoon. Flowers and a note from the manager on arrival.' },
+  { id: 'HS-26-4133', room: '012', guest: 'Aarav Sethi', start: 0, nights: 1, src: 'Direct', meal: 'Breakfast', notes: 'One night only, early check-in granted from 10:00.' },
+  { id: 'HS-26-4149', room: '012', guest: 'Grace Mbeki', start: 2, nights: 4, src: 'Booking.com', meal: 'Breakfast', notes: 'Has asked whether the treatment pavilion is step-free.' },
+  { id: 'HS-26-4155', room: '013', guest: 'Nour Haddad', start: 4, nights: 3, src: 'Direct', meal: 'Half board', notes: 'Two rooms held under the same profile, second room to be assigned.' },
+  { id: 'HS-26-4121', room: '102', guest: 'Jonas Brekke', start: 6, nights: 4, src: 'Direct', meal: 'Room only', notes: 'Long lead booking, deposit paid in full.' },
+  { id: 'HS-26-4158', room: '202', guest: 'Yuki Tanabe', start: 8, nights: 3, src: 'Agoda', meal: 'Full board', notes: 'Requested the sun deck laid for breakfast.' }
+];
+
+const BLOCKS = [{ room: '014', start: 0, nights: 6, label: 'Maintenance — bathroom' }];
+
+/* Per guest, per night — the same board rates the engine sells. */
+const MEAL_PP = { 'Room only': 0, 'Breakfast': 900, 'Half board': 2200, 'Full board': 3400 };
+
+/* Channels the desk can book against — the OTAs the property is listed on,
+   plus walk-ins and direct calls. */
+const SOURCES = ['Direct', 'Walk-in', 'MakeMyTrip', 'Goibibo', 'Booking.com', 'Agoda',
+  'OYO', 'Cleartrip', 'EaseMyTrip', 'Yatra', 'Expedia', 'Airbnb', 'Hotels.com'];
+
+/* Where each category sits on the property, so the desk can say where a
+   guest is without reading a floor plan. Empty until the wings are known;
+   a category with no line here reads 'Main house'. */
+const WHERE = {};
+
+const C = {
+  inhouse: '#968ae0', arriving: '#b5abfc', confirmed: '#5d5294',
+  departing: '#8fa6c4', dirty: '#c0a06a', clean: '#7f9c8b', ooo: '#75798c'
+};
+
+const HK_INIT = {
+  '101': 'occupied', '102': 'clean', '103': 'clean', '201': 'occupied', '202': 'clean',
+  '301': 'dirty', '302': 'occupied', '303': 'inspected', '011': 'dirty', '012': 'clean',
+  '013': 'clean', '014': 'ooo'
+};
+
+
+class Component extends DCLogic {
+  state = {
+    view: 'overview', query: '', detail: null, audited: false,
+    gr: G() ? G().all() : [], grFilter: 'pending',
+    checkedIn: {}, checkedOut: {}, hk: { ...HK_INIT },
+    rates: R() ? R().get() : { categories: [], seasons: [] },
+    live: (typeof window !== 'undefined' && window.HSBookings) ? window.HSBookings.all() : [],
+    /* Bumped whenever the guest book changes, so the view re-reads it. The
+       book itself is never held in state — it is staff-only and read through
+       the gate on every render. */
+    gbRev: 0, gbQuery: '', gbOpen: null,
+    saved: null,
+    section: 'home',
+    content: CT() ? CT().draft() : null,
+    dirty: CT() ? CT().isDirty() : false,
+    user: null, email: '', password: '', authError: '', busy: false,
+    pwCode: '', pwNew: '', pwConfirm: '', pwBusy: false, pwError: '', pwDone: ''
+  };
+
+  componentDidMount() {
+    if (R()) this._unsub = R().subscribe(rates => this.setState({ rates }));
+    /* Reservations taken on the website or at the desk arrive through the
+       shared store, in this tab and across tabs. */
+    if (window.HSBookings) this._unsubB = window.HSBookings.subscribe(live => this.setState({ live }));
+    /* A booking writes the reservation and the guest's record together, so
+       the guest book moves in the same breath — including a booking taken in
+       the booking engine's desk mode, in this tab or another. */
+    if (GB()) this._unsubP = GB().subscribe(() => this.setState(x => ({ gbRev: (x.gbRev || 0) + 1 })));
+    this.bindGuests(0);
+    this.bindAuth(0);
+    this.wireModClips();
+  }
+
+  /* auth.js is a helmet script and may not have run yet. Once it has, pick up
+     any token this tab already holds — verified, not merely present — and
+     start watching the clock: real interaction keeps the session alive, and
+     the moment the idle window or the eight-hour lifetime runs out the
+     dashboard drops back to the sign-in screen rather than sitting there
+     showing a dead session's guests. */
+  bindAuth(tries) {
+    const A = window.HSAuth;
+    if (!A) {
+      if (tries < 60) this._authWait = setTimeout(() => this.bindAuth(tries + 1), 50);
+      return;
+    }
+    /* Who is signed in is the server's answer, and it arrives with the first
+       snapshot rather than synchronously. Settle once now from whatever is
+       already known, again when that lands, and again whenever it changes —
+       so a still-valid cookie reopens the dashboard instead of showing a
+       sign-in screen to someone who never signed out. */
+    const settle = () => {
+      const user = A.current('pms');
+      this.setState({ user });
+      if (user) this.armWatch();
+    };
+    settle();
+    const api = window.HSApi;
+    if (api) {
+      if (api.ready && api.ready.then) api.ready.then(settle);
+      if (api.onSession) this._unsubS = api.onSession(settle);
+    }
+  }
+
+  /* Armed only while a session is actually held, so signing out deliberately
+     never trips the timeout notice twenty seconds later. */
+  armWatch() {
+    const A = window.HSAuth;
+    if (!A || this._unwatch) return;
+    this._unwatch = A.watch('pms', () => {
+      this._unwatch = null;
+      if (!this.state.user) return;
+      this.setState({ user: null, password: '', expired: true, detail: null, settle: null });
+    });
+  }
+
+  componentDidUpdate() { this.wireModClips(); }
+
+  /* React assigns `muted` after mount, too late for the autoplay gate — force
+     it so a moderator sees the clip move without clicking each tile. */
+  wireModClips() {
+    for (const v of document.querySelectorAll('video[data-hs-mod-clip]')) {
+      if (v._hsClip) continue;
+      v._hsClip = true;
+      v.muted = true;
+      v.defaultMuted = true;
+      v.setAttribute('muted', '');
+      const kick = () => { const p = v.play(); if (p && p.catch) p.catch(() => {}); };
+      v.addEventListener('loadeddata', kick);
+      kick();
+    }
+  }
+
+  /* PBKDF2 at full strength takes a moment, so the form is held while it
+     runs — otherwise a double-tap on Sign in spends that work twice and
+     counts two attempts against the backoff. */
+  submitAuth = e => {
+    if (e && e.preventDefault) e.preventDefault();
+    const A = window.HSAuth;
+    if (this.state.busy) return;
+    /* A stale auth.js in the browser cache is the one way this arrives with
+       no signIn to call. Say so, rather than leaving the form spinning. */
+    if (!A || typeof A.signIn !== 'function') {
+      this.setState({ authError: 'Sign-in is unavailable — reload the page (Ctrl+Shift+R) and try again.' });
+      return;
+    }
+    this.setState({ busy: true, authError: '' });
+    A.signIn('pms', this.state.email, this.state.password, A.STAFF).then(r => {
+      /* The password never stays in state past the attempt, right or wrong. */
+      if (r.ok) {
+        this.setState({ user: r.user, password: '', authError: '', expired: false, busy: false });
+        this.armWatch();
+      } else {
+        this.setState({ password: '', authError: r.error, busy: false });
+      }
+    }, err => {
+      /* Whatever went wrong, the form has to come back. */
+      this.setState({ password: '', busy: false, authError: 'Sign-in failed: ' + ((err && err.message) || err) });
+    });
+  };
+
+  /* Changing the password needs the authorisation code and a live session;
+     auth.js checks both. The fields are cleared either way, so a code does
+     not sit in component state after the attempt. */
+  changePw = e => {
+    if (e && e.preventDefault) e.preventDefault();
+    const A = window.HSAuth;
+    if (this.state.pwBusy) return;
+    if (!A || typeof A.changePassword !== 'function') {
+      this.setState({ pwError: 'Unavailable — reload the page (Ctrl+Shift+R) and try again.', pwDone: '' });
+      return;
+    }
+    const s = this.state;
+    this.setState({ pwBusy: true, pwError: '', pwDone: '' });
+    A.changePassword('pms', s.pwCode, s.pwNew, s.pwConfirm).then(r => {
+      if (r.ok) {
+        this.setState({
+          pwBusy: false, pwCode: '', pwNew: '', pwConfirm: '', pwError: '',
+          pwDone: 'Password changed. Use it the next time you sign in.'
+        });
+      } else {
+        /* The code survives a mismatched confirmation — retyping ten digits
+           because the two passwords differed would be its own small cruelty. */
+        const codeWrong = /authorisation code/.test(r.error || '');
+        this.setState({
+          pwBusy: false, pwError: r.error, pwDone: '',
+          pwCode: codeWrong ? '' : s.pwCode, pwNew: '', pwConfirm: ''
+        });
+      }
+    }, err => {
+      this.setState({ pwBusy: false, pwNew: '', pwConfirm: '', pwDone: '',
+        pwError: 'Could not change the password: ' + ((err && err.message) || err) });
+    });
+  };
+
+  signOut = () => {
+    if (window.HSAuth) window.HSAuth.signOut('pms');
+    if (this._unwatch) { this._unwatch(); this._unwatch = null; }
+    this.setState({ user: null, email: '', password: '', authError: '', expired: false, busy: false,
+      pwCode: '', pwNew: '', pwConfirm: '', pwError: '', pwDone: '', detail: null, settle: null });
+  };
+
+  /* Every write on this page goes through here first. The shared modules
+     refuse a write without a token of their own, so this is not the lock —
+     it is what tells the operator why nothing happened. */
+  authorised() {
+    const A = window.HSAuth;
+    if (A && A.can('pms', A.STAFF)) return true;
+    this.setState({ user: null, expired: true });
+    return false;
+  }
+
+  componentWillUnmount() {
+    if (this._unsub) this._unsub();
+    if (this._unsubB) this._unsubB();
+    if (this._unsubG) this._unsubG();
+    if (this._unsubP) this._unsubP();
+    if (this._unsubS) this._unsubS();
+    if (this._unwatch) this._unwatch();
+    clearTimeout(this._authWait);
+    clearTimeout(this._grWait);
+  }
+
+  /* guests.js is a helmet script, so it may not have executed yet. Retry, then
+     subscribe — the public page and this queue read the same record. */
+  bindGuests(tries) {
+    if (!G()) {
+      if (tries < 60) this._grWait = setTimeout(() => this.bindGuests(tries + 1), 50);
+      return;
+    }
+    this.setState({ gr: G().all() });
+    this._unsubG = G().subscribe(gr => this.setState({ gr }));
+  }
+
+  grStatus(id, status) { if (this.authorised() && G()) G().setStatus(id, status); }
+
+  grPhoto(id, photoId, status) { if (this.authorised() && G()) G().setPhotoStatus(id, photoId, status); }
+
+  grReply(id, value) { if (this.authorised() && G()) G().setReply(id, value); }
+
+  grRemove(id) { if (this.authorised() && G()) G().remove(id); }
+
+  /* The moderation queue. Nothing here edits the guest's words — a moderator
+     may publish, hold, or reply, and may approve photographs one at a time. */
+  reviewVals(counts) {
+    const s = this.state;
+    const filter = s.grFilter;
+    const list = (s.gr || []).filter(r => filter === 'all' || r.status === filter)
+      .sort((a, b) => (b.submitted || '').localeCompare(a.submitted || ''));
+
+    const TAGS = {
+      pending: { label: 'Awaiting', color: '#c0a06a', border: '#5a4a2e' },
+      approved: { label: 'Published', color: '#7f9c8b', border: '#33513f' },
+      rejected: { label: 'Held back', color: '#75798c', border: '#3f424d' }
+    };
+
+    return {
+      isGuestReviews: s.view === 'reviews',
+      grTallies: [
+        { label: 'Awaiting a decision', value: String(counts.pending), color: counts.pending ? '#c0a06a' : '#75798c' },
+        { label: 'Published on the site', value: String(counts.approved), color: '#7f9c8b' },
+        { label: 'Held back', value: String(counts.rejected), color: '#75798c' },
+        { label: 'Photographs to check', value: String(counts.photos), color: counts.photos ? '#c0a06a' : '#75798c' }
+      ],
+      grFilters: [
+        { id: 'pending', label: 'Awaiting', n: counts.pending },
+        { id: 'approved', label: 'Published', n: counts.approved },
+        { id: 'rejected', label: 'Held back', n: counts.rejected },
+        { id: 'all', label: 'Everything', n: counts.total }
+      ].map(f => ({
+        label: f.label + (f.n ? '  ' + f.n : ''),
+        bg: filter === f.id ? '#2b2741' : 'transparent',
+        border: filter === f.id ? '#5d5294' : '#3f424d',
+        color: filter === f.id ? '#e9e9ed' : '#9397ab',
+        go: () => this.setState({ grFilter: f.id })
+      })),
+      grEmpty: list.length === 0,
+      grEmptyNote: filter === 'pending'
+        ? 'Nothing awaiting a decision. Submissions from the website land here.'
+        : 'Nothing in this list yet.',
+      grRows: list.map(r => {
+        const photos = r.photos || [];
+        const tag = TAGS[r.status] || TAGS.pending;
+        return {
+          author: r.author || 'Anonymous',
+          meta: [r.stay, r.place].filter(Boolean).join(' \u00b7 ') || 'Stay not given',
+          starText: '\u2605'.repeat(r.rating || 0) + '\u2606'.repeat(5 - (r.rating || 0)),
+          text: r.text,
+          tagLabel: tag.label, tagColor: tag.color, tagBorder: tag.border,
+          consentLabel: r.consent === false ? 'No permission given' : 'Permission given to publish',
+          consentColor: r.consent === false ? '#c07a7a' : '#75798c',
+          hasPhotos: photos.length > 0,
+          photoMeta: photos.length + (photos.length === 1 ? ' photograph' : ' photographs')
+            + ' \u00b7 ' + photos.filter(p => p.status === 'approved').length + ' approved',
+          photos: photos.map(p => ({
+            css: 'url("' + (p.poster || p.url) + '")',
+            isClip: p.kind === 'video',
+            plays: !!(p.kind === 'video' && p.url),
+            url: p.kind === 'video' ? (p.url || '') : '',
+            poster: p.poster || '',
+            clipLabel: p.trimmed ? 'Clip · still only'
+              : p.duration ? Math.round(p.duration) + 's' : 'Clip',
+            ring: p.status === 'approved' ? '#33513f' : p.status === 'rejected' ? '#3f424d' : '#5a4a2e',
+            dim: p.status === 'approved' ? '1' : '0.42',
+            useBg: p.status === 'approved' ? '#233329' : 'transparent',
+            useColor: p.status === 'approved' ? '#7f9c8b' : '#9397ab',
+            use: () => this.grPhoto(r.id, p.id, 'approved'),
+            hold: () => this.grPhoto(r.id, p.id, 'rejected')
+          })),
+          reply: r.reply || '',
+          onReply: e => this.grReply(r.id, e.target.value),
+          isPublished: r.status === 'approved',
+          publishLabel: r.status === 'approved' ? 'Unpublish' : 'Publish',
+          publish: () => this.grStatus(r.id, r.status === 'approved' ? 'pending' : 'approved'),
+          hold: () => this.grStatus(r.id, 'rejected'),
+          remove: () => this.grRemove(r.id)
+        };
+      })
+    };
+  }
+
+  /* The guest book. Read through HSGuests on every render rather than held
+     in state, because it is staff-only: the moment the session ends the gate
+     returns nothing and the view empties with it. */
+  guestBookVals() {
+    const s = this.state, gb = GB();
+    /* Signed out there is nothing to show and nothing to ask for — the gate
+       would refuse every read, once per render, for a view that is not on
+       screen anyway. */
+    if (!gb || !s.user) return { isGuestBook: false, gbRows: [], gbEmpty: true, gbTallies: [] };
+
+    const stats = gb.stats();
+    const rows = gb.search(s.gbQuery);
+    const showRevenue = this.props.showRevenue ?? true;
+    const money = n => showRevenue ? INR(n) : '—';
+    const when = ymd => {
+      if (!ymd) return '—';
+      const d = this.parseDate(ymd);
+      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
+
+    return {
+      isGuestBook: s.view === 'guestbook',
+      gbTallies: [
+        { label: 'People in the book', value: String(stats.total), color: '#e9e9ed' },
+        { label: 'Have stayed before', value: String(stats.returning), color: stats.returning ? '#d2cefd' : '#75798c' },
+        { label: 'Room-nights sold to them', value: String(stats.nights), color: '#e9e9ed' },
+        { label: 'Lifetime value', value: money(stats.spend), color: '#e9e9ed' }
+      ],
+      gbQuery: s.gbQuery,
+      onGbQuery: e => this.setState({ gbQuery: e.target.value }),
+      gbCount: rows.length === stats.total
+        ? stats.total + (stats.total === 1 ? ' guest' : ' guests')
+        : rows.length + ' of ' + stats.total + ' shown',
+      gbEmpty: rows.length === 0,
+      gbEmptyNote: s.gbQuery
+        ? 'Nobody in the book matches that.'
+        : 'The book is empty. It fills itself: every reservation taken on the website, at the desk, or captured from an OTA opens a record for the person who made it.',
+      gbRows: rows.map(p => {
+        const open = s.gbOpen === p.id;
+        return {
+          id: p.id,
+          name: p.name || 'Name not given',
+          contact: [p.email, p.phone].filter(Boolean).join(' · ') || 'No contact details',
+          where: p.country || '',
+          ordinal: p.ordinal,
+          ordinalColor: p.returning ? '#d2cefd' : '#9397ab',
+          ordinalBorder: p.returning ? '#5d5294' : '#3f424d',
+          nightsLine: p.nights + (p.nights === 1 ? ' room-night' : ' room-nights'),
+          spend: money(p.spend),
+          outstanding: p.outstanding ? money(p.outstanding) + ' outstanding' : '',
+          lastLine: 'Last stay ' + when(p.lastStay) + (p.staysCount > 1 ? ' · first ' + when(p.firstStay) : ''),
+          cancelledLine: p.cancelled ? p.cancelled + (p.cancelled === 1 ? ' cancelled booking' : ' cancelled bookings') : '',
+          hasTags: (p.tags || []).length > 0,
+          tags: (p.tags || []).map(t => ({ label: t })),
+          tagText: (p.tags || []).join(', '),
+          onTags: e => { if (this.authorised()) gb.setTags(p.id, e.target.value); },
+          notes: p.notes || '',
+          onNotes: e => { if (this.authorised()) gb.setNotes(p.id, e.target.value); },
+          isOpen: open,
+          toggleLabel: open ? 'Hide stays' : 'Stays (' + p.staysCount + ')',
+          toggle: () => this.setState({ gbOpen: open ? null : p.id }),
+          stays: p.stays.map(st => ({
+            ref: st.ref,
+            when: when(st.checkIn),
+            what: (st.categoryName || st.category) +
+              (st.roomCount > 1 ? ' × ' + st.roomCount : '') + ' · ' +
+              (st.nightsBilled || st.nights) + ((st.nightsBilled || st.nights) === 1 ? ' night' : ' nights') +
+              (st.meal ? ' · ' + st.meal : ''),
+            source: st.source || 'Direct',
+            value: money(st.total),
+            status: st.status === 'departed' ? 'Stayed'
+              : st.status === 'cancelled' ? 'Cancelled' : 'Booked',
+            statusColor: st.status === 'departed' ? C.clean
+              : st.status === 'cancelled' ? '#75798c' : '#d2cefd'
+          })),
+          /* An erasure request: the person goes, the reservations stay. */
+          forget: () => { if (this.authorised()) { gb.remove(p.id); this.setState({ gbOpen: null }); } }
+        };
+      })
+    };
+  }
+
+  today() { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+
+  /* Every content edit writes the draft record and nothing else. The website
+     keeps serving the published record until Publish is pressed. */
+  writeDraft(next) {
+    if (!this.authorised() || !CT()) return;
+    CT().saveDraft(next);
+    this.setState({ content: CT().draft(), dirty: CT().isDirty() });
+  }
+
+  editCopy(section, field, value) {
+    const c = this.state.content;
+    this.writeDraft({ ...c, [section]: { ...c[section], [field]: value } });
+  }
+
+  editFrames(frames) {
+    const c = this.state.content;
+    this.writeDraft({ ...c, gallery: { ...c.gallery, frames } });
+  }
+
+  editFrame(id, field, value) {
+    this.editFrames(this.state.content.gallery.frames.map(f => f.id === id ? { ...f, [field]: value } : f));
+  }
+
+  /* set() sanitises and returns what was actually stored, so state follows the
+     record rather than what this page hoped to put in it. */
+  writeRates(next) {
+    if (!this.authorised() || !R()) return;
+    this.setState({ rates: R().set(next), saved: Date.now() });
+  }
+
+  editCat(id, field, value) {
+    const next = { ...this.state.rates, categories: this.state.rates.categories.map(c => c.id === id ? { ...c, [field]: value } : c) };
+    this.writeRates(next);
+  }
+
+  editMeal(id, field, value) {
+    const list = (this.state.rates.meals || []).map(m => m.id === id ? { ...m, [field]: value } : m);
+    this.writeRates({ ...this.state.rates, meals: list });
+  }
+
+  editExtra(id, field, value) {
+    const list = (this.state.rates.extras || []).map(x => x.id === id ? { ...x, [field]: value } : x);
+    this.writeRates({ ...this.state.rates, extras: list });
+  }
+
+  editTax(field, value) {
+    const tax = { ...(R() ? R().tax(this.state.rates) : {}), [field]: value };
+    this.writeRates({ ...this.state.rates, tax });
+  }
+
+  editSeason(id, field, value) {
+    const next = { ...this.state.rates, seasons: this.state.rates.seasons.map(w => w.id === id ? { ...w, [field]: value } : w) };
+    this.writeRates(next);
+  }
+
+  dateAt(offset) { const d = this.today(); d.setDate(d.getDate() + offset); return d; }
+
+  fmt(offset) { return this.dateAt(offset).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); }
+
+  status(b) {
+    if (this.state.checkedOut[b.id]) return 'departed';
+    if (b.start + b.nights === 0) return 'departing';
+    if (b.start < 0) return 'inhouse';
+    if (b.start === 0) return this.state.checkedIn[b.id] ? 'inhouse' : 'arriving';
+    return 'confirmed';
+  }
+
+  roomRevenue(b) { return this.roomRevenueFor(b, b.nights); }
+
+  /* Priced for an arbitrary number of nights so an early departure can be
+     quoted before it is committed. A stay is never billed at nothing: the
+     night of arrival is charged even when the guest leaves the same day. */
+  roomRevenueFor(b, nights) {
+    const room = ROOMS.find(r => r.n === b.room);
+    const n = Math.max(1, Math.min(b.fullNights || b.nights, nights));
+    if (!room || !R()) return 0;
+    return R().stayTotal(room.c, this.dateAt(b.start), n, 1, this.state.rates);
+  }
+
+  mealRevenueFor(b, nights) {
+    const n = Math.max(1, Math.min(b.fullNights || b.nights, nights));
+    return MEAL_PP[b.meal] * 2 * n;
+  }
+
+  bookingTotal(b) { return this.bookingTotalFor(b, b.nights); }
+
+  bookingTotalFor(b, nights) {
+    return (this.roomRevenueFor(b, nights) + this.mealRevenueFor(b, nights)) * 1.18;
+  }
+
+  /* Rooms this booking could move into: free for every night of the stay,
+     not out of order, and not held by another reservation or a block. */
+  freeRoomsFor(b) {
+    const from = b.start, to = b.start + (b.fullNights || b.nights);
+    const clash = n => BOOKINGS.some(o => o !== b && o.room === n && o.start < to && o.start + o.nights > from)
+      || BLOCKS.some(o => o.room === n && o.start < to && o.start + o.nights > from);
+    return ROOMS.filter(r => r.n === b.room || (!clash(r.n) && this.state.hk[r.n] !== 'ooo'));
+  }
+
+  /* A booking holds a room of its category, but the number only becomes the
+     guest's room when they check in — before that it is provisional and the
+     desk can hand it to whoever walks in first. */
+  /* Local calendar date — toISOString would shift the day for anyone east
+     of UTC and open the form on yesterday. */
+  iso(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  parseDate(s) {
+    const p = String(s || '').split('-');
+    return p.length === 3 ? new Date(+p[0], +p[1] - 1, +p[2]) : new Date(s);
+  }
+
+  /* The desk's own booking form: same rate plan, same store, so a booking
+     taken at the counter behaves exactly like one taken on the website. */
+  nb() {
+    return Object.assign({
+      guest: '', email: '', phone: '', source: 'Direct', category: 'deluxe-view',
+      checkIn: this.iso(this.today()), nights: 2, adults: 2, children: 0,
+      meal: 'Breakfast', method: 'cash', deposit: 'full'
+    }, this.state.nb || {});
+  }
+
+  nbSet(key, value) {
+    const cur = this.nb();
+    this.setState({ nb: Object.assign({}, cur, { [key]: value }) });
+  }
+
+  nbQuote() {
+    const f = this.nb(), rates = this.state.rates;
+    const nights = Math.max(1, +f.nights || 1);
+    const guests = Math.max(1, +f.adults || 1) + Math.max(0, +f.children || 0);
+    const room = R() ? R().stayTotal(f.category, this.parseDate(f.checkIn), nights, 1, rates) : 0;
+    const services = MEAL_PP[f.meal] * guests * nights;
+    const taxObj = R() ? R().taxFor(room, services, nights ? room / nights : 0) : { amount: (room + services) * 0.18 };
+    const total = Math.round(room + services + taxObj.amount);
+    const pay = f.deposit === 'full' ? total : Math.round(total * 0.25);
+    return { nights, guests, room: Math.round(room), services, tax: Math.round(taxObj.amount), total, pay };
+  }
+
+  /* What is actually free in a category for the nights the form is holding.
+     The same function the booking engine asks, reading the same reservations,
+     so the desk and the website can never disagree about a room. */
+  nbAvailability() {
+    const f = this.nb(), B = window.HSBookings;
+    if (!B || !B.availability) return { total: 0, sold: 0, left: 0 };
+    return B.availability(f.category, f.checkIn, Math.max(1, +f.nights || 1));
+  }
+
+  nbSubmit() {
+    if (!this.authorised()) return;
+    const f = this.nb(), q = this.nbQuote(), B = window.HSBookings;
+    if (!B) return;
+    if (!f.guest.trim()) { this.setState({ nbError: 'Enter the guest name' }); return; }
+    /* add() re-checks availability against the record as it stands, so a room
+       sold on the website while this form was open is refused here too. */
+    const r = B.add({
+      guest: f.guest.trim(), email: f.email.trim(), phone: f.phone.trim(),
+      category: f.category, categoryName: catById(f.category).name,
+      checkIn: f.checkIn, nights: q.nights, adults: +f.adults || 1, children: +f.children || 0,
+      meal: f.meal, roomTotal: q.room, serviceTotal: q.services, roomCount: 1,
+      total: q.total, paid: q.pay, method: f.method, source: f.source,
+      notes: 'Taken at the desk' + (f.source === 'Direct' ? '' : ' · ' + f.source)
+    });
+    if (!r.ok) { this.setState({ nbError: r.error }); return; }
+    this.setState({ nb: null, nbOpen: false, nbError: '', view: 'live' });
+  }
+
+  chargesFor(b) { return (this.state.charges || {})[b.id] || []; }
+
+  chargesTotal(b) { return this.chargesFor(b).reduce((a, c) => a + c.amount, 0); }
+
+  /* Anything the guest uses during the stay goes on the folio here — priced
+     from the same extras table the booking engine sells from. */
+  postCharge(b) {
+    const id = (this.state.chargePick || {})[b.id];
+    const x = (R() ? R().extras(this.state.rates) : []).filter(e => e.id === id)[0];
+    if (!x) return;
+    const amount = x.per === 'night' ? x.price * b.nights : x.price;
+    this.setState(s => ({
+      charges: { ...(s.charges || {}), [b.id]: [...((s.charges || {})[b.id] || []), { label: x.name, amount }] },
+      chargePick: { ...(s.chargePick || {}), [b.id]: '' }
+    }));
+  }
+
+  isAssigned(b) {
+    return !!(this.state.checkedIn[b.id] || this.state.checkedOut[b.id] || b.start < 0);
+  }
+
+  moveRoom(b, room) {
+    if (!room || room === b.room) return;
+    const prev = b.room, live = this.status(b) === 'inhouse';
+    b.room = room;
+    this.setState(x => ({
+      rev: (x.rev || 0) + 1,
+      hk: { ...x.hk, [prev]: 'dirty', ...(live ? { [room]: 'occupied' } : {}) }
+    }));
+  }
+
+  /* Shortens a stay in place, keeping the nights originally sold on the
+     record so the folio can say what was booked against what was used. */
+  departEarly(b, nightsUsed) {
+    const full = b.fullNights || b.nights;
+    const n = Math.max(1, Math.min(full, nightsUsed));
+    b.fullNights = full;
+    b.nights = n;
+    b.earlyOut = n < full;
+    this.setState(x => ({
+      rev: (x.rev || 0) + 1,
+      checkedOut: { ...x.checkedOut, [b.id]: true },
+      hk: { ...x.hk, [b.room]: 'dirty' },
+      settle: null,
+      detail: null
+    }));
+  }
+
+  setStayNights(b, n) {
+    const full = b.fullNights || b.nights;
+    this.setState(x => ({ stay: { ...(x.stay || {}), [b.id]: Math.max(1, Math.min(full, n)) } }));
+  }
+
+  /* A room the guest has checked out of is free from today on, whether they
+     left on the last night or walked out early.
+
+     Reservations taken through the engine count here too — that is the whole
+     point of the number. One with a room number joins the set; one still
+     waiting on an allocation is counted by the rooms it bought, because a
+     room it will be given is a room nobody else can have. */
+  occupiedOn(day) {
+    const rooms = new Set();
+    BOOKINGS.forEach(b => {
+      if (day >= 0 && this.state.checkedOut[b.id]) return;
+      if (day >= b.start && day < b.start + b.nights) rooms.add(b.room);
+    });
+    BLOCKS.forEach(b => { if (day >= b.start && day < b.start + b.nights) rooms.add(b.room); });
+
+    let unassigned = 0;
+    (this.state.live || []).forEach(b => {
+      if (b.status === 'cancelled') return;
+      const start = Math.round((this.parseDate(b.checkIn).getTime() - this.today().getTime()) / 86400000);
+      const nights = Math.max(1, b.nightsBilled || b.nights || 1);
+      if (day < start || day >= start + nights) return;
+      if (b.status === 'departed' && day >= 0) return;
+      if (b.room) rooms.add(b.room);
+      else unassigned += Math.max(1, b.roomCount || 1);
+    });
+    return rooms.size + unassigned;
+  }
+
+  open(b) { this.setState({ detail: b.id }); }
+
+  contentVals() {
+    const s = this.state;
+    const c = s.content || (CT() ? CT().DEFAULTS : null);
+    if (!c) return { isContent: false };
+
+    const sec = s.section;
+    const sub = c[sec];
+    const gal = c.gallery;
+    const isGallery = sec === 'gallery';
+    const isHome = sec === 'home';
+    const isBanner = sec === 'banner';
+    const featuredCount = gal.frames.filter(f => f.featured).length;
+    const bn = c.banner || {};
+    const bnImage = String(bn.image || '');
+    const bnUploaded = bnImage.indexOf('data:') === 0;
+
+    const pv = isBanner
+      ? {
+          bg: '#1B241C', fg: '#F6F3EA', kickerColor: '#C6AC7C', ledeColor: '#D9D3C4',
+          hasImage: !!bnImage, image: bnImage,
+          kicker: bn.kicker, title: bn.title || (bnImage ? '' : 'Add an image to show the banner'), lede: bn.text,
+          hasCta: !!bn.ctaLabel, cta: bn.ctaLabel,
+          hasIntro: false, introKicker: '', introTitle: '', introBody: '',
+          hasFrames: false, framesLabel: '', frames: []
+        }
+      : isHome
+      ? {
+          bg: '#20291F', fg: '#F6F3EA', kickerColor: '#DCD3BE', ledeColor: '#E4DECF',
+          kicker: sub.heroKicker, title: sub.heroTitle, lede: sub.heroLede,
+          hasCta: true, cta: sub.heroCta,
+          hasIntro: true, introKicker: sub.introKicker, introTitle: sub.introTitle, introBody: sub.introBody,
+          hasFrames: featuredCount > 0,
+          framesLabel: featuredCount + (featuredCount === 1 ? ' featured frame' : ' featured frames'),
+          frames: gal.frames.filter(f => f.featured).slice(0, 6)
+            .map(f => ({ slotId: 'hs-gal-' + f.id, src: f.src || '', caption: f.caption, ratio: f.ratio }))
+        }
+      : {
+          bg: sec === 'dining' ? '#20291F' : '#F2EEE4',
+          fg: sec === 'dining' ? '#F6F3EA' : '#2C3A2E',
+          kickerColor: sec === 'dining' ? '#C4A97A' : '#8A6E42',
+          ledeColor: sec === 'dining' ? '#D9D3C4' : '#4A4A40',
+          kicker: sub.kicker, title: sub.title, lede: sub.lede,
+          hasCta: false, cta: '',
+          hasIntro: false, introKicker: '', introTitle: '', introBody: '',
+          hasFrames: isGallery,
+          framesLabel: gal.frames.length + (gal.frames.length === 1 ? ' frame' : ' frames'),
+          frames: isGallery
+            ? gal.frames.map(f => ({ slotId: 'hs-gal-' + f.id, src: f.src || '', caption: f.caption, ratio: f.ratio }))
+            : []
+        };
+
+    return {
+      isContent: s.view === 'content',
+      isGallery,
+      isBanner,
+      bnHasImage: !!bnImage,
+      bnNoImage: !bnImage,
+      bnImage,
+      bnPath: bnUploaded ? '' : bnImage,
+      bnUploadLabel: s.bnBusy ? 'Uploading…' : bnImage ? 'Replace image' : 'Upload image',
+      bnNote: s.bnErr ? s.bnErr
+        : bnUploaded ? 'Uploaded image · ' + Math.round(bnImage.length * 0.75 / 1024) + ' KB'
+        : bnImage ? 'Using the image at this path'
+        : 'No image yet, so the banner is hidden on the website',
+      bnOnLabel: bn.on === false ? 'Hidden on website' : 'Showing on website',
+      bnOnBg: bn.on === false ? 'transparent' : '#2b2741',
+      bnOnBorder: bn.on === false ? '#3f424d' : '#5d5294',
+      bnOnColor: bn.on === false ? '#9397ab' : '#d2cefd',
+      bnToggle: () => this.editCopy('banner', 'on', bn.on === false),
+      bnRemove: () => this.editCopy('banner', 'image', ''),
+      bnOnPath: e => this.editCopy('banner', 'image', e.target.value.trim()),
+      bnUpload: e => {
+        const file = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (!file) return;
+        this.setState({ bnBusy: true, bnErr: '' });
+        shrinkImage(file)
+          .then(url => { this.setState({ bnBusy: false }); this.editCopy('banner', 'image', url); })
+          .catch(err => this.setState({ bnBusy: false, bnErr: err.message }));
+      },
+      sections: SECTION_DEFS.map(d => ({
+        label: d.label,
+        bg: sec === d.id ? '#2b2741' : 'transparent',
+        border: sec === d.id ? '#5d5294' : '#292b31',
+        color: sec === d.id ? '#e9e9ed' : '#9397ab',
+        dot: d.id === 'gallery' ? String(gal.frames.length) : '',
+        dotColor: sec === d.id ? '#b5abfc' : '#9397ab',
+        go: () => this.setState({ section: d.id })
+      })),
+      panelTitle: (SECTION_DEFS.find(d => d.id === sec) || {}).label || '',
+      panelMeta: isHome ? 'Hero and intro' : isBanner ? 'Promotion on the home page' : 'Page header',
+      fields: FIELD_DEFS[sec].map(f => ({
+        label: f.label, hint: f.hint, value: sub[f.key] || '',
+        long: !!f.long, short: !f.long,
+        onEdit: e => this.editCopy(sec, f.key, e.target.value)
+      })),
+      groupOpts: gal.groups,
+      frameMeta: gal.frames.length + ' total · ' + featuredCount + ' featured',
+      frameRows: gal.frames.map(f => ({
+        slotId: 'hs-gal-' + f.id,
+        src: f.src || '',
+        caption: f.caption, group: f.group, season: f.season,
+        featLabel: f.featured ? 'On home' : 'Feature',
+        featBg: f.featured ? '#2b2741' : 'transparent',
+        featBorder: f.featured ? '#5d5294' : '#3f424d',
+        featColor: f.featured ? '#d2cefd' : '#9397ab',
+        onCaption: e => this.editFrame(f.id, 'caption', e.target.value),
+        onGroup: e => this.editFrame(f.id, 'group', e.target.value),
+        onSeason: e => this.editFrame(f.id, 'season', e.target.value),
+        toggleFeatured: () => this.editFrame(f.id, 'featured', !f.featured),
+        remove: () => this.editFrames(gal.frames.filter(x => x.id !== f.id))
+      })),
+      addFrame: () => {
+        const id = CT() ? CT().newFrameId(c) : 'g' + (gal.frames.length + 1);
+        this.editFrames(gal.frames.concat([{
+          id, caption: 'Untitled frame', group: gal.groups[0], season: '', ratio: '1 / 1', featured: false
+        }]));
+      },
+      pubNote: s.dirty ? 'Draft has unpublished changes' : 'Live — draft matches the published site',
+      pubSub: s.dirty
+        ? 'The website is still serving the last published version'
+        : 'Edits here save to the draft as you type',
+      pubColor: s.dirty ? '#e0c98f' : '#8fc4a6',
+      pubBorder: s.dirty ? '#5b4f2c' : '#292b31',
+      publishLabel: s.dirty ? 'Publish to site' : 'Published',
+      publishBg: s.dirty ? '#2b2741' : 'transparent',
+      /* The only two calls in the codebase that change what a visitor sees. */
+      publish: () => {
+        if (!this.authorised() || !CT()) return;
+        CT().publish();
+        this.setState({ dirty: CT().isDirty() });
+      },
+      discard: () => {
+        if (!this.authorised() || !CT()) return;
+        CT().discard();
+        this.setState({ content: CT().draft(), dirty: CT().isDirty() });
+      },
+      previewKey: 'pv-' + sec,
+      pv
+    };
+  }
+
+  authVals() {
+    const s = this.state, A = window.HSAuth;
+    return {
+      locked: !s.user,
+      /* The dashboard itself hangs off this. Signed out, none of it renders. */
+      unlocked: !!s.user,
+      signInNote: s.expired
+        ? 'That session timed out. Sign in again to carry on.'
+        : 'One account operates this property. It is checked on the server — this page never sees the password or the key that signs your session.',
+      email: s.email,
+      password: s.password,
+      authError: s.authError,
+      busy: !!s.busy,
+      submitLabel: s.busy ? 'Signing in\u2026' : 'Sign in',
+      fieldBorder: s.authError ? '#5c3a45' : '#3f424d',
+      onEmail: e => this.setState({ email: e.target.value, authError: '' }),
+      onPassword: e => this.setState({ password: e.target.value, authError: '' }),
+      onSubmit: this.submitAuth,
+      onSignOut: this.signOut,
+      ...this.settingsVals(),
+      userName: s.user ? s.user.name : '',
+      userTitle: s.user ? s.user.title : '',
+      userInitials: A && s.user ? A.initials(s.user) : ''
+    };
+  }
+
+  /* Settings. The authorisation code is never shown back, only asked for. */
+  settingsVals() {
+    const s = this.state, A = window.HSAuth;
+    const changedAt = A && A.passwordChangedAt ? A.passwordChangedAt() : null;
+    return {
+      pwCode: s.pwCode, pwNew: s.pwNew, pwConfirm: s.pwConfirm,
+      pwError: s.pwError, pwDone: s.pwDone, pwBusy: !!s.pwBusy,
+      pwLabel: s.pwBusy ? 'Changing\u2026' : 'Change password',
+      pwBorder: s.pwError ? '#5c3a45' : '#3f424d',
+      pwStatus: changedAt
+        ? 'Last changed ' + new Date(changedAt).toLocaleString()
+        : 'Still using the password this build shipped with.',
+      acctEmail: s.user ? s.user.email : '',
+      acctTitle: s.user ? s.user.title : '',
+      sessionNote: 'Session ends when the tab closes',
+      onPwCode: e => this.setState({ pwCode: e.target.value, pwError: '', pwDone: '' }),
+      onPwNew: e => this.setState({ pwNew: e.target.value, pwError: '', pwDone: '' }),
+      onPwConfirm: e => this.setState({ pwConfirm: e.target.value, pwError: '', pwDone: '' }),
+      onChangePw: this.changePw
+    };
+  }
+
+  renderVals() {
+    const s = this.state, q = s.query.trim().toLowerCase();
+    const showRevenue = this.props.showRevenue ?? true;
+
+    const occToday = this.occupiedOn(0);
+    const sellable = ROOMS.length - 1;
+    const revenueToday = BOOKINGS.filter(b => 0 >= b.start && 0 < b.start + b.nights && !s.checkedOut[b.id])
+      .reduce((t, b) => t + (R() ? R().rateFor(ROOMS.find(r => r.n === b.room).c, this.dateAt(0), s.rates) : 0), 0);
+    const adr = occToday ? revenueToday / occToday : 0;
+
+    const arrivalsAll = BOOKINGS.filter(b => b.start === 0);
+    const departuresAll = BOOKINGS.filter(b => b.start + b.nights === 0);
+
+    const kpis = [
+      { label: 'Occupancy tonight', value: Math.round((occToday / sellable) * 100) + '%', delta: occToday + ' of ' + sellable + ' sellable', deltaColor: '#75798c' },
+      { label: 'Arrivals', value: String(arrivalsAll.length), delta: Object.keys(s.checkedIn).length + ' checked in', deltaColor: '#75798c' },
+      { label: 'Departures', value: String(departuresAll.length), delta: Object.keys(s.checkedOut).length + ' settled', deltaColor: '#75798c' },
+      { label: 'In house', value: String(BOOKINGS.filter(b => this.status(b) === 'inhouse').length), delta: 'incl. checked-in arrivals', deltaColor: '#75798c' },
+      { label: 'ADR', value: showRevenue ? INR(adr) : '—', delta: 'room revenue ÷ rooms sold', deltaColor: '#75798c' }
+    ];
+
+    const grCounts = G() ? G().counts() : { pending: 0, approved: 0, rejected: 0, photos: 0, total: 0 };
+    const gbStats = (s.user && GB()) ? GB().stats() : { total: 0, returning: 0, nights: 0, spend: 0, outstanding: 0 };
+
+    /* Reservations that came from the booking engine. The desk allocates a
+       room from the category the guest bought; anything already given to a
+       seeded booking or another reservation is off the list. */
+    const B = window.HSBookings;
+    const live = s.live || [];
+    const takenRooms = {};
+    BOOKINGS.forEach(b => { takenRooms[b.room] = true; });
+    /* A guest who has departed releases the room back to the desk. */
+    live.forEach(b => { if (b.room && b.status !== 'departed') takenRooms[b.room] = true; });
+
+    const liveRows = live.map(b => {
+      /* Who this is, not just what they booked — so the desk greets a third
+         stay as a third stay rather than as a stranger. */
+      const who = (s.user && GB()) ? GB().historyFor(b) : null;
+      const used = b.nightsBilled || b.nights;
+      const balance = Math.max(0, (b.total || 0) - (b.paid || 0));
+      const refund = b.refund || 0;
+      const out = b.status === 'departed';
+      const free = ROOMS.filter(r => r.c === b.category && (!takenRooms[r.n] || r.n === b.room));
+      /* Folio the shortened stay would produce, shown before it is committed. */
+      const q = !out && B && B.quote ? B.quote(b.ref, used) : null;
+      const preview = q && q.short && showRevenue
+        ? 'Checking out now bills ' + INR(q.total) +
+          (q.refund ? ' · ' + INR(q.refund) + ' back to the guest'
+            : q.due ? ' · ' + INR(q.due) + ' still to collect' : '')
+        : '';
+      return {
+        ref: b.ref, guest: b.guest, room: b.room || '', nights: b.nights, nightsBilled: used,
+        stay: b.categoryName + ' · ' + b.nights + (b.nights === 1 ? ' night' : ' nights') +
+          ' from ' + b.checkIn + ' · ' + b.adults + ' adults' + (b.children ? ' + ' + b.children : ''),
+        contact: [b.email, b.phone].filter(Boolean).join(' · ') || 'No contact given',
+        returning: !!(who && who.returning),
+        historyLabel: who && who.returning
+          ? who.ordinal + ' · ' + who.nights + ' room-nights with us'
+          : '',
+        openProfile: () => { if (who) this.setState({ view: 'guestbook', gbQuery: who.name, gbOpen: who.id }); },
+        total: showRevenue ? INR(b.total) : '—',
+        paidLine: showRevenue
+          ? (refund ? INR(b.paid) + ' paid · ' + INR(refund) + ' to refund'
+            : balance ? INR(b.paid) + ' paid · ' + INR(balance) + ' on arrival'
+            : 'Paid in full · ' + b.method)
+          : b.method,
+        paidColor: refund || balance ? C.dirty : C.clean,
+        statusLabel: b.status === 'departed' ? (b.earlyOut ? 'Left early' : 'Departed')
+          : b.room ? 'Room assigned' : 'Needs a room',
+        statusColor: b.status === 'departed' ? '#75798c' : b.room ? '#d2cefd' : '#c0a06a',
+        edge: b.status === 'departed' ? '#3f424d' : b.room ? '#5d5294' : '#5a4a2c',
+        note: b.source + ' · ' + (b.meal || 'no meal plan') +
+          (b.earlyOut ? ' · folio rebuilt for ' + used + ' of ' + b.nights + ' nights' : ''),
+        roomOptions: free.map(r => ({ value: r.n, label: r.n + ' · ' + catById(r.c).name })),
+        departed: out,
+        /* Nothing to check out of until the guest is in a room. */
+        inHouse: !!b.room && (out || b.checkedIn === true),
+        canCheckIn: !out && !!b.room && b.checkedIn !== true,
+        onCheckIn: () => { if (B && b.room) B.update(b.ref, { checkedIn: true }); },
+        preview,
+        previewColor: q && q.refund ? C.dirty : '#c0a06a',
+        departLabel: out ? 'Checked out' : 'Check out',
+        departBorder: out ? '#292b31' : '#5a4a2c',
+        departColor: out ? '#75798c' : '#c0a06a',
+        departCursor: out ? 'default' : 'pointer',
+        onRoom: e => { if (!out && B) B.assignRoom(b.ref, e.target.value || null); },
+        onNights: e => { if (!out && B) B.update(b.ref, { nightsBilled: Math.max(1, Math.min(b.nights, +e.target.value || 1)) }); },
+        departEarly: () => { if (!out && B) B.departEarly(b.ref, b.nightsBilled || b.nights); }
+      };
+    });
+    const needsRoom = live.filter(b => !b.room && b.status !== 'departed').length;
+
+    /* Desk booking form. */
+    const nbF = this.nb(), nbQ = this.nbQuote();
+    const nbAv = this.nbAvailability();
+    const nbVals = {
+      open: !!s.nbOpen,
+      error: s.nbError || '',
+      /* Rooms left is inventory from the rate plan minus what is actually
+         booked for these nights — never a stored number. */
+      availLine: nbAv.left
+        ? nbAv.left + ' of ' + nbAv.total + ' ' + catById(nbF.category).name + ' free for those nights'
+        : catById(nbF.category).name + ' is fully booked for those nights',
+      availColor: nbAv.left === 0 ? C.dirty : nbAv.left <= 2 ? '#c0a06a' : C.clean,
+      soldOut: nbAv.left === 0,
+      toggle: () => this.setState({ nbOpen: !s.nbOpen, nbError: '' }),
+      fields: nbF,
+      sourceOptions: SOURCES.map(x => ({ value: x, label: x })),
+      catOptions: (s.rates.categories || []).map(c => ({ value: c.id, label: c.name + ' · ' + INR(c.base) + ' base' })),
+      mealOptions: Object.keys(MEAL_PP).map(m => ({ value: m, label: m + (MEAL_PP[m] ? ' · ' + INR(MEAL_PP[m]) + ' pp/night' : '') })),
+      setGuest: e => this.nbSet('guest', e.target.value),
+      setEmail: e => this.nbSet('email', e.target.value),
+      setPhone: e => this.nbSet('phone', e.target.value),
+      setSource: e => this.nbSet('source', e.target.value),
+      setCategory: e => this.nbSet('category', e.target.value),
+      setMeal: e => this.nbSet('meal', e.target.value),
+      setCheckIn: e => this.nbSet('checkIn', e.target.value),
+      setNights: e => this.nbSet('nights', Math.max(1, Math.min(30, +e.target.value || 1))),
+      setAdults: e => this.nbSet('adults', Math.max(1, Math.min(8, +e.target.value || 1))),
+      setChildren: e => this.nbSet('children', Math.max(0, Math.min(6, +e.target.value || 0))),
+      fullBorder: nbF.deposit === 'full' ? '#5d5294' : '#3f424d',
+      fullColor: nbF.deposit === 'full' ? '#d2cefd' : '#9397ab',
+      partBorder: nbF.deposit === 'full' ? '#3f424d' : '#5d5294',
+      partColor: nbF.deposit === 'full' ? '#9397ab' : '#d2cefd',
+      cashBorder: nbF.method === 'cash' ? '#5d5294' : '#3f424d',
+      cashColor: nbF.method === 'cash' ? '#d2cefd' : '#9397ab',
+      onlineBorder: nbF.method === 'cash' ? '#3f424d' : '#5d5294',
+      onlineColor: nbF.method === 'cash' ? '#9397ab' : '#d2cefd',
+      lines: [
+        { label: catById(nbF.category).name + ' × ' + nbQ.nights + (nbQ.nights === 1 ? ' night' : ' nights'), value: INR(nbQ.room) },
+        { label: nbF.meal + ' · ' + nbQ.guests + ' guests', value: INR(nbQ.services) },
+        { label: 'GST', value: INR(nbQ.tax) }
+      ],
+      total: INR(nbQ.total),
+      payLabel: nbF.deposit === 'full' ? 'Paying in full now' : 'Deposit now, balance on arrival',
+      payValue: INR(nbQ.pay),
+      isFull: nbF.deposit === 'full',
+      isCash: nbF.method === 'cash',
+      setFull: () => this.nbSet('deposit', 'full'),
+      setDeposit: () => this.nbSet('deposit', 'part'),
+      setCash: () => this.nbSet('method', 'cash'),
+      setOnline: () => this.nbSet('method', 'online'),
+      submit: () => this.nbSubmit()
+    };
+
+    /* Owner's revenue: what the site and the desk actually took, beside the
+       operational figures the dashboard already computes. */
+    const takenTotal = live.reduce((a, b) => a + (b.total || 0), 0);
+    const collected = live.reduce((a, b) => a + (b.paid || 0), 0);
+    const refunds = live.reduce((a, b) => a + (b.refund || 0), 0);
+    /* Net of refunds, so the split sums to the Collected figure above it. */
+    const cash = live.filter(b => b.method === 'cash')
+      .reduce((a, b) => a + Math.max(0, (b.paid || 0) - (b.refund || 0)), 0);
+    const online = Math.max(0, collected - refunds - cash);
+    const deskCount = live.filter(b => b.source === 'Desk').length;
+    const maxSplit = Math.max(1, online, cash);
+    const revKpis = [
+      { label: 'Booked value', value: INR(takenTotal), note: live.length + ' reservations through the engine' },
+      { label: 'Collected', value: INR(collected - refunds), note: refunds
+        ? INR(refunds) + ' refunded on early departures'
+        : INR(Math.max(0, takenTotal - collected)) + ' due on arrival' },
+      { label: 'Rooms on the books', value: String(live.reduce((a, b) => a + (b.nightsBilled || b.nights), 0)), note: 'room nights sold' },
+      { label: 'ADR', value: INR(adr), note: 'from tonight\'s in-house rooms' }
+    ];
+    const revSplit = [
+      { label: 'Online payment', value: INR(online), pct: Math.round((online / maxSplit) * 100) + '%', fill: '#5d5294' },
+      { label: 'Cash at the desk', value: INR(cash), pct: Math.round((cash / maxSplit) * 100) + '%', fill: '#c0a06a' }
+    ];
+    const revRows = live.map(b => ({
+      ref: b.ref, guest: b.guest,
+      when: new Date(b.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+      method: b.method === 'cash' ? 'Cash · desk' : 'Razorpay · online',
+      paid: INR(b.paid),
+      balance: b.refund ? '−' + INR(b.refund) : INR(Math.max(0, (b.total || 0) - (b.paid || 0))),
+      balanceColor: b.refund || (b.total || 0) - (b.paid || 0) > 0 ? C.dirty : '#75798c'
+    }));
+
+    const role = (s.user && s.user.role) || 'desk';
+
+    const navDefs = [
+      { id: 'overview', label: 'Overview', badge: '' },
+      { id: 'calendar', label: 'Calendar', badge: String(BOOKINGS.length) },
+      { id: 'reservations', label: 'Reservations', badge: String(BOOKINGS.length) },
+      { id: 'guests', label: 'Guests', badge: String(BOOKINGS.filter(b => ['inhouse', 'departing'].indexOf(this.status(b)) > -1 && this.isAssigned(b)).length) },
+      { id: 'live', label: 'New bookings', badge: needsRoom ? String(needsRoom) : (live.length ? String(live.length) : '') },
+      { id: 'guestbook', label: 'Guest book', badge: gbStats.total ? String(gbStats.total) : '' },
+      { id: 'rates', label: 'Rates', badge: String((s.rates.categories || []).length) },
+      { id: 'content', label: 'Content', badge: s.dirty ? 'Draft' : '' },
+      { id: 'reviews', label: 'Guest reviews', badge: grCounts.pending ? String(grCounts.pending) : '' }
+    ].concat(role === 'owner' ? [{ id: 'revenue', label: 'Revenue', badge: '' }] : [])
+     .concat([{ id: 'settings', label: 'Settings', badge: '' }]);
+    const navItems = navDefs.map(n => ({
+      label: n.label, badge: n.badge,
+      bg: s.view === n.id ? '#2b2741' : 'transparent',
+      border: s.view === n.id ? '#5d5294' : 'transparent',
+      color: s.view === n.id ? '#e9e9ed' : '#9397ab',
+      go: () => this.setState({ view: n.id })
+    }));
+
+    /* Three states on the board: green is in the room now, red has left,
+       grey is booked but not yet in a room. */
+    const tag = st => ({
+      inhouse: { label: 'In house', color: '#7fc79b', bg: '#1e3229', border: '#3f7a5a' },
+      departing: { label: 'Due out', color: '#7fc79b', bg: '#1e3229', border: '#3f7a5a' },
+      arriving: { label: 'Due in', color: '#9397ab', bg: 'transparent', border: '#3f424d' },
+      confirmed: { label: 'Confirmed', color: '#9397ab', bg: 'transparent', border: '#3f424d' },
+      departed: { label: 'Departed', color: '#e08b8b', bg: '#35222a', border: '#8a4a52' }
+    }[st]);
+
+    const arrivals = arrivalsAll.map(b => {
+      const inn = !!s.checkedIn[b.id], t = tag(this.status(b));
+      return {
+        guest: b.guest, meta: b.room + ' · ' + catOf(b.room).name + ' · ' + b.nights + 'n · ' + b.src,
+        tag: t.label, tagColor: t.color, tagBg: t.bg, tagBorder: t.border,
+        btn: inn ? 'Keyed' : 'Check in', done: inn,
+        btnBorder: inn ? '#292b31' : '#5d5294', btnColor: inn ? '#75798c' : '#d2cefd',
+        /* Opens the reservation so the desk confirms the room and the folio
+           before the key is cut, rather than checking in blind from a list. */
+        act: () => inn || this.open(b)
+      };
+    });
+
+    const departures = departuresAll.map(b => {
+      const out = !!s.checkedOut[b.id];
+      return {
+        guest: b.guest, meta: b.room + ' · ' + b.nights + ' nights · ' + b.src,
+        folio: showRevenue ? INR(this.bookingTotal(b)) : '—',
+        btn: out ? 'Settled' : 'Check out', done: out,
+        btnBorder: out ? '#292b31' : '#5d5294', btnColor: out ? '#75798c' : '#d2cefd',
+        /* Check-out settles a folio, so it goes through the reservation
+           where the balance can be seen and taken. */
+        act: () => out || this.open(b)
+      };
+    });
+
+    const occRaw = Array.from({ length: DAYS }, (_, i) => this.occupiedOn(i) / sellable);
+    const peak = Math.max(...occRaw);
+    const occBars = occRaw.map((v, i) => {
+      const d = this.dateAt(i), we = d.getDay() === 0 || d.getDay() === 6;
+      return {
+        pctLabel: Math.round(v * 100), h: Math.max(3, Math.round(v * 68)) + 'px',
+        fill: i === 0 ? '#968ae0' : we ? '#5d5294' : '#3f424d',
+        day: d.toLocaleDateString('en-GB', { weekday: 'narrow' }), dayColor: we ? '#9397ab' : '#75798c'
+      };
+    });
+
+    const days = Array.from({ length: DAYS }, (_, i) => {
+      const d = this.dateAt(i), we = d.getDay() === 0 || d.getDay() === 6;
+      return {
+        dow: d.toLocaleDateString('en-GB', { weekday: 'short' }), num: d.getDate(),
+        color: i === 0 ? '#d2cefd' : '#e9e9ed',
+        bg: i === 0 ? '#2b2741' : we ? '#1f2130' : 'transparent'
+      };
+    });
+
+    const barStyle = st => ({
+      inhouse: { bg: '#24422f', border: '#4f8f68', color: '#ddf1e4' },
+      departing: { bg: '#24422f', border: '#4f8f68', color: '#ddf1e4' },
+      arriving: { bg: '#292b31', border: '#595d6c', color: '#cfd3e5' },
+      confirmed: { bg: '#292b31', border: '#595d6c', color: '#cfd3e5' },
+      departed: { bg: '#3a2630', border: '#8a4a52', color: '#f0cfcf' }
+    }[st]);
+
+    /* Bookings taken at the desk or through the engine live in the shared
+       store (checkIn as an ISO date, not a day offset). They join the grid
+       too: assigned ones sit on their room row, unassigned ones get their
+       own "booked, no room yet" row under their category. */
+    const liveB = s.live || [];
+    const liveOffset = ci => Math.round((this.parseDate(ci).getTime() - this.today().getTime()) / 86400000);
+    const calCells = () => Array.from({ length: DAYS }, (_, i) => {
+      const d = this.dateAt(i), we = d.getDay() === 0 || d.getDay() === 6;
+      return { bg: i === 0 ? 'rgba(145,132,217,0.06)' : we ? '#1f2130' : 'transparent' };
+    });
+    const liveBar = b => {
+      const start = liveOffset(b.checkIn), nights = Math.max(1, b.nights || 1);
+      if (start + nights < 0 || start >= DAYS) return null;
+      const from = Math.max(0, start), to = Math.max(from + 0.45, Math.min(DAYS, start + nights));
+      const st = barStyle(b.checkedIn === true ? 'inhouse' : 'confirmed');
+      return {
+        label: b.guest + (b.roomCount > 1 ? ' \u00d7' + b.roomCount : ''),
+        left: (from / DAYS * 100).toFixed(4) + '%', width: ((to - from) / DAYS * 100).toFixed(4) + '%',
+        bg: st.bg, border: st.border, color: st.color, open: () => this.setState({ view: 'live' })
+      };
+    };
+
+    /* Only rows carrying something in the visible fortnight are drawn —
+       empty rooms left the grid as a field of blank rules. */
+    let rows = ROOMS.map((r, ri) => {
+      const bars = BOOKINGS.filter(b => b.room === r.n && b.start + b.nights >= 0 && b.start < DAYS).map(b => {
+        const from = Math.max(0, b.start);
+        const to = Math.max(from + 0.45, Math.min(DAYS, b.start + b.nights));
+        const st = barStyle(this.status(b));
+        return {
+          label: b.guest, left: (from / DAYS * 100).toFixed(4) + '%', width: ((to - from) / DAYS * 100).toFixed(4) + '%',
+          bg: st.bg, border: st.border, color: st.color, open: () => this.open(b)
+        };
+      });
+      liveB.filter(lb => lb.room === r.n).forEach(lb => { const bar = liveBar(lb); if (bar) bars.push(bar); });
+      BLOCKS.filter(b => b.room === r.n).forEach(b => {
+        const from = Math.max(0, b.start), to = Math.min(DAYS, b.start + b.nights);
+        bars.push({
+          label: b.label, left: (from / DAYS * 100).toFixed(4) + '%', width: ((to - from) / DAYS * 100).toFixed(4) + '%',
+          bg: 'repeating-linear-gradient(45deg, #292b31 0 6px, #202230 6px 12px)', border: '#3f424d', color: '#9397ab',
+          open: () => {}
+        });
+      });
+      /* Room numbers stay off the calendar — a row is a unit of that
+         category, and which physical room it becomes is settled at
+         check-in. The sub-line carries the state, not the number. */
+      return {
+        number: r.n, sn: String(ri + 1), category: catById(r.c).name, bars,
+        cells: Array.from({ length: DAYS }, (_, i) => {
+          const d = this.dateAt(i), we = d.getDay() === 0 || d.getDay() === 6;
+          return { bg: i === 0 ? 'rgba(145,132,217,0.06)' : we ? '#1f2130' : 'transparent' };
+        })
+      };
+    }).filter(row => row.bars.length);
+
+    /* Unassigned live bookings — registered or engine reservations with no
+       room number yet — each get a row under their category so the desk can
+       see them coming before a room is handed over at check-in. */
+    const calLiveRows = liveB.filter(lb => !lb.room).map(lb => {
+      const bar = liveBar(lb);
+      if (!bar) return null;
+      const cat = lb.categoryName || (catById(lb.category) || {}).name || '';
+      return { number: '\u2014', sn: '+', category: cat + ' \u00b7 room at check-in', bars: [bar], cells: calCells() };
+    }).filter(Boolean);
+    rows = rows.concat(calLiveRows);
+
+    const resRows = BOOKINGS
+      .filter(b => !q || b.guest.toLowerCase().includes(q) || b.room.includes(q) || b.id.toLowerCase().includes(q))
+      .slice().sort((a, b) => a.start - b.start)
+      .map(b => {
+        const t = tag(this.status(b));
+        return {
+          ref: b.id, guest: b.guest,
+          /* The physical room is only named once the guest has checked in. */
+          room: this.isAssigned(b) ? b.room + ' · ' + catOf(b.room).name : catOf(b.room).name + ' · room at check-in',
+          dates: this.fmt(b.start) + ' – ' + this.fmt(b.start + b.nights), source: b.src,
+          status: t.label, tagColor: t.color, tagBg: t.bg, tagBorder: t.border,
+          total: showRevenue ? INR(this.bookingTotal(b)) : '—',
+          open: () => this.open(b)
+        };
+      });
+
+    /* Who is in the house, which room they are in and where that room is —
+       plus the folio charges the desk posts during the stay. */
+    const extrasList = (R() ? R().extras(s.rates) : []).map(x => ({
+      value: x.id, label: x.name + ' · ' + INR(x.price) + (x.per === 'night' ? ' a night' : '')
+    }));
+    const inHouseRows = BOOKINGS
+      .filter(b => ['inhouse', 'departing'].indexOf(this.status(b)) > -1 && this.isAssigned(b))
+      .slice().sort((a, b) => (a.room < b.room ? -1 : 1))
+      .map(b => {
+        const room = ROOMS.find(r => r.n === b.room);
+        const cat = catOf(b.room);
+        const charges = this.chargesFor(b);
+        const posted = this.chargesTotal(b);
+        return {
+          id: b.id, guest: b.guest, room: b.room, category: cat.name,
+          where: (room && WHERE[room.c]) || 'Main house',
+          stay: this.fmt(b.start) + ' – ' + this.fmt(b.start + b.nights) + ' · ' + b.meal,
+          statusLabel: this.status(b) === 'departing' ? 'Due out today' : 'In house',
+          statusColor: this.status(b) === 'departing' ? '#c0a06a' : '#7fc79b',
+          charges: charges.map(c => ({ label: c.label, value: showRevenue ? INR(c.amount) : '—' })),
+          hasCharges: charges.length > 0,
+          postedLine: posted
+            ? (showRevenue ? INR(posted) + ' posted this stay' : charges.length + ' charges posted')
+            : 'Nothing posted yet',
+          pick: (s.chargePick || {})[b.id] || '',
+          onPick: e => { const v = e.target.value; this.setState(x => ({ chargePick: { ...(x.chargePick || {}), [b.id]: v } })); },
+          post: () => this.postCharge(b),
+          open: () => this.open(b)
+        };
+      });
+
+    const db = BOOKINGS.find(b => b.id === s.detail);
+    const detail = db ? (() => {
+      const cat = catOf(db.room);
+      const st = this.status(db);
+      const full = db.fullNights || db.nights;
+      /* Nights the desk is proposing to bill, before check-out commits it. */
+      const used = Math.max(1, Math.min(full, (s.stay || {})[db.id] ?? db.nights));
+      const out = st === 'departed';
+      const total = this.bookingTotalFor(db, used);
+      const sold = this.bookingTotalFor(db, full);
+      /* Deposit is what the guest already handed over for the full stay. */
+      const paid = sold * (db.src === 'Direct' ? 1 : 0.25);
+      const posted = this.chargesTotal(db);
+      const balance = total + posted - paid;
+      const short = used < full;
+      return {
+        ref: db.id, guest: db.guest,
+        sub: (this.isAssigned(db) ? db.room + ' · ' : '') + cat.name + ' · ' + this.fmt(db.start) + ' – ' + this.fmt(db.start + used),
+        chips: [tag(st).label, used + (used === 1 ? ' night' : ' nights') + (short ? ' of ' + full : ''), db.meal, db.src],
+        folio: [
+          { label: cat.name + ' × ' + used + (used === 1 ? ' night' : ' nights'), value: showRevenue ? INR(this.roomRevenueFor(db, used)) : '—' },
+          { label: db.meal, value: showRevenue ? INR(this.mealRevenueFor(db, used)) : '—' }
+        ].concat(this.chargesFor(db).map(c => ({ label: c.label, value: showRevenue ? INR(c.amount) : '—' })), [
+          { label: 'GST', value: showRevenue ? INR(total - total / 1.18) : '—' },
+          { label: db.src === 'Direct' ? 'Paid on booking' : 'Deposit paid', value: showRevenue ? '−' + INR(paid) : '—' }
+        ]),
+        balanceLabel: balance < -0.5 ? 'To refund' : 'Balance',
+        balance: showRevenue ? (balance < -0.5 ? '−' + INR(-balance) : INR(Math.max(0, balance))) : '—',
+        balanceColor: balance < -0.5 ? C.dirty : '#e9e9ed',
+        notes: db.notes,
+        /* Move room: free for the whole stay, across any category. */
+        room: db.room,
+        roomLocked: out,
+        roomOptions: this.freeRoomsFor(db).map(r => ({ value: r.n, label: r.n + ' · ' + catById(r.c).name })),
+        onRoom: e => { if (!out) this.moveRoom(db, e.target.value); },
+        nightsMax: full,
+        nightsUsed: used,
+        onNights: e => this.setStayNights(db, +e.target.value || 1),
+        /* Nothing to check out of until the guest is actually in the room:
+           before arrival the desk only picks the room and checks them in. */
+        inHouse: st === 'inhouse' || st === 'departing' || out,
+        stayNote: out
+          ? (db.earlyOut ? 'Left after ' + used + ' of ' + full + ' nights · folio rebuilt' : 'Checked out, folio settled')
+          : st === 'arriving' ? 'Arriving today · pick the room, then check in'
+          : st === 'confirmed' ? 'Arrives ' + this.fmt(db.start) + ' · room held, not yet occupied'
+          : short
+            ? (showRevenue
+              ? 'Leaving now bills ' + INR(total) + (balance < -0.5 ? ' · ' + INR(-balance) + ' back to the guest' : '')
+              : 'Leaving now shortens the stay to ' + used + ' nights')
+            : 'Full stay of ' + full + (full === 1 ? ' night' : ' nights'),
+        stayNoteColor: short && !out ? '#c0a06a' : '#75798c',
+        canDepart: !out,
+        departLabel: out ? 'Checked out' : short ? 'Check out early' : 'Check out now',
+        departBorder: out ? '#292b31' : '#5a4a2c',
+        departColor: out ? '#75798c' : '#c0a06a',
+        departCursor: out ? 'default' : 'pointer',
+        /* Check-out is a two-step: the folio has to be settled first. */
+        departEarly: () => { if (!out) this.setState({ settle: db.id }); },
+        settling: s.settle === db.id && !out,
+        settleLine: balance > 0.5
+          ? (showRevenue ? INR(balance) + ' still to collect from the guest' : 'Balance outstanding')
+          : balance < -0.5
+            ? (showRevenue ? INR(-balance) + ' to refund the guest' : 'Refund due')
+            : 'Folio is square — nothing left to settle',
+        settleColor: Math.abs(balance) > 0.5 ? '#c0a06a' : '#7fc79b',
+        settleLabel: balance > 0.5 ? 'Take payment and check out'
+          : balance < -0.5 ? 'Refund and check out' : 'Check out',
+        settleNote: short ? 'Billing ' + used + ' of ' + full + ' nights' : 'Full stay of ' + full + ' nights',
+        confirmDepart: () => this.departEarly(db, used),
+        cancelDepart: () => this.setState({ settle: null }),
+        /* Only arrivals and future bookings carry a primary action; an
+           in-house guest is worked from the Stay block above. */
+        hasPrimary: st === 'arriving' || st === 'confirmed',
+        primaryLabel: st === 'arriving' ? 'Check in to ' + db.room : 'Send confirmation',
+        primary: () => {
+          if (st === 'arriving') this.setState(x => ({ checkedIn: { ...x.checkedIn, [db.id]: true }, hk: { ...x.hk, [db.room]: 'occupied' }, detail: null }));
+          else this.setState({ detail: null });
+        }
+      };
+    })() : {
+      ref: '', guest: '', sub: '', chips: [], folio: [], balanceLabel: 'Balance', balance: '',
+      balanceColor: '#e9e9ed', notes: '', room: '', roomOptions: [], nightsMax: 1, nightsUsed: 1,
+      stayNote: '', stayNoteColor: '#75798c', inHouse: false, settling: false, settleLine: '',
+      settleColor: '#75798c', settleLabel: '', settleNote: '',
+      confirmDepart: () => {}, cancelDepart: () => {}, departLabel: '', departBorder: '#292b31',
+      departColor: '#75798c', departCursor: 'default', canDepart: false, roomLocked: true,
+      hasPrimary: false, primaryLabel: '', primary: () => {},
+      onRoom: () => {}, onNights: () => {}, departEarly: () => {}
+    };
+
+    const today = this.dateAt(0);
+    const seasonNow = R() ? R().seasonFor(today, s.rates) : null;
+
+    const rateRows = (s.rates.categories || []).map(c => ({
+      id: c.id, name: c.name, size: c.size, roomCount: c.rooms,
+      onRooms: e => this.editCat(c.id, 'rooms', Math.max(0, Math.min(99, +e.target.value || 0))),
+      base: c.base, weekend: c.weekend, minStay: c.minStay,
+      tonight: R() ? INR(R().rateFor(c.id, today, s.rates)) : '—',
+      stopSell: c.stopSell,
+      sellLabel: c.stopSell ? 'Stopped' : 'Selling',
+      sellColor: c.stopSell ? C.dirty : C.clean,
+      sellBorder: c.stopSell ? '#5a4a2c' : '#33463c',
+      onBase: e => this.editCat(c.id, 'base', Math.max(0, +e.target.value || 0)),
+      onWeekend: e => this.editCat(c.id, 'weekend', Math.max(0, +e.target.value || 0)),
+      onMinStay: e => this.editCat(c.id, 'minStay', Math.max(1, +e.target.value || 1)),
+      toggleSell: () => this.editCat(c.id, 'stopSell', !c.stopSell)
+    }));
+
+    const tax = R() ? R().tax(s.rates) : { roomLow: 12, roomHigh: 18, threshold: 7500, services: 18, deposit: 25 };
+    const mealRows = (R() ? R().meals(s.rates) : []).map(m => ({
+      name: m.name, note: m.note, pp: m.pp,
+      perLabel: m.pp ? 'per guest / night' : 'included',
+      onPrice: e => this.editMeal(m.id, 'pp', Math.max(0, +e.target.value || 0))
+    }));
+    const extraRows = (R() ? R().extras(s.rates) : []).map(x => ({
+      name: x.name, note: x.note, price: x.price,
+      perLabel: x.per === 'night' ? 'Per night' : 'Per stay',
+      onPrice: e => this.editExtra(x.id, 'price', Math.max(0, +e.target.value || 0)),
+      togglePer: () => this.editExtra(x.id, 'per', x.per === 'night' ? 'stay' : 'night')
+    }));
+    const taxFields = [
+      { label: 'Room GST, low', value: tax.roomLow, step: '1', hint: 'per cent, at or below the threshold',
+        onChange: e => this.editTax('roomLow', Math.max(0, Math.min(50, +e.target.value || 0))) },
+      { label: 'Room GST, high', value: tax.roomHigh, step: '1', hint: 'per cent, above the threshold',
+        onChange: e => this.editTax('roomHigh', Math.max(0, Math.min(50, +e.target.value || 0))) },
+      { label: 'Threshold ADR', value: tax.threshold, step: '500', hint: 'nightly rate where the high band starts',
+        onChange: e => this.editTax('threshold', Math.max(0, +e.target.value || 0)) },
+      { label: 'Services GST', value: tax.services, step: '1', hint: 'per cent on meals and extras',
+        onChange: e => this.editTax('services', Math.max(0, Math.min(50, +e.target.value || 0))) },
+      { label: 'Deposit', value: tax.deposit, step: '5', hint: 'per cent taken at booking',
+        onChange: e => this.editTax('deposit', Math.max(0, Math.min(100, +e.target.value || 0))) }
+    ];
+    const invTotal = (s.rates.categories || []).reduce((a, c) => a + (+c.rooms || 0), 0);
+
+    const seasonRows = (s.rates.seasons || []).map(w => ({
+      id: w.id, name: w.name, range: w.from + ' → ' + w.to,
+      adjust: w.adjust,
+      adjustLabel: (w.adjust > 0 ? '+' : '') + w.adjust + '%',
+      adjustColor: w.adjust > 0 ? '#d2cefd' : C.clean,
+      active: seasonNow && seasonNow.id === w.id,
+      onAdjust: e => this.editSeason(w.id, 'adjust', Math.max(-90, Math.min(300, +e.target.value || 0))),
+      onFrom: e => this.editSeason(w.id, 'from', e.target.value),
+      onTo: e => this.editSeason(w.id, 'to', e.target.value)
+    }));
+
+    const titles = {
+      overview: ['Today', this.dateAt(0).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })],
+      calendar: ['Availability calendar', DAYS + ' nights from today · ' + ROOMS.length + ' rooms'],
+      reservations: ['Reservations', resRows.length + ' of ' + BOOKINGS.length + ' shown'],
+      guests: ['Guests in the house', inHouseRows.length ? inHouseRows.length + ' guests in their rooms' : 'No one in a room right now'],
+      live: ['New bookings', live.length ? needsRoom + ' waiting on a room · ' + live.length + ' in total' : 'Nothing new yet'],
+      guestbook: ['Guest book', gbStats.total
+        ? gbStats.total + (gbStats.total === 1 ? ' person' : ' people') +
+          (gbStats.returning ? ' · ' + gbStats.returning + ' have stayed before' : ' · none returning yet')
+        : 'Opens a record for every person who books'],
+      revenue: ['Revenue', 'Taken through the booking engine'],
+      settings: ['Settings', 'The account that operates this property'],
+      content: ['Website content', 'Draft here, publish to the public site'],
+      rates: ['Rates and inventory', 'Read by the booking engine and the website' + (seasonNow ? ' · ' + seasonNow.name + ' in effect' : '')],
+      reviews: ['Guest reviews', grCounts.pending
+        ? grCounts.pending + ' awaiting a decision · nothing is public until approved'
+        : 'Queue is clear · ' + grCounts.approved + ' published']
+    };
+
+    const content = this.contentVals();
+
+    return {
+      navItems, kpis, arrivals, departures, occBars, days, rows, resRows,
+      isOverview: s.view === 'overview', isCalendar: s.view === 'calendar',
+      isReservations: s.view === 'reservations', isSettings: s.view === 'settings',
+      isRates: s.view === 'rates', rateRows, seasonRows, mealRows, extraRows, taxFields,
+      isGuests: s.view === 'guests', inHouseRows, guestsEmpty: !inHouseRows.length, extrasList,
+      isLive: s.view === 'live', liveRows, liveEmpty: !live.length, nb: nbVals,
+      isRevenue: s.view === 'revenue', revKpis, revSplit, revRows,
+      revSplitNote: deskCount + ' of ' + live.length + ' taken at the desk',
+      inventoryTotal: invTotal + ' rooms across ' + (s.rates.categories || []).length + ' categories',
+      taxSummary: tax.roomLow + '% / ' + tax.roomHigh + '% rooms · ' + tax.services + '% services · ' + tax.deposit + '% deposit',
+      ...this.reviewVals(grCounts),
+      ...this.guestBookVals(),
+      ...content,
+      ...this.authVals(),
+      seasonNote: seasonNow ? seasonNow.name + ' is in effect today, at ' + (seasonNow.adjust > 0 ? '+' : '') + seasonNow.adjust + '%' : 'No season adjustment applies today',
+      savedNote: s.saved ? 'Saved — the booking engine and website read this immediately' : 'Edits save as you type',
+      savedColor: s.saved ? C.clean : '#75798c',
+      resetRates: () => {
+        if (!this.authorised() || !R()) return;
+        this.setState({ rates: R().reset(), saved: Date.now() });
+      },
+      viewTitle: titles[s.view][0], viewSub: titles[s.view][1],
+      query: s.query, onQuery: e => this.setState({ query: e.target.value, view: 'reservations' }),
+      arrivalsMeta: Object.keys(s.checkedIn).length + ' of ' + arrivalsAll.length + ' in',
+      departuresMeta: Object.keys(s.checkedOut).length + ' of ' + departuresAll.length + ' out',
+      occSummary: 'peak ' + Math.round(peak * 100) + '% · ' + (showRevenue ? 'ADR ' + INR(adr) : ROOMS.length + ' rooms'),
+      resCols: ['Reference', 'Guest', 'Room', 'Dates', 'Source', 'Status', 'Total'],
+      legend: [
+        { label: 'In the room now', color: '#4f8f68' },
+        { label: 'Booked, no room yet', color: '#595d6c' },
+        { label: 'Left', color: '#8a4a52' },
+        { label: 'Blocked', color: '#3f424d' }
+      ],
+      detailOpen: !!db, detail, closeDetail: () => this.setState({ detail: null }),
+      auditLine: s.audited ? 'Closed for ' + this.fmt(-1) : 'Pending for ' + this.fmt(0),
+      auditCta: s.audited ? 'View report' : 'Run night audit',
+      runAudit: () => this.setState({ audited: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

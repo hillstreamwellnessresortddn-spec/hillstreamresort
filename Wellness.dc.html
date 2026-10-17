@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="./content.js"></script>
+<script src="./image-slot.js"></script>
+<style>
+  /* Navigation: one row on wide screens; below 1080px the links fold into a
+     menu button that opens a panel under the header. */
+  .hs-nav { display:flex; align-items:center; gap:clamp(14px, 2.4vw, 30px); flex:0 0 auto; }
+  .hs-nav-links { display:flex; align-items:center; gap:clamp(18px, 2.2vw, 30px); }
+  .hs-nav-links a { white-space:nowrap; }
+  .hs-menu { display:none; }
+  .hs-menu > summary { list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:center; width:44px; height:44px; border:1px solid currentColor; border-radius:50%; opacity:0.9; transition:opacity 300ms, background 300ms; }
+  .hs-menu > summary::-webkit-details-marker { display:none; }
+  .hs-menu > summary:hover { opacity:1; }
+  .hs-menu .hs-ico-close { display:none; }
+  .hs-menu[open] .hs-ico-open { display:none; }
+  .hs-menu[open] .hs-ico-close { display:block; }
+  .hs-menu-panel { position:absolute; top:100%; left:0; right:0; max-height:calc(100svh - 76px); overflow:auto; background:#1B241C; border-top:1px solid rgba(198,172,124,0.35); box-shadow:0 30px 60px -30px rgba(0,0,0,0.55); padding:10px 24px 28px; animation:hsMenuIn 380ms cubic-bezier(.2,.7,.3,1) both; }
+  .hs-menu-panel a.hs-menu-link { display:flex; align-items:center; justify-content:space-between; padding:18px 2px; border-bottom:1px solid rgba(242,238,228,0.12); font-family:'Marcellus', serif; font-size:24px; letter-spacing:-0.01em; text-decoration:none; color:#F6F3EA; }
+  .hs-menu-panel a.hs-menu-link:hover { color:#D8C39A; }
+  .hs-menu-panel a.hs-menu-link span { font-family:'Jost', sans-serif; font-size:16px; color:#C6AC7C; }
+  .hs-menu-panel a.hs-menu-cta { display:block; margin-top:24px; text-align:center; font-size:11px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:#1B241C; background:#D8C39A; padding:16px 20px; }
+  @keyframes hsMenuIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:none; } }
+  @media (max-width:1080px) {
+    .hs-nav-links { display:none; }
+    .hs-menu { display:block; }
+  }
+  @media (max-width:520px) {
+    .hs-enquire { display:none !important; }
+    .hs-brand-name { font-size:13px !important; letter-spacing:0.22em !important; }
+  }
+
+  html, body { margin:0; padding:0; background:#F4F1E8; }
+  * { box-sizing:border-box; }
+  a { color:#1B241C; }
+  a:hover { color:#96793F; }
+  :focus-visible { outline:1px solid #96793F; outline-offset:4px; }
+  ::selection { background:#DCD5C4; }
+  @keyframes hsUp { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:none; } }
+  @keyframes hsMask { from { opacity:0; clip-path:inset(0 0 102% 0); transform:translateY(26px); } to { opacity:1; clip-path:inset(-24% -24% -24% -24%); transform:none; } }
+  @keyframes hsKen { from { transform:scale(1.03) translate3d(0,0,0); } to { transform:scale(1.14) translate3d(-1.4%,-1.8%,0); } }
+  @keyframes hsCue { 0%,100% { opacity:0.85; transform:scaleY(1); transform-origin:top; } 50% { opacity:0.3; transform:scaleY(0.45); transform-origin:top; } }
+  @keyframes hsDrift { 0% { transform:translate3d(-6%, -4%, 0) scale(1); } 100% { transform:translate3d(6%, 4%, 0) scale(1.15); } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:1ms !important; animation-delay:1ms !important; transition-duration:1ms !important; }
+  }
+</style>
+<script src="./spotlight.js"></script>
+<script src="./api.js"></script>
+</helmet>
+
+<div ref="{{ rootRef }}" style="background:#F4F1E8; color:#1B241C; font-family:'Jost', system-ui, sans-serif; font-weight:300; overflow-x:hidden">
+
+  <header ref="{{ hdrRef }}" style="position:fixed; top:0; left:0; right:0; z-index:60; background:transparent; border-bottom:1px solid transparent; transition:background 700ms cubic-bezier(.2,.7,.3,1), border-color 700ms cubic-bezier(.2,.7,.3,1), backdrop-filter 700ms">
+    <div style="max-width:1240px; margin:0 auto; padding:14px 24px; display:flex; flex-wrap:nowrap; gap:24px; align-items:center; justify-content:space-between">
+      <a href="index.html" style="display:flex; flex-wrap:nowrap; align-items:center; gap:12px; min-width:0; font-family:'Marcellus', serif; font-size:15px; letter-spacing:0.3em; text-transform:uppercase; text-decoration:none; color:var(--hsc, #F4F1E8); transition:color 600ms cubic-bezier(.2,.7,.3,1)">
+        <video src="uploads/Video Project (2).mp4" poster="uploads/photos/logo-mark.png" autoPlay="{{ true }}" muted="{{ true }}" loop="{{ true }}" playsInline="{{ true }}" preload="auto" aria-hidden="true" data-hs-mark-h="48" style="display:block; width:64px; height:48px; flex:0 0 auto; object-fit:contain; border-radius:4px"></video>
+        <span class="hs-brand-name" style="white-space:nowrap">Hill Stream</span>
+      </a>
+      <nav class="hs-nav" aria-label="Main">
+        <div class="hs-nav-links">
+          <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+            <a href="{{ n.href }}" style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:var(--hsc2, #E3E0D4); padding-bottom:3px; border-bottom:1px solid transparent; transition:color 600ms cubic-bezier(.2,.7,.3,1), border-color 350ms" style-hover="border-color:#C6AC7C">{{ n.label }}</a>
+          </sc-for>
+        </div>
+        <a class="hs-enquire" href="Booking%20Engine.dc.html" style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:#F4F1E8; background:#1B241C; border:1px solid #C6AC7C; padding:11px 18px; white-space:nowrap; transition:background 350ms, color 350ms, border-color 350ms" style-hover="background:#243024; color:#F4F1E8; border-color:#DCC79B">Enquire</a>
+        <details class="hs-menu">
+          <summary aria-label="Menu" title="Menu" style="color:var(--hsc, #F4F1E8)">
+            <svg class="hs-ico-open" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M2 5h14M2 9h14M2 13h14"/></svg>
+            <svg class="hs-ico-close" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>
+          </summary>
+          <div class="hs-menu-panel">
+            <sc-for list="{{ nav }}" as="m" hint-placeholder-count="5">
+              <a class="hs-menu-link" href="{{ m.href }}">{{ m.label }}<span>→</span></a>
+            </sc-for>
+            <a class="hs-menu-cta" href="Booking%20Engine.dc.html">Enquire</a>
+          </div>
+        </details>
+      </nav>
+    </div>
+  </header>
+
+  <section style="position:relative; min-height:100svh; display:flex; flex-direction:column; justify-content:flex-end; overflow:hidden; background:#141A14">
+    <div style="position:absolute; inset:0; filter:brightness(0.94) saturate(1.02); animation:hsKen 34s cubic-bezier(.4,0,.6,1) infinite alternate; will-change:transform">
+      <image-slot id="hs-wellness-hero" shape="rect" fit="cover" src="uploads/photos/g03.jpg" placeholder="Treatment pavilion, doors open to the stream"></image-slot>
+    </div>
+    <div style="position:absolute; inset:0; backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); mask-image:linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 26%, rgba(0,0,0,0) 40%, rgba(0,0,0,1) 100%); -webkit-mask-image:linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 26%, rgba(0,0,0,0) 40%, rgba(0,0,0,1) 100%)"></div>
+    <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(14,18,16,0.70) 0%, rgba(14,18,16,0.28) 26%, rgba(14,18,16,0.50) 48%, rgba(14,18,16,0.78) 72%, rgba(14,18,16,0.92) 100%)"></div>
+    <div style="position:relative; width:100%; max-width:1240px; margin:0 auto; padding:clamp(92px, 13vh, 150px) 24px calc(clamp(36px, 6vh, 80px) + 84px)">
+      <p style="margin:0 0 clamp(20px, 3.4vw, 34px); font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#D8C39A; text-shadow:0 1px 16px rgba(14,18,16,0.95); animation:hsUp 900ms cubic-bezier(.2,.7,.3,1) 120ms both">{{ pageKicker }}</p>
+      <h1 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(38px, 8.6vw, 96px); line-height:1.0; letter-spacing:-0.035em; margin:0; max-width:18ch; color:#F6F3EA; text-shadow:0 2px 30px rgba(14,18,16,0.6); text-wrap:pretty; animation:hsMask 1400ms cubic-bezier(.2,.7,.3,1) 240ms both">{{ pageTitle }}</h1>
+      <div style="display:flex; flex-wrap:wrap; gap:clamp(20px, 4vw, 72px); align-items:flex-end; justify-content:space-between; margin-top:clamp(26px, 4vh, 56px); animation:hsUp 1000ms cubic-bezier(.2,.7,.3,1) 640ms both">
+        <p style="margin:0; font-size:clamp(16px, 4.2vw, 21px); line-height:1.7; color:#E2DFD2; text-shadow:0 1px 18px rgba(14,18,16,0.85); max-width:30ch; text-wrap:pretty">{{ pageLede }}</p>
+        <a href="Booking%20Engine.dc.html" style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:#F4F1E8; border-bottom:1px solid #C6AC7C; padding-bottom:7px; white-space:nowrap; transition:border-color 350ms, color 350ms" style-hover="color:#C6AC7C; border-color:#F4F1E8">Add to a booking →</a>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:14px 24px; align-items:center; margin-top:clamp(26px, 4.2vh, 56px); padding-top:20px; border-top:1px solid rgba(244,241,232,0.22); animation:hsUp 1000ms cubic-bezier(.2,.7,.3,1) 860ms both">
+        <span style="font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:#BFC3B4">The pavilion, doors open to the stream</span>
+        <sc-if value="{{ cue }}" hint-placeholder-val="{{ true }}">
+          <span style="display:flex; align-items:center; gap:10px; margin-left:auto; font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:#BFC3B4">Scroll<span style="display:block; width:1px; height:34px; background:linear-gradient(180deg, #C6AC7C, rgba(198,172,124,0)); animation:hsCue 2600ms ease-in-out infinite"></span></span>
+        </sc-if>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width:1240px; margin:0 auto; padding:clamp(80px, 15vw, 184px) 24px clamp(56px, 11vw, 128px)">
+    <div data-hsr="group" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:clamp(32px, 7vw, 96px); align-items:start">
+      <div>
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:26px">
+          <span style="display:block; width:clamp(24px, 5vw, 44px); height:1px; background:#96793F"></span>
+          <p style="margin:0; font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#96793F">Before you book</p>
+        </div>
+        <p style="margin:0; font-family:'Marcellus', serif; font-weight:400; font-size:clamp(24px, 4.6vw, 40px); line-height:1.24; letter-spacing:-0.02em; color:#1B241C; text-wrap:pretty">Every treatment starts with twenty minutes with the doctor — pulse, sleep, digestion, what you came here to put down. Packages are set after that conversation, not before it.</p>
+      </div>
+      <p style="margin:0; font-size:clamp(16px, 4.2vw, 19px); line-height:1.85; color:#4E5449; max-width:42ch; text-wrap:pretty">Tell us on the booking form if you are pregnant, recovering from surgery, or taking anything that thins the blood. Some of the oil work is not appropriate and we will say so.</p>
+    </div>
+  </section>
+
+  <section style="max-width:1240px; margin:0 auto; padding:0 24px clamp(80px, 15vw, 176px)">
+    <div data-hsr="item" style="display:flex; flex-wrap:wrap; gap:16px 32px; align-items:baseline; justify-content:space-between; margin-bottom:clamp(32px, 6vw, 60px)">
+      <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(28px, 6.4vw, 54px); line-height:1.06; letter-spacing:-0.025em; margin:0">Treatments</h2>
+      <span style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; color:#7C8076">{{ treatmentMeta }}</span>
+    </div>
+    <div data-hsr="group" style="display:flex; flex-direction:column">
+      <sc-for list="{{ treatments }}" as="t" hint-placeholder-count="5">
+        <div style="position:relative; border-top:1px solid #DCD5C4; padding:clamp(24px, 4.6vw, 44px) 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px clamp(24px, 5vw, 64px); align-items:baseline; transition:padding-left 520ms cubic-bezier(.2,.7,.3,1)" style-hover="padding-left:14px">
+          <div style="display:flex; align-items:baseline; gap:clamp(14px, 2.4vw, 26px)">
+            <sc-if value="{{ numerals }}" hint-placeholder-val="{{ true }}">
+              <span style="font-family:'Marcellus', serif; font-size:12px; letter-spacing:0.04em; color:#96793F; flex:none">{{ t.idx }}</span>
+            </sc-if>
+            <h3 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(24px, 5.4vw, 40px); line-height:1.08; letter-spacing:-0.025em; margin:0; text-wrap:pretty">{{ t.name }}</h3>
+          </div>
+          <div>
+            <p style="margin:0; font-size:15px; line-height:1.8; color:#4E5449; max-width:46ch; text-wrap:pretty">{{ t.desc }}</p>
+            <div style="display:flex; flex-wrap:wrap; gap:10px 28px; align-items:baseline; margin-top:20px; padding-top:16px; border-top:1px solid #E6E0D2">
+              <span style="font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:#7C8076">{{ t.duration }}</span>
+              <span style="font-family:'Marcellus', serif; font-size:clamp(19px, 3.4vw, 24px); letter-spacing:-0.01em; margin-left:auto; white-space:nowrap">{{ t.price }}</span>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+      <div style="border-top:1px solid #DCD5C4"></div>
+    </div>
+  </section>
+
+  <section style="position:relative; overflow:hidden; background:#243024; color:#F2EEE4">
+    <div style="position:absolute; inset:0; pointer-events:none; background:radial-gradient(120% 90% at 12% 0%, rgba(150,121,63,0.20) 0%, rgba(150,121,63,0) 46%), radial-gradient(90% 120% at 100% 100%, rgba(44,58,46,0.9) 0%, rgba(20,26,20,0) 55%); animation:hsDrift 26s ease-in-out infinite alternate; will-change:transform"></div>
+    <div style="position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg, rgba(198,172,124,0) 0%, rgba(198,172,124,0.5) 50%, rgba(198,172,124,0) 100%)"></div>
+    <div style="position:relative; max-width:1240px; margin:0 auto; padding:clamp(72px, 13vw, 152px) 24px">
+      <div data-hsr="item" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); gap:clamp(24px, 6vw, 80px); align-items:end; margin-bottom:clamp(48px, 9vw, 96px)">
+        <h2 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(28px, 6.4vw, 56px); line-height:1.06; letter-spacing:-0.03em; margin:0; color:#F6F3EA; text-wrap:pretty">A day, if you let it be one</h2>
+        <p style="margin:0; font-size:clamp(15px, 4vw, 18px); line-height:1.8; color:#CBCFC2; max-width:40ch; text-wrap:pretty">Nothing here is compulsory. This is what most guests settle into by the second morning.</p>
+      </div>
+      <div data-hsr="group" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:clamp(28px, 4vw, 48px)">
+        <sc-for list="{{ day }}" as="d" hint-placeholder-count="5">
+          <div style="position:relative; padding-right:clamp(12px, 2vw, 28px)">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:clamp(20px, 4vw, 32px)">
+              <span style="font-family:'Marcellus', serif; font-size:12px; color:#96793F; letter-spacing:0.04em">{{ d.idx }}</span>
+              <span style="flex:1; height:1px; background:linear-gradient(90deg, rgba(159,174,155,0.35) 0%, rgba(159,174,155,0) 100%)"></span>
+            </div>
+            <div style="font-family:'Marcellus', serif; font-size:clamp(26px, 3.2vw, 38px); line-height:1; letter-spacing:-0.02em; color:#F6F3EA">{{ d.time }}</div>
+            <div style="margin-top:14px; font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:#C6AC7C">{{ d.what }}</div>
+            <p style="margin:16px 0 0; font-size:14px; line-height:1.75; color:#9FAE9B; text-wrap:pretty">{{ d.note }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <figure style="margin:0; position:relative; width:100%; height:clamp(300px, 62vh, 660px); overflow:hidden; background:#F4F1E8">
+    <div style="position:absolute; inset:0; overflow:hidden; mask-image:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 8%, rgba(0,0,0,1) 24%, rgba(0,0,0,1) 76%, rgba(0,0,0,0.4) 92%, rgba(0,0,0,0) 100%); -webkit-mask-image:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 8%, rgba(0,0,0,1) 24%, rgba(0,0,0,1) 76%, rgba(0,0,0,0.4) 92%, rgba(0,0,0,0) 100%)">
+      <div style="position:absolute; inset:-6%; animation:hsKen 40s cubic-bezier(.4,0,.6,1) infinite alternate; will-change:transform">
+        <image-slot id="hs-wellness-band" shape="rect" fit="cover" src="uploads/photos/yoga-evening.jpg" placeholder="The steam room, lit in the afternoon"></image-slot>
+      </div>
+    </div>
+    <div style="position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg, rgba(244,241,232,0.9) 0%, rgba(244,241,232,0) 18%, rgba(244,241,232,0) 82%, rgba(244,241,232,0.9) 100%)"></div>
+  </figure>
+
+  <section style="max-width:1240px; margin:0 auto; padding:clamp(72px, 13vw, 160px) 24px clamp(80px, 15vw, 176px)">
+    <div data-hsr="group" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); gap:clamp(32px, 7vw, 88px); align-items:start">
+      <div>
+        <div style="display:flex; align-items:center; gap:16px; margin-bottom:26px">
+          <span style="display:block; width:clamp(24px, 5vw, 44px); height:1px; background:#96793F"></span>
+          <p style="margin:0; font-size:10px; letter-spacing:0.28em; text-transform:uppercase; color:#96793F">Included in every stay</p>
+        </div>
+        <div style="display:flex; flex-direction:column">
+          <sc-for list="{{ included }}" as="inc" hint-placeholder-count="4">
+            <div style="border-top:1px solid #DCD5C4; padding:clamp(16px, 3vw, 26px) 0; font-family:'Marcellus', serif; font-size:clamp(19px, 3.6vw, 27px); line-height:1.2; letter-spacing:-0.015em; color:#1B241C">{{ inc }}</div>
+          </sc-for>
+          <div style="border-top:1px solid #DCD5C4"></div>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:clamp(24px, 4vw, 36px); align-items:flex-start">
+        <p style="margin:0; font-size:clamp(15px, 4vw, 18px); line-height:1.85; color:#4E5449; max-width:38ch; text-wrap:pretty">Half past six on the upper deck, every day, whatever the weather. The steam room is lit each afternoon and stays warm until seven.</p>
+        <a href="Booking%20Engine.dc.html" style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:#1B241C; border:1px solid #1B241C; padding:17px 30px; transition:background 350ms, color 350ms, border-color 350ms" style-hover="background:#1B241C; color:#F4F1E8">Add to a booking</a>
+      </div>
+    </div>
+  </section>
+
+  <dc-import name="SiteFooter" hint-size="100%,420px"></dc-import>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844},&quot;showNumerals&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Treatments&quot;},&quot;heroCue&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;revealMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Motion&quot;}}">
+const CT = () => (typeof window !== 'undefined' && window.HSContent) || null;
+const FB = { kicker: 'Wellness', title: 'The pavilion', lede: '' };
+
+const NAV = [
+  { label: 'Wellness', href: 'Wellness.dc.html' },
+  { label: 'Dining', href: 'Dining.dc.html' },
+  { label: 'Gallery', href: 'Gallery.dc.html' },
+  { label: 'Reviews', href: 'Reviews.dc.html' },
+  { label: 'Getting here', href: 'Visit.dc.html' }
+];
+
+const TREATMENTS = [
+  { name: 'Himalayan oil ritual', duration: '90 minutes', price: '₹4,500', desc: 'Warm oil worked along the spine and limbs, finished in the steam room. The oldest thing on the list and still the one most often asked for.' },
+  { name: 'Stream stone therapy', duration: '75 minutes', price: '₹5,200', desc: 'River stones heated over the kitchen fire, laid along the back. Best taken late, after a long walk.' },
+  { name: 'Three-day reset', duration: 'Three days', price: '₹12,000', desc: 'A consultation, daily yoga, two treatments and a menu set with the doctor. Booked before arrival so the kitchen can plan.' },
+  { name: 'Abhyanga for two', duration: '90 minutes', price: '₹8,400', desc: 'The oil ritual in the double room, two therapists working at once. The only treatment taken side by side.' },
+  { name: 'Morning yoga', duration: '60 minutes', price: 'Included', desc: 'Half past six on the upper deck, every day, whatever the weather. Mats and blankets are there.' }
+];
+
+const DAY = [
+  { time: '06:30', what: 'Yoga', note: 'Upper deck. Cold at that hour until April — the blankets are for using.' },
+  { time: '08:00', what: 'Breakfast', note: 'At the stream pavilion, served until ten. Nobody minds if you are late.' },
+  { time: '11:00', what: 'Walk or treatment', note: 'Three marked walks leave from the gate, forty minutes to three hours.' },
+  { time: '16:00', what: 'Steam', note: 'The steam room is lit each afternoon and stays warm until seven.' },
+  { time: '20:00', what: 'Dinner', note: 'One table, one sitting, five courses. Whoever is staying.' }
+];
+
+const INCLUDED = [
+  'Morning yoga, every day',
+  'Steam room and cold plunge',
+  'The three marked valley walks',
+  'A consultation before any treatment'
+];
+
+class Component extends DCLogic {
+  state = { copy: CT() ? CT().published().wellness : FB };
+
+  componentDidMount() {
+    this.bindContent(0);
+    this._onScroll = () => this._paintHeader();
+    window.addEventListener('scroll', this._onScroll, { passive: true });
+    window.addEventListener('resize', this._onScroll);
+    this._paintHeader();
+    this._wireMark();
+    this._wireReveals();
+  }
+
+  componentDidUpdate() { this._wireMark(); this._wireReveals(); }
+
+  componentWillUnmount() {
+    clearTimeout(this._tC);
+    if (this._unsubC) this._unsubC();
+    window.removeEventListener('scroll', this._onScroll);
+    window.removeEventListener('resize', this._onScroll);
+    if (this._io) this._io.disconnect();
+  }
+
+  bindContent(tries) {
+    if (!CT()) {
+      if (tries < 60) this._tC = setTimeout(() => this.bindContent(tries + 1), 50);
+      return;
+    }
+    this.setState({ copy: CT().published().wellness });
+    this._unsubC = CT().subscribe(c => this.setState({ copy: c.wellness }));
+  }
+
+  /* Transparent over the dark hero, cream once past it. Colours travel as
+     custom properties so every child inherits the same crossfade. */
+  _paintHeader() {
+    const h = this._hdr;
+    if (!h) return;
+    const past = window.scrollY > window.innerHeight * 0.8;
+    if (past === this._past) return;
+    this._past = past;
+    if (past) {
+      h.style.background = 'rgba(244,241,232,0.92)';
+      h.style.backdropFilter = 'blur(14px)';
+      h.style.webkitBackdropFilter = 'blur(14px)';
+      h.style.borderBottomColor = '#DCD5C4';
+      h.style.setProperty('--hsc', '#1B241C');
+      h.style.setProperty('--hsc2', '#4E5449');
+      h.style.setProperty('--hscb', 'rgba(27,36,28,0.35)');
+    } else {
+      h.style.background = 'transparent';
+      h.style.backdropFilter = 'none';
+      h.style.webkitBackdropFilter = 'none';
+      h.style.borderBottomColor = 'transparent';
+      h.style.setProperty('--hsc', '#F4F1E8');
+      h.style.setProperty('--hsc2', '#E3E0D4');
+      h.style.setProperty('--hscb', 'rgba(244,241,232,0.55)');
+    }
+  }
+
+  /* The logo clip's own aspect drives its box; autoplay is armed from script
+     because Chrome reads the muted attribute before the property. */
+  _wireMark() {
+    const v = this._root && this._root.querySelector('video[data-hs-mark-h]');
+    if (!v) return;
+    if (!v._hsWired) {
+      v._hsWired = true;
+      v.muted = true;
+      v.defaultMuted = true;
+      v.setAttribute('muted', '');
+      const kick = () => { const p = v.play(); if (p && p.catch) p.catch(() => {}); };
+      v.addEventListener('loadeddata', () => { this._wireMark(); kick(); });
+      kick();
+    }
+    if (!v.videoWidth) return;
+    const h = parseFloat(v.dataset.hsMarkH);
+    v.style.height = h + 'px';
+    v.style.width = Math.round(h * (v.videoWidth / v.videoHeight)) + 'px';
+  }
+
+  /* Hidden state is applied from script, so the page still reads if JS never
+     runs. Each element is hidden and observed individually — copy resolves
+     asynchronously, so watching a container would hide children that no longer
+     exist by the time the callback runs. Re-runs on every update; a WeakSet
+     keeps already-wired nodes from being hidden twice. */
+  _wireReveals() {
+    if (this.props.revealMotion === false || !this._root) return;
+    if (typeof IntersectionObserver === 'undefined') return;
+    const ease = 'cubic-bezier(.2,.7,.3,1)';
+    if (!this._seen) this._seen = new WeakSet();
+    if (!this._io) {
+      this._io = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (!e.isIntersecting) return;
+          e.target.style.opacity = '1';
+          e.target.style.transform = 'none';
+          this._io.unobserve(e.target);
+        });
+      }, { rootMargin: '0px 0px -8% 0px', threshold: 0.04 });
+    }
+    this._root.querySelectorAll('[data-hsr]').forEach(node => {
+      const kids = node.dataset.hsr === 'group' ? Array.from(node.children) : [node];
+      kids.forEach((el, i) => {
+        if (this._seen.has(el)) return;
+        this._seen.add(el);
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = 'opacity 900ms ' + ease + ' ' + (i * 110) + 'ms, transform 900ms ' + ease + ' ' + (i * 110) + 'ms';
+        this._io.observe(el);
+      });
+    });
+  }
+
+  renderVals() {
+    const cp = this.state.copy || FB;
+    const pad = n => (n < 10 ? '0' + n : '' + n);
+    return {
+      rootRef: el => { this._root = el; },
+      hdrRef: el => { this._hdr = el; this._past = undefined; this._paintHeader(); },
+      nav: NAV,
+      cue: this.props.heroCue !== false,
+      numerals: this.props.showNumerals !== false,
+      pageKicker: cp.kicker || FB.kicker,
+      pageTitle: cp.title || FB.title,
+      pageLede: cp.lede || '',
+      treatmentMeta: TREATMENTS.length + ' on the list · consultation first',
+      treatments: TREATMENTS.map((t, i) => Object.assign({ idx: pad(i + 1) }, t)),
+      day: DAY.map((d, i) => Object.assign({ idx: pad(i + 1) }, d)),
+      included: INCLUDED
+    };
+  }
+}
+
+</script>
+</body>
+</html>

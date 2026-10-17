@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&amp;family=Jost:wght@300;400;500&amp;display=swap" rel="stylesheet">
+<script src="./content.js"></script>
+<script src="./image-slot.js"></script>
+<style>
+  html, body { margin:0; padding:0; background:#F2EEE4; }
+  * { box-sizing:border-box; }
+  a { color:#5B7057; }
+  a:hover { color:#2C3A2E; }
+  :focus-visible { outline:2px solid #8A6E42; outline-offset:3px; }
+  ::selection { background:#DCD3BE; }
+  @keyframes hsRise { from { opacity:0; transform:translateY(30px) scale(0.97); filter:blur(9px); } to { opacity:1; transform:none; filter:blur(0); } }
+  @keyframes hsFade { from { opacity:0; } to { opacity:1; } }
+  @keyframes hsLift { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+  @keyframes hsZoom { from { opacity:0; transform:scale(0.94); } to { opacity:1; transform:none; } }
+  @keyframes hsWipe { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+  @keyframes hsInR { from { opacity:0; transform:translateX(38px) scale(0.985); } to { opacity:1; transform:none; } }
+  @keyframes hsInL { from { opacity:0; transform:translateX(-38px) scale(0.985); } to { opacity:1; transform:none; } }
+  @keyframes hsKen { from { transform:scale(1); } to { transform:scale(1.07); } }
+  @keyframes hsMask { from { clip-path:inset(0 0 100% 0); transform:translateY(16px); } to { clip-path:inset(0 0 -12% 0); transform:none; } }
+  @keyframes hsTrack { from { opacity:0; letter-spacing:0.46em; } to { opacity:1; letter-spacing:0.24em; } }
+  /* ambient drift — each frame keeps moving on its own, slowly, out of step */
+  @keyframes hsBreath1 { from { transform:scale(1.03) translate3d(-0.7%,0.5%,0); } to { transform:scale(1.1) translate3d(0.9%,-0.9%,0); } }
+  @keyframes hsBreath2 { from { transform:scale(1.09) translate3d(0.8%,-0.6%,0); } to { transform:scale(1.03) translate3d(-0.9%,0.7%,0); } }
+  @keyframes hsBreath3 { from { transform:scale(1.04) translate3d(0.6%,0.7%,0); } to { transform:scale(1.11) translate3d(-0.7%,-0.5%,0); } }
+  @keyframes hsTray { from { transform:translate3d(-50%,0,0); } to { transform:translate3d(0,0,0); } }
+  @keyframes hsPulse { 0%,100% { opacity:1; } 50% { opacity:0.25; } }
+  @keyframes hsPlayhead { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+  /* the camera is drafted before it is built: a blueprint draws in, then the body develops over it */
+  @keyframes hsBlueLine { 0% { opacity:0; transform:scale(0.985); } 16% { opacity:1; transform:none; } 66% { opacity:1; } 100% { opacity:0; transform:scale(1.008); } }
+  @keyframes hsBlueScan { 0% { transform:translateY(-6%); opacity:0; } 12% { opacity:0.9; } 64% { transform:translateY(104%); opacity:0.9; } 100% { transform:translateY(104%); opacity:0; } }
+  @keyframes hsDevelop { from { opacity:0; filter:contrast(0.7) brightness(1.25); } to { opacity:1; filter:none; } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation:none !important; transition-duration:1ms !important; }
+  }
+</style>
+<script src="./spotlight.js"></script>
+<script src="./api.js"></script>
+</helmet>
+
+<div style="background:#F2EEE4; color:#2C3A2E; font-family:'Jost', system-ui, sans-serif; font-weight:300; overflow-x:clip">
+
+  <div data-hs-rail="1" style="position:fixed; top:0; left:0; right:0; height:2px; z-index:80; background:#8A6E42; transform-origin:left; transform:scaleX(0.02)"></div>
+
+  <dc-import name="SiteHeader" current="gallery" hint-size="100%,68px"></dc-import>
+
+  <section style="position:relative; min-height:clamp(420px, 76vh, 720px); display:flex; align-items:flex-end; overflow:hidden; background:#2C3A2E">
+    <div style="position:absolute; inset:0; animation:hsKen 26s cubic-bezier(.22,.61,.36,1) both">
+      <image-slot id="gallery-hero" shape="rect" fit="cover" src="uploads/photos/valley-dusk.jpg" placeholder="Gallery hero — a wide landscape of the valley"></image-slot>
+    </div>
+    <div style="position:absolute; inset:0; pointer-events:none; background:linear-gradient(to top, rgba(24,30,22,0.72) 0%, rgba(24,30,22,0.34) 44%, rgba(24,30,22,0.1) 100%)"></div>
+    <div style="position:relative; width:100%; max-width:1180px; margin:0 auto; padding:0 20px clamp(36px, 8vw, 72px); color:#F2EEE4">
+      <p style="margin:0 0 18px; font-size:10px; letter-spacing:0.24em; text-transform:uppercase; color:#C8B48A; animation:hsTrack 900ms cubic-bezier(.22,.61,.36,1) 40ms forwards">Hill Stream</p>
+      <h1 style="font-family:'Marcellus', serif; font-weight:400; font-size:clamp(46px, 14vw, 108px); line-height:0.96; letter-spacing:-0.03em; margin:0 0 20px; animation:hsMask 1080ms cubic-bezier(.22,.61,.36,1) 90ms forwards">Gallery</h1>
+      <div style="width:64px; height:1px; background:#C8B48A; transform-origin:left; margin:0 0 20px; animation:hsWipe 700ms cubic-bezier(.22,.61,.36,1) 300ms forwards"></div>
+      <p style="margin:0; font-size:clamp(15px, 4vw, 19px); line-height:1.7; color:rgba(242,238,228,0.86); max-width:44ch; text-wrap:pretty; animation:hsLift 760ms cubic-bezier(.22,.61,.36,1) 180ms forwards">Experience nature with us. Deodar forest, the river below, mountain light through the day — the resort as our guests find it, season by season.</p>
+      <div style="display:flex; align-items:center; gap:10px; margin:22px 0 0; animation:hsLift 760ms cubic-bezier(.22,.61,.36,1) 460ms forwards; opacity:0">
+        <span style="display:block; width:1px; height:26px; background:linear-gradient(to bottom, rgba(200,180,138,0), #C8B48A); animation:hsPulse 2200ms ease-in-out infinite"></span>
+        <span style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; color:#C8B48A">Scroll down</span>
+      </div>
+    </div>
+  </section>
+
+  <section data-hs-cam="1" style="position:relative; height:460vh; background:#F2EEE4">
+    <div style="position:sticky; top:0; height:100vh; overflow:hidden; display:flex; align-items:center; justify-content:center">
+
+      <div data-hs-bluewrap="1" style="position:absolute; width:{{ bodyW }}; aspect-ratio:0.62; transform-origin:58.5% 49.2%; pointer-events:none">
+      <div data-hs-blue="1" style="position:absolute; inset:0; pointer-events:none; opacity:0; overflow:hidden; border-radius:22px; animation:hsBlueLine 1900ms cubic-bezier(.22,.61,.36,1) 120ms forwards; animation-play-state:paused">
+        <div style="position:absolute; inset:0; border:1px solid rgba(140,110,66,0.5); border-radius:22px"></div>
+        <div style="position:absolute; left:30.4%; top:24.8%; width:56.2%; height:48.4%; border:1px solid rgba(140,110,66,0.5)"></div>
+        <div style="position:absolute; left:31.8%; top:26%; width:53.4%; height:46%; border:1px dashed rgba(140,110,66,0.42)"></div>
+        <div style="position:absolute; left:31.8%; top:48.8%; width:53.4%; height:1px; background:rgba(140,110,66,0.5)"></div>
+        <div style="position:absolute; left:34.6%; top:10.4%; width:27.4%; height:12.6%; border:1px solid rgba(140,110,66,0.45); border-radius:8px"></div>
+        <div style="position:absolute; left:41.5%; top:12.9%; width:13.6%; aspect-ratio:1; border:1px solid rgba(140,110,66,0.45); border-radius:50%"></div>
+        <div style="position:absolute; left:9%; top:74%; width:16.4%; aspect-ratio:1; border:1px solid rgba(140,110,66,0.45); border-radius:50%"></div>
+        <div style="position:absolute; left:40.6%; top:74.4%; width:44%; height:5.6%; display:flex; gap:5%">
+          <span style="flex:1 1 0; border:1px solid rgba(140,110,66,0.42)"></span>
+          <span style="flex:1 1 0; border:1px solid rgba(140,110,66,0.42)"></span>
+          <span style="flex:1 1 0; border:1px solid rgba(140,110,66,0.42)"></span>
+        </div>
+        <div style="position:absolute; left:0; right:0; top:0; height:2px; background:linear-gradient(90deg, rgba(200,180,138,0) 0%, rgba(200,180,138,0.85) 50%, rgba(200,180,138,0) 100%); animation:hsBlueScan 1900ms cubic-bezier(.4,0,.6,1) 120ms forwards; animation-play-state:paused"></div>
+      </div>
+      </div>
+
+      <div data-hs-body="1" style="position:relative; width:{{ bodyW }}; aspect-ratio:0.62; border-radius:22px; container-type:size; transform-origin:58.5% 49.2%; opacity:0; animation:hsDevelop 900ms cubic-bezier(.22,.61,.36,1) 1180ms forwards; animation-play-state:paused; background:linear-gradient(148deg, #26282C 0%, #15171B 44%, #1D1F23 78%, #101215 100%); box-shadow:0 50px 110px -46px rgba(20,24,18,0.55), inset 0 1px 0 rgba(255,255,255,0.07), inset 0 -1px 0 rgba(0,0,0,0.5); will-change:transform">
+
+        <div style="position:absolute; inset:0; border-radius:22px; pointer-events:none; background-image:radial-gradient(rgba(255,255,255,0.045) 0.5px, transparent 0.6px); background-size:3px 3px"></div>
+        <div style="position:absolute; inset:0; border-radius:22px; pointer-events:none; background:linear-gradient(115deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 34%)"></div>
+
+        <span data-hs-chrome="1" style="position:absolute; left:38.5%; top:-1.6%; width:5%; height:3.2%; border-radius:40% 40% 20% 20%; background:linear-gradient(180deg, #B7BCC2, #6E747B); box-shadow:inset 0 -1px 1px rgba(0,0,0,0.4)"></span>
+        <span data-hs-chrome="1" style="position:absolute; left:38.5%; bottom:-1.6%; width:5%; height:3.2%; border-radius:20% 20% 40% 40%; background:linear-gradient(0deg, #B7BCC2, #6E747B); box-shadow:inset 0 1px 1px rgba(0,0,0,0.4)"></span>
+
+        <span data-hs-chrome="1" style="position:absolute; left:9%; top:6.1%; width:5.6%; aspect-ratio:1; border-radius:50%; background:radial-gradient(60% 60% at 38% 32%, #E0533E, #8E1B10); box-shadow:0 1px 2px rgba(0,0,0,0.6)"></span>
+        <span data-hs-chrome="1" style="position:absolute; left:16.4%; top:6.6%; width:7.4%; height:4.6%; border-radius:2px; background:linear-gradient(180deg, #E2E4E7, #85898F); box-shadow:inset 0 0 0 1px rgba(0,0,0,0.35)">
+          <span style="position:absolute; left:38%; top:22%; width:24%; height:56%; background:#24262A; border-radius:1px"></span>
+        </span>
+        <span data-hs-chrome="1" style="position:absolute; left:16.8%; top:13%; width:8.4%; aspect-ratio:1; border-radius:50%; background:repeating-conic-gradient(from 0deg, #2E3136 0deg 6deg, #14161A 6deg 12deg); box-shadow:inset 0 0 0 1px rgba(0,0,0,0.5)"></span>
+
+        <span data-hs-chrome="1" style="position:absolute; left:3.4%; top:13.4%; width:10.4%; height:10.2%; border-radius:3px; background:linear-gradient(100deg, #E6E8EA, #9AA0A6); box-shadow:inset 0 0 0 1px rgba(0,0,0,0.4)">
+          <span style="position:absolute; left:18%; top:16%; width:64%; height:14%; background:#2B2D31"></span>
+          <span style="position:absolute; left:38%; top:16%; width:24%; height:68%; background:#2B2D31"></span>
+          <span style="position:absolute; left:18%; top:70%; width:64%; height:14%; background:#2B2D31"></span>
+        </span>
+
+        <span data-hs-chrome="1" style="position:absolute; left:4.4%; top:26.6%; width:6.2%; height:12.4%; border-radius:3px; background:repeating-linear-gradient(90deg, #33373D 0 2px, #101215 2px 4px); box-shadow:inset 0 0 0 1px rgba(0,0,0,0.55)"></span>
+
+        <span data-hs-chrome="1" style="position:absolute; left:4.4%; top:43.6%; width:7.2%; height:9.4%; border-radius:2px; background:#0D0F12; box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06)">
+          <span style="position:absolute; left:16%; top:20%; width:68%; height:12%; background:#3A3D42"></span>
+          <span style="position:absolute; left:16%; top:44%; width:68%; height:12%; background:#3A3D42"></span>
+          <span style="position:absolute; left:16%; top:68%; width:68%; height:12%; background:#3A3D42"></span>
+        </span>
+
+        <span data-hs-chrome="1" style="position:absolute; left:22.5%; top:74%; transform:rotate(-90deg); transform-origin:left top; display:flex; flex-direction:column; gap:2px; white-space:nowrap; font-size:2.6cqw; letter-spacing:0.14em; line-height:1.5; color:#7A7F86">
+          <span>MADE IN TORONTO, CA</span>
+          <span>TRUSTED WORLDWIDE</span>
+          <span>EST 2021</span>
+        </span>
+
+        <span data-hs-chrome="1" style="position:absolute; left:16.6%; top:69.4%; width:3.8%; aspect-ratio:1; border-radius:50%; background:radial-gradient(60% 60% at 36% 32%, #D6DADE, #6C7178); box-shadow:inset 0 0 0 1px rgba(0,0,0,0.45)">
+          <span style="position:absolute; left:26%; top:46%; width:48%; height:8%; background:#4A4E55"></span>
+        </span>
+
+        <span data-hs-chrome="1" style="position:absolute; left:9.4%; top:73.6%; width:19.4%; aspect-ratio:1; border-radius:50%; background:radial-gradient(70% 70% at 38% 30%, #2C2F34, #0A0C0F); box-shadow:inset 0 0 0 1px rgba(255,255,255,0.07), 0 2px 6px rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center">
+          <span style="width:52%; height:52%; border-radius:14%; background:linear-gradient(140deg, #191B1F, #060709); box-shadow:inset 0 0 0 1px rgba(255,255,255,0.05)"></span>
+        </span>
+
+        <span data-hs-chrome="1" style="position:absolute; left:3.6%; top:88%; width:8.4%; height:7.2%; border-radius:3px; background:repeating-linear-gradient(0deg, #33373D 0 2px, #0E1013 2px 4px); box-shadow:inset 0 0 0 1px rgba(0,0,0,0.5)"></span>
+
+        <span data-hs-chrome="1" style="position:absolute; left:34.6%; top:10.4%; width:27.4%; height:12.6%; border-radius:8px; background:linear-gradient(160deg, #2A2C31, #16181C); box-shadow:inset 0 0 0 1px rgba(255,255,255,0.05), 0 1px 2px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center">
+          <span style="position:relative; width:62%; aspect-ratio:1; border-radius:50%; background:radial-gradient(62% 62% at 40% 32%, #34383E, #101215); box-shadow:inset 0 0 0 1px rgba(0,0,0,0.5)">
+            <span style="position:absolute; left:50%; top:9%; width:0; height:0; transform:translateX(-50%); border-left:4px solid transparent; border-right:4px solid transparent; border-bottom:5px solid #C3C7CC"></span>
+            <span style="position:absolute; left:50%; bottom:9%; width:0; height:0; transform:translateX(-50%); border-left:4px solid transparent; border-right:4px solid transparent; border-top:5px solid #C3C7CC"></span>
+            <span style="position:absolute; top:50%; left:9%; width:0; height:0; transform:translateY(-50%); border-top:4px solid transparent; border-bottom:4px solid transparent; border-right:5px solid #C3C7CC"></span>
+            <span style="position:absolute; top:50%; right:9%; width:0; height:0; transform:translateY(-50%); border-top:4px solid transparent; border-bottom:4px solid transparent; border-left:5px solid #C3C7CC"></span>
+            <span style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:30%; aspect-ratio:1; border-radius:50%; background:radial-gradient(60% 60% at 38% 32%, #C8CCD1, #7C8189)"></span>
+          </span>
+        </span>
+
+        <span data-hs-chrome="1" style="position:absolute; left:69%; top:23.6%; width:1.1%; aspect-ratio:1; border-radius:50%; background:#0A0C0F"></span>
+
+        <div data-hs-chrome="1" style="position:absolute; left:30.4%; top:24.8%; width:56.2%; height:48.4%; border-radius:4px; background:#1A1C20; box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08), 0 2px 8px rgba(0,0,0,0.45)"></div>
+
+        <div data-hs-lcd="1" style="position:absolute; left:31.8%; top:26%; width:53.4%; height:46%; overflow:hidden; background:#FBF8F1">
+        </div>
+
+        <span data-hs-chrome="1" style="position:absolute; left:40.6%; top:74.4%; width:44%; height:5.6%; display:flex; gap:5%">
+          <span style="flex:1 1 0; border-radius:2px; background:linear-gradient(180deg, #33363B, #1B1D21); box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; font-size:2.3cqw; letter-spacing:0.12em; color:#A7ACB3">PLAY</span>
+          <span style="flex:1 1 0; border-radius:2px; background:linear-gradient(180deg, #33363B, #1B1D21); box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; font-size:2.3cqw; letter-spacing:0.12em; color:#A7ACB3">FN</span>
+          <span style="flex:1 1 0; border-radius:2px; background:linear-gradient(180deg, #33363B, #1B1D21); box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; font-size:2.3cqw; letter-spacing:0.12em; color:#A7ACB3">MENU</span>
+        </span>
+
+      </div>
+
+      <div data-hs-stage="1" style="position:absolute; left:0; top:0; width:0; height:0; overflow:visible; pointer-events:none">
+        <div data-hs-panel="1" style="position:absolute; inset:0; pointer-events:auto; display:flex; flex-direction:column; overflow:hidden; background:radial-gradient(128% 108% at 50% 48%, #111309 46%, #101321 82%, #141726 100%)">
+          
+
+          <div data-hs-win="1" style="flex:1 1 auto; min-height:0; position:relative; overflow:hidden">
+            <div data-hs-bg="1" style="position:absolute; left:0; top:0; width:100%; height:100%; z-index:0; opacity:0; overflow:hidden">
+              <video data-hs-reel="1" src="uploads/My Project_0.mp4" loop="{{ true }}" playsInline="{{ true }}" preload="auto" aria-label="The valley in monsoon" style="width:100%; height:100%; object-fit:cover; display:block"></video>
+            </div>
+            <div data-hs-mat="top" style="position:absolute; left:0; right:0; top:0; height:51%; z-index:4; pointer-events:none; background:#FBF8F1; box-shadow:0 2px 0 rgba(20,24,18,0.5), 0 3px 10px rgba(20,24,18,0.25); will-change:transform"></div>
+            <div data-hs-mat="bot" style="position:absolute; left:0; right:0; bottom:0; height:51%; z-index:4; pointer-events:none; background:#FBF8F1; box-shadow:0 -2px 0 rgba(20,24,18,0.5), 0 -3px 10px rgba(20,24,18,0.25); will-change:transform"></div>
+            <div data-hs-hud="1" style="position:absolute; left:0; right:0; bottom:0; opacity:0; pointer-events:none; display:flex; align-items:center; gap:8px; padding:10px 12px; background:linear-gradient(to top, rgba(17,19,9,0.78), rgba(17,19,9,0))">
+              <span style="width:8px; height:8px; background:#8C4A3F; animation:hsPulse 1600ms ease-in-out infinite"></span>
+              <span style="font-size:9px; letter-spacing:0.18em; text-transform:uppercase; color:#F2EEE4; white-space:nowrap">Valley in monsoon</span>
+              <span style="margin-left:auto; display:flex; align-items:center; gap:7px">
+                <span style="font-size:9px; letter-spacing:0.16em; color:rgba(242,238,228,0.6)">Vol</span>
+                <span style="display:flex; align-items:flex-end; gap:2px; height:11px">
+                  <span data-hs-bar="0" style="width:3px; height:34%; background:rgba(242,238,228,0.22)"></span>
+                  <span data-hs-bar="1" style="width:3px; height:48%; background:rgba(242,238,228,0.22)"></span>
+                  <span data-hs-bar="2" style="width:3px; height:62%; background:rgba(242,238,228,0.22)"></span>
+                  <span data-hs-bar="3" style="width:3px; height:76%; background:rgba(242,238,228,0.22)"></span>
+                  <span data-hs-bar="4" style="width:3px; height:88%; background:rgba(242,238,228,0.22)"></span>
+                  <span data-hs-bar="5" style="width:3px; height:100%; background:rgba(242,238,228,0.22)"></span>
+                </span>
+                <span data-hs-volnum="1" style="font-size:9px; letter-spacing:0.12em; color:#C8B48A; font-variant-numeric:tabular-nums; min-width:3.2em">0%</span>
+              </span>
+            </div>
+            <div data-hs-hud="1" style="position:absolute; left:0; right:0; bottom:0; height:2px; opacity:0; background:rgba(242,238,228,0.16); pointer-events:none">
+              <div style="height:2px; background:#C8B48A; transform-origin:left; animation:hsPlayhead 14s linear infinite"></div>
+            </div>
+          </div><div data-hs-tray="1" style="flex:0 0 0%; min-height:0; opacity:0; overflow:hidden; border-top:1px solid rgba(242,238,228,0.14); background:#0C0E07; mask-image:linear-gradient(to right, transparent 0%, #000 9%, #000 91%, transparent 100%); -webkit-mask-image:linear-gradient(to right, transparent 0%, #000 9%, #000 91%, transparent 100%)">
+            <div style="width:533.3333%; height:100%; display:flex; animation:hsTray 34s linear infinite">
+              <sc-for list="{{ trayShots }}" as="t" hint-placeholder-count="16">
+                <div style="flex:1 1 0; min-width:0; height:100%; padding:6px">
+                  <div style="position:relative; width:100%; height:100%; overflow:hidden; background:#1A1D14">
+                    <image-slot id="{{ t.slotId }}" shape="rect" fit="cover" src="{{ t.src }}" placeholder="{{ t.caption }}"></image-slot>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p data-hs-cue="1" style="position:fixed; right:clamp(14px, 4vw, 32px); bottom:clamp(16px, 4vw, 30px); z-index:60; margin:0; display:flex; align-items:center; gap:9px; font-size:10px; letter-spacing:0.24em; text-transform:uppercase; color:#8A6E42; pointer-events:none; mix-blend-mode:difference">
+        <span style="color:#F2EEE4">Scroll down</span>
+        <span style="display:block; width:1px; height:22px; background:linear-gradient(to bottom, rgba(242,238,228,0), #F2EEE4); animation:hsPulse 2200ms ease-in-out infinite"></span>
+      </p>
+    </div>
+  </section>
+
+  <section style="max-width:1180px; margin:0 auto; padding:0 20px clamp(24px, 6vw, 40px)">
+    <div style="display:flex; flex-wrap:wrap; gap:8px; animation:hsLift 700ms cubic-bezier(.22,.61,.36,1) 260ms forwards">
+      <sc-for list="{{ filters }}" as="f" hint-placeholder-count="5">
+        <button onClick="{{ f.pick }}" style="cursor:pointer; border:1px solid {{ f.border }}; background:{{ f.bg }}; color:{{ f.color }}; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; padding:11px 16px; transition:transform 300ms cubic-bezier(.22,.61,.36,1), background-color 420ms ease, border-color 420ms ease, color 420ms ease" style-hover="border-color:#2C3A2E; transform:translateY(-2px)" style-active="transform:translateY(0)">{{ f.label }}</button>
+      </sc-for>
+    </div>
+    <p key="{{ countKey }}" style="margin:16px 0 0; font-size:12px; color:#6E6A5C; animation:hsFade 480ms ease 40ms forwards">{{ countLine }}</p>
+  </section>
+
+  <section style="padding:0 0 clamp(48px, 12vw, 96px); overflow:hidden">
+    <div key="{{ gridKey }}" style="display:flex; flex-direction:column; gap:clamp(10px, 1.4vw, 16px)">
+      <sc-for list="{{ rows }}" as="r" hint-placeholder-count="3">
+        <div onMouseEnter="{{ r.slow }}" onMouseLeave="{{ r.resume }}" style="position:relative; overflow:hidden; padding:14px 0; margin:-14px 0">
+          <div data-hs-row="1" data-hs-dir="{{ r.dir }}" data-hs-reps="{{ r.reps }}" style="display:flex; gap:clamp(10px, 1.4vw, 16px); width:max-content; will-change:transform">
+            <sc-for list="{{ r.items }}" as="g" hint-placeholder-count="8">
+              <figure style="margin:0; width:clamp(210px, 25vw, 320px); flex:0 0 auto; display:flex; flex-direction:column; gap:9px">
+                <div onClick="{{ g.open }}" style="position:relative; aspect-ratio:3 / 2; overflow:hidden; cursor:zoom-in; background:#E6DFCE; transition:transform 620ms cubic-bezier(.22,.61,.36,1), box-shadow 520ms ease" style-hover="transform:translateY(-7px); box-shadow:0 20px 44px -20px rgba(24,30,20,0.55)">
+                  <div style="position:absolute; inset:0; animation:{{ g.breath }}">
+                    <image-slot id="{{ g.slotId }}" shape="rect" fit="cover" src="{{ g.src }}" placeholder="{{ g.caption }}"></image-slot>
+                  </div>
+                  <div style="position:absolute; inset:0; pointer-events:none; background:linear-gradient(to top, rgba(20,24,18,0.4) 0%, rgba(20,24,18,0) 46%)"></div>
+                  <span style="position:absolute; left:10px; bottom:8px; font-size:9px; letter-spacing:0.18em; color:rgba(242,238,228,0.85); font-variant-numeric:tabular-nums">{{ g.num }}</span>
+                </div>
+                <figcaption style="display:flex; flex-wrap:wrap; gap:4px 10px; align-items:baseline">
+                  <span style="font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:#4A4A40">{{ g.caption }}</span>
+                  <span style="font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:#8A6E42">{{ g.season }}</span>
+                </figcaption>
+              </figure>
+            </sc-for>
+          </div>
+          <div style="position:absolute; inset:0; pointer-events:none; background:linear-gradient(90deg, #F2EEE4 0%, rgba(242,238,228,0) 6%, rgba(242,238,228,0) 94%, #F2EEE4 100%)"></div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <dc-import name="SiteFooter" hint-size="100%,420px"></dc-import>
+
+  <sc-if value="{{ lightbox }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ close }}" style="position:fixed; inset:0; z-index:90; background:rgba(24,26,20,0.94); display:flex; flex-direction:column; animation:hsFade 320ms ease 40ms forwards; cursor:zoom-out">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 20px; flex:0 0 auto">
+        <span style="font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#B8AE96">{{ lightbox.position }}</span>
+        <button onClick="{{ close }}" style="cursor:pointer; background:transparent; border:1px solid rgba(242,238,228,0.28); color:#F2EEE4; width:40px; height:40px; font-size:15px; line-height:1; transition:border-color 240ms, background 240ms" style-hover="border-color:#F2EEE4; background:rgba(242,238,228,0.1)">✕</button>
+      </div>
+      <div key="{{ lightbox.key }}" style="flex:1 1 auto; min-height:0; padding:0 clamp(14px, 4vw, 48px); display:flex; align-items:center; justify-content:center; animation:{{ lightbox.enter }}">
+        <div onClick="{{ stop }}" style="position:relative; width:min(100%, 900px); height:100%; max-height:100%; cursor:default; animation:hsKen 16s cubic-bezier(.22,.61,.36,1) both">
+          <image-slot id="{{ lightbox.slotId }}" shape="rect" fit="contain" src="{{ lightbox.src }}" placeholder="{{ lightbox.caption }}"></image-slot>
+        </div>
+      </div>
+      <div onClick="{{ stop }}" style="flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 20px clamp(20px, 5vw, 34px)">
+        <button onClick="{{ prev }}" style="cursor:pointer; background:transparent; border:1px solid rgba(242,238,228,0.28); color:#F2EEE4; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; padding:12px 18px; transition:border-color 240ms, background 240ms, transform 240ms" style-hover="border-color:#F2EEE4; background:rgba(242,238,228,0.1); transform:translateX(-3px)">← Prev</button>
+        <div key="{{ lightbox.key }}" style="text-align:center; animation:hsLift 520ms cubic-bezier(.22,.61,.36,1) 120ms forwards">
+          <p style="margin:0 0 5px; font-family:'Marcellus', serif; font-size:clamp(15px, 4.4vw, 20px); color:#F2EEE4">{{ lightbox.caption }}</p>
+          <p style="margin:0; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#B49A6A">{{ lightbox.meta }}</p>
+        </div>
+        <button onClick="{{ next }}" style="cursor:pointer; background:transparent; border:1px solid rgba(242,238,228,0.28); color:#F2EEE4; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; padding:12px 18px; transition:border-color 240ms, background 240ms, transform 240ms" style-hover="border-color:#F2EEE4; background:rgba(242,238,228,0.1); transform:translateX(3px)">Next →</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844}}">
+const SHOTS = [
+  { id: 'g01', caption: 'The stream, below the rooms', group: 'Grounds', season: 'July', ratio: '4 / 3', src: 'uploads/photos/g01.jpg' },
+  { id: 'g02', caption: 'The resort from the air', group: 'Grounds', season: 'October', ratio: '4 / 3', src: 'uploads/photos/g02.jpg' },
+  { id: 'g03', caption: 'Treatment pavilion', group: 'Wellness', season: 'March', ratio: '4 / 3', src: 'uploads/photos/g03.jpg' },
+  { id: 'g04', caption: 'The rooms, from the lawn', group: 'Rooms', season: 'August', ratio: '4 / 3', src: 'uploads/photos/g04.jpg' },
+  { id: 'g05', caption: 'The games room', group: 'Leisure', season: 'November', ratio: '4 / 3', src: 'uploads/photos/g05.jpg' },
+  { id: 'g06', caption: 'The deck, after rain', group: 'Grounds', season: 'August', ratio: '4 / 3', src: 'uploads/photos/g06.jpg' },
+  { id: 'g07', caption: 'Cloud in the valley', group: 'Grounds', season: 'July', ratio: '4 / 3', src: 'uploads/photos/g07.jpg' },
+  { id: 'g08', caption: 'Tables on the upper lawn', group: 'Kitchen', season: 'May', ratio: '4 / 3', src: 'uploads/photos/g08.jpg' },
+  { id: 'g09', caption: 'A twin room', group: 'Rooms', season: 'February', ratio: '4 / 3', src: 'uploads/photos/g09.jpg' },
+  { id: 'g10', caption: 'The gym, morning light', group: 'Wellness', season: 'January', ratio: '4 / 3', src: 'uploads/photos/g10.jpg' },
+  { id: 'g11', caption: 'Garden side', group: 'Rooms', season: 'June', ratio: '4 / 3', src: 'uploads/photos/g11.jpg' },
+  { id: 'g12', caption: 'Yoga, half past six', group: 'Wellness', season: 'June', ratio: '4 / 3', src: 'uploads/photos/g12.jpg' },
+  { id: 'g13', caption: 'The pool, after dark', group: 'Wellness', season: 'November', ratio: '4 / 3', src: 'uploads/photos/g13.jpg' },
+  { id: 'g14', caption: 'The rooms at dusk', group: 'Rooms', season: 'October', ratio: '4 / 3', src: 'uploads/photos/g14.jpg' },
+  { id: 'g15', caption: 'Terraces below the road', group: 'Grounds', season: 'March', ratio: '4 / 3', src: 'uploads/photos/g15.jpg' },
+  { id: 'g16', caption: 'The dining hall', group: 'Kitchen', season: 'December', ratio: '4 / 3', src: 'uploads/photos/g16.jpg' },
+  { id: 'g17', caption: 'The billiard table', group: 'Leisure', season: 'January', ratio: '4 / 3', src: 'uploads/photos/g17.jpg' },
+  { id: 'g18', caption: 'From the valley path', group: 'Rooms', season: 'September', ratio: '4 / 3', src: 'uploads/photos/g18.jpg' }
+];
+
+const CT = () => (typeof window !== 'undefined' && window.HSContent) || null;
+
+/* The published record is the source of truth; SHOTS above is only the
+   fallback for a site that has never published from the PMS. */
+const FALLBACK = { kicker: 'Gallery', title: 'The grounds', lede: '', groups: ['Grounds', 'Rooms', 'Wellness', 'Kitchen', 'Leisure'], frames: SHOTS };
+
+class Component extends DCLogic {
+  _hov = {};
+
+  state = {
+    group: 'All',
+    open: null,
+    dir: 0,
+    portrait: typeof window !== 'undefined' ? window.innerWidth < 860 : false,
+    gallery: CT() ? CT().published().gallery : FALLBACK
+  };
+
+  componentDidMount() {
+    this.bindContent(0);
+    this._key = (e) => {
+      if (this.state.open === null) return;
+      if (e.key === 'Escape') this.setState({ open: null });
+      if (e.key === 'ArrowRight') this._step(1);
+      if (e.key === 'ArrowLeft') this._step(-1);
+    };
+    window.addEventListener('keydown', this._key);
+
+    /* Scroll motion is driven from the scroll path (rAF-coalesced), not CSS
+       scroll timelines — those do not advance in every host. */
+    this._reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this._collect();
+    this._onScroll = () => {
+      /* Scroll energy: the bands run slowly on their own, and every scroll
+         pushes them — down drives each band its own way, up reverses all of
+         them, so neighbouring bands always shear against each other. */
+      const y = window.scrollY || 0;
+      const d = y - (this._lastY == null ? y : this._lastY);
+      this._lastY = y;
+      if (d) {
+        this._sv = (this._sv || 0) * 0.5 + d * 20;
+        this._sign = d > 0 ? 1 : -1;
+      }
+      if (this._raf) return;
+      this._raf = requestAnimationFrame(this._tick);
+    };
+    this._onResize = () => {
+      this._winMax = 0;
+      for (const r of (this._bands || [])) r.setW = 0;
+      const p = window.innerWidth < 860;
+      if (p !== this.state.portrait) this.setState({ portrait: p });
+      this._onScroll();
+    };
+    window.addEventListener('resize', this._onResize);
+    if (!this._reduce) {
+      window.addEventListener('scroll', this._onScroll, { passive: true });
+      this._tick();
+      this._mraf = requestAnimationFrame(this._drift);
+    } else {
+      this._armed = true;
+      const blue = (this._root || document).querySelector('[data-hs-blue]');
+      if (blue) blue.style.display = 'none';
+      if (this._body) { this._body.style.opacity = '1'; this._body.style.animation = 'none'; }
+      this._settleCamera(1);
+    }
+  }
+
+  /* The camera stage: scroll drives one progress value, which scales the body,
+     fades its chrome and the white mat, and opens the media panel out to the
+     LCD edges. Written straight to style so it tracks the scroll exactly. */
+  _settleCamera(p) {
+    const ease = p * p * (3 - 2 * p);
+    const rot = this.state.portrait ? 0 : 90;
+    if (this._blueWrap) this._blueWrap.style.transform = 'rotate(' + rot + 'deg)';
+    if (this._body) {
+      const span = this.state.portrait ? 2.55 : 2.45;
+      /* The zoom stops once the screen has taken the frame — past that the
+         panel would simply swallow the viewport in flat olive. */
+      const lw = (this._lcd && this._lcd.offsetWidth) || 1;
+      const lh = (this._lcd && this._lcd.offsetHeight) || 1;
+      const sw = rot ? lh : lw, sh = rot ? lw : lh;
+      const cap = Math.min(window.innerWidth * 0.74 / sw, window.innerHeight * 0.94 / sh);
+      const s = Math.min(1 + ease * span, Math.max(1, cap));
+      /* The origin sits at the screen's centre, which is right of the body's —
+         slide that difference back so the screen lands mid-frame. */
+      const W = this._body.offsetWidth || 0, H = this._body.offsetHeight || 0;
+      const dx = -0.085 * W * ease, dy = 0.008 * H * ease;
+      this._body.style.transform = 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) +
+        'px) scale(' + s.toFixed(4) + ') rotate(' + rot + 'deg)';
+    }
+    const chromeOp = Math.max(0, 1 - Math.max(0, (p - 0.28)) / 0.42);
+    for (const el of (this._chrome || [])) el.style.opacity = chromeOp.toFixed(3);
+    /* The white screen parts from the centre — the picture is already running
+       behind it — and the level comes up as the scroll carries on. */
+    /* Held fully shut through the zoom, then parted in one decisive move: the
+       two halves clear the window entirely, so the picture is what is being
+       uncovered rather than a backdrop behind a gap. */
+    const raw = Math.max(0, Math.min(1, (p - 0.05) / 0.45));
+    const split = raw * raw * (3 - 2 * raw);
+    for (const el of (this._mats || [])) {
+      const dir = el.dataset.hsMat === 'top' ? -1 : 1;
+      el.style.transform = 'translateY(' + (dir * split * 101).toFixed(2) + '%)';
+    }
+    /* The edge only starts bleeding outward once the halves begin to part. */
+    if (this._panel) {
+      this._panel.style.boxShadow = split <= 0 ? 'none' :
+        '0 0 72px 34px rgba(20,23,38,' + (0.9 * split).toFixed(3) + '), 0 0 140px 70px rgba(17,19,9,' + (0.55 * split).toFixed(3) + ')';
+    }
+    const hud = Math.max(0, Math.min(1, (p - 0.52) / 0.14));
+    for (const el of (this._huds || [])) el.style.opacity = hud.toFixed(3);
+    const exitFade = this._camExit == null ? 1 : this._camExit;
+    const vol = Math.max(0, Math.min(1, (p - 0.34) / 0.56)) * exitFade;
+    for (const el of (this._bars || [])) {
+      const lit = vol > (Number(el.dataset.hsBar) + 0.55) / 6;
+      el.style.background = lit ? '#C8B48A' : 'rgba(242,238,228,0.22)';
+    }
+    if (this._volNum) this._volNum.textContent = Math.round(vol * 100) + '%';
+    /* The level readout was a fiction before there was a film in the window.
+       Now it drives the real thing: sound comes up as the scroll carries on,
+       and only after the visitor has interacted, since no browser will unmute
+       on its own. */
+    if (this._reel) {
+      this._reel.volume = Math.max(0, Math.min(1, vol));
+      /* Sound simply follows the scroll. The unmute is attempted as soon as
+         there is a level to play; where the browser refuses it without a
+         gesture the film is put back on mute and keeps running, and the next
+         real gesture releases it. */
+      if (vol > 0.02 && this._reel.muted) {
+        this._reel.muted = false;
+        const q = this._reel.play();
+        if (q && q.catch) q.catch(() => { this._reel.muted = true; const r = this._reel.play(); if (r && r.catch) r.catch(() => {}); });
+      }
+      if (vol <= 0.02 && !this._reel.muted) this._reel.muted = true;
+      const live = p > 0 && exitFade > 0.01;
+      if (live && this._reel.paused) { const q = this._reel.play(); if (q && q.catch) q.catch(() => {}); }
+      else if (!live && !this._reel.paused) this._reel.pause();
+    }
+    /* Track the LCD's real rect with the media layer, then open the panel out
+       to its edges. Both are layout sizes, so the image stays sharp. */
+    if (this._stage && this._lcd) {
+      const host = this._stage.parentElement.getBoundingClientRect();
+      const r = this._lcd.getBoundingClientRect();
+      const l = r.left - host.left, t = r.top - host.top;
+      const cl = Math.max(0, l), ct = Math.max(0, t);
+      const cr = Math.min(host.width, l + r.width), cb = Math.min(host.height, t + r.height);
+      this._stage.style.left = Math.round(cl) + 'px';
+      this._stage.style.top = Math.round(ct) + 'px';
+      this._stage.style.width = Math.round(Math.max(0, cr - cl)) + 'px';
+      this._stage.style.height = Math.round(Math.max(0, cb - ct)) + 'px';
+      /* Once the panel has taken over the screen, the LCD's own white must go —
+         clamped to the viewport it otherwise leaks a bright sliver at the edge. */
+      const k = Math.min(1, ease / 0.1);
+      const mix = (a, b) => Math.round(a + (b - a) * k);
+      this._lcd.style.background = 'rgb(' + mix(251, 18) + ',' + mix(248, 21) + ',' + mix(241, 34) + ')';
+    }
+    /* The picture is pinned to the viewport, so the screen reads as a window
+       onto it: as the window opens, more of the same image comes into view. */
+    if (this._tray) {
+      const t = Math.max(0, Math.min(1, (p - 0.6) / 0.16));
+      this._tray.style.opacity = t.toFixed(3);
+      this._tray.style.flexBasis = (t * 30).toFixed(2) + '%';
+    }
+    if (this._bg && this._win) {
+      const w = { width: this._win.clientWidth, height: this._win.clientHeight };
+      /* The film IS the window — no inset box. It fills whatever the window
+         currently measures, so it grows with the zoom and never sits small
+         inside a dark field. `object-fit: cover` on the element handles the
+         difference between the window's shape and the film's. */
+      this._bg.style.left = '0px';
+      this._bg.style.top = '0px';
+      this._bg.style.width = w.width + 'px';
+      this._bg.style.height = w.height + 'px';
+      /* The picture exists only inside the band the halves have opened, so it
+         is uncovered by the split rather than sitting behind it. */
+      this._bg.style.opacity = split > 0 ? '1' : '0';
+      const gap = w.height * split;
+      const bandTop = (w.height - gap) / 2, bandBot = bandTop + gap;
+      this._bg.style.clipPath = 'inset(' + Math.max(0, bandTop).toFixed(1) + 'px 0 ' +
+        Math.max(0, w.height - bandBot).toFixed(1) + 'px 0)';
+    }
+  }
+
+  componentDidUpdate() { this._collect(); if (!this._reduce) this._tick(); }
+
+  _collect() {
+    const root = this._root || (this._root = document);
+    this._drifts = Array.from(root.querySelectorAll('[data-hs-amp]'));
+    this._caps = Array.from(root.querySelectorAll('[data-hs-cap]'));
+    this._rail = root.querySelector('[data-hs-rail]');
+    this._cam = root.querySelector('[data-hs-cam]');
+    this._body = root.querySelector('[data-hs-body]');
+    this._chrome = Array.from(root.querySelectorAll('[data-hs-chrome]'));
+    this._mats = Array.from(root.querySelectorAll('[data-hs-mat]'));
+    this._bars = Array.from(root.querySelectorAll('[data-hs-bar]'));
+    this._volNum = root.querySelector('[data-hs-volnum]');
+    this._huds = Array.from(root.querySelectorAll('[data-hs-hud]'));
+    this._win = root.querySelector('[data-hs-win]');
+    this._bg = root.querySelector('[data-hs-bg]');
+    this._reel = root.querySelector('[data-hs-reel]');
+    this._wireReel();
+    this._lcd = root.querySelector('[data-hs-lcd]');
+    this._stage = root.querySelector('[data-hs-stage]');
+    this._panel = root.querySelector('[data-hs-panel]');
+    this._bands = Array.from(root.querySelectorAll('[data-hs-row]')).map((el, i) => ({
+      el: el, i: i,
+      dir: parseFloat(el.dataset.hsDir) || 1,
+      reps: parseFloat(el.dataset.hsReps) || 3,
+      base: [26, 17, 33][i % 3],
+      gain: [1, 0.76, 1.18][i % 3],
+      off: el._hsOff || i * 150,
+      v: 0, setW: 0
+    }));
+    this._tray = root.querySelector('[data-hs-tray]');
+    this._cue = root.querySelector('[data-hs-cue]');
+    this._blueWrap = root.querySelector('[data-hs-bluewrap]');
+    this._panel = root.querySelector('[data-hs-panel]');
+  }
+
+  /* The blueprint drafts itself only once the user has actually scrolled the
+     stage up into view — the intro is paused in markup until then. */
+  _arm() {
+    if (this._armed) return;
+    const cam = (this._root || document).querySelector('[data-hs-cam]');
+    if (!cam || (window.scrollY || 0) <= 0) return;
+    if (cam.getBoundingClientRect().top > window.innerHeight * 0.6) return;
+    this._armed = true;
+    const blue = (this._root || document).querySelector('[data-hs-blue]');
+    const targets = [this._body, blue].concat(blue ? Array.from(blue.children) : []);
+    for (const el of targets) if (el) el.style.animationPlayState = 'running';
+  }
+
+  /* One continuous clock for the bands: a slow base drift plus whatever
+     energy the last scroll left behind, eased in so a direction flip reads as
+     a turn rather than a jump. Each track carries its slice repeated, and the
+     offset wraps at one set length, so the run never ends. */
+  _drift = (t) => {
+    this._mraf = requestAnimationFrame(this._drift);
+    const dt = Math.min(0.05, (t - (this._mt || t)) / 1000);
+    this._mt = t;
+    this._sv = (this._sv || 0) * Math.pow(0.0015, dt);
+    const boost = Math.min(1100, Math.abs(this._sv));
+    const sign = this._sign || 1;
+    for (const r of (this._bands || [])) {
+      if (!r.setW) { r.setW = r.el.scrollWidth / r.reps; if (!r.setW) continue; }
+      const target = r.dir * sign * (r.base + boost * r.gain) * (this._hov[r.i] ? 0.1 : 1);
+      r.v += (target - r.v) * Math.min(1, dt * 3.4);
+      r.off = (r.off + r.v * dt) % r.setW;
+      if (r.off < 0) r.off += r.setW;
+      r.el._hsOff = r.off;
+      r.el.style.transform = 'translate3d(' + (-r.off).toFixed(2) + 'px,0,0)';
+    }
+  };
+
+  _tick = () => {
+    this._raf = 0;
+    const vh = window.innerHeight || 1;
+    this._arm();
+
+    for (const el of this._drifts) {
+      const frame = el.parentElement;
+      if (!frame) continue;
+      const r = frame.getBoundingClientRect();
+      if (r.bottom < -240 || r.top > vh + 240) continue;
+      const p = Math.max(0, Math.min(1, (vh - r.top) / (vh + r.height)));
+      const amp = parseFloat(el.dataset.hsAmp) || 3.4;
+      el.style.transform = 'translate3d(0,' + ((p - 0.5) * 2 * amp).toFixed(2) + '%,0)';
+      // sharpen toward the middle of the viewport, soften at the edges
+      const centred = Math.min(1, (1 - Math.abs(p - 0.5) / 0.5) * 1.9);
+      el.style.opacity = (0.58 + 0.42 * centred).toFixed(3);
+      el.style.filter = centred > 0.97 ? 'none' : 'saturate(' + (0.72 + 0.28 * centred).toFixed(2) + ')';
+    }
+
+    for (const el of this._caps) {
+      const r = el.getBoundingClientRect();
+      const t = Math.max(0, Math.min(1, (vh * 0.94 - r.top) / (vh * 0.3)));
+      el.style.opacity = t.toFixed(3);
+      el.style.transform = 'translate3d(0,' + ((1 - t) * 12).toFixed(2) + 'px,0)';
+    }
+
+    if (this._rail) {
+      const doc = document.documentElement;
+      const max = Math.max(1, doc.scrollHeight - doc.clientHeight);
+      const p = Math.max(0.02, Math.min(1, (window.scrollY || doc.scrollTop || 0) / max));
+      this._rail.style.transform = 'scaleX(' + p.toFixed(4) + ')';
+      if (this._cue) this._cue.style.opacity = Math.max(0, Math.min(1, (0.97 - p) / 0.04)).toFixed(3);
+    }
+
+    if (this._cam) {
+      const r = this._cam.getBoundingClientRect();
+      const travel = Math.max(1, r.height - vh);
+      /* How much of the pinned frame is still on screen. 1 while the film is
+         held; it falls to 0 over the last viewport-height as the section
+         leaves, so the sound goes with the picture instead of cutting out. */
+      const e = Math.max(0, Math.min(1, r.bottom / vh));
+      this._camExit = e * e * (3 - 2 * e);
+      this._settleCamera(Math.max(0, Math.min(1, -r.top / travel)));
+    }
+  };
+
+  bindContent(tries) {
+    if (!CT()) {
+      if (tries < 60) this._tC = setTimeout(() => this.bindContent(tries + 1), 50);
+      return;
+    }
+    this.setState({ gallery: CT().published().gallery });
+    this._unsubContent = CT().subscribe(c => this.setState({ gallery: c.gallery, open: null }));
+  }
+
+  /* Muted so it is allowed to start at all; the first real gesture on the page
+     releases the audio, which the scroll then fades up. */
+  _wireReel() {
+    const v = this._reel;
+    if (!v || v._hsWired) return;
+    v._hsWired = true;
+    v.muted = true;
+    v.defaultMuted = true;
+    v.setAttribute('muted', '');
+    v.volume = 0;
+    const kick = () => { const p = v.play(); if (p && p.catch) p.catch(() => {}); };
+    v.addEventListener('loadeddata', kick);
+    /* The real aspect ratio is only known once metadata lands — re-measure. */
+    v.addEventListener('loadedmetadata', () => { if (!this._reduce) this._tick(); });
+    kick();
+    const allow = () => { this._audioOK = true; };
+    window.addEventListener('pointerdown', allow, { once: true, passive: true });
+    window.addEventListener('keydown', allow, { once: true });
+    window.addEventListener('touchstart', allow, { once: true, passive: true });
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this._key);
+    window.removeEventListener('scroll', this._onScroll);
+    window.removeEventListener('resize', this._onResize);
+    cancelAnimationFrame(this._raf);
+    cancelAnimationFrame(this._mraf);
+    clearTimeout(this._tC);
+    if (this._unsubContent) this._unsubContent();
+  }
+
+  _frames() { return (this.state.gallery && this.state.gallery.frames) || SHOTS; }
+
+  _visible() {
+    const g = this.state.group;
+    return this._frames().filter(s => g === 'All' || s.group === g);
+  }
+
+  _step(dir) {
+    const list = this._visible();
+    const i = list.findIndex(s => s.id === this.state.open);
+    if (i < 0) return;
+    this.setState({ open: list[(i + dir + list.length) % list.length].id, dir });
+  }
+
+  renderVals() {
+    const g = this.state.group;
+    const shots = this._visible();
+    const openIndex = shots.findIndex(s => s.id === this.state.open);
+    const cur = openIndex >= 0 ? shots[openIndex] : null;
+
+    const gal = this.state.gallery || FALLBACK;
+
+    /* The grid is a set of drifting bands. Each band carries its slice of the
+       set repeated enough times to overrun any window, so wrapping the track
+       by one set length reads as an endless run of frames. */
+    const card = (s, i) => ({
+      slotId: 'hs-gal-' + s.id,
+      src: s.src || '',
+      caption: s.caption,
+      season: s.season,
+      num: String(i + 1).padStart(2, '0'),
+      breath: 'hsBreath' + (1 + (i % 3)) + ' ' + (19 + (i % 5) * 3.5) + 's ease-in-out '
+        + (-(i % 7) * 2.6) + 's infinite alternate both',
+      open: () => this.setState({ open: s.id, dir: 0 })
+    });
+    const rowCount = shots.length >= 9 ? 3 : shots.length >= 4 ? 2 : 1;
+    const per = Math.max(1, Math.ceil(shots.length / rowCount));
+    const rows = [];
+    for (let ri = 0; ri < rowCount; ri++) {
+      const base = shots.slice(ri * per, (ri + 1) * per).map((s, k) => card(s, ri * per + k));
+      if (!base.length) continue;
+      const reps = Math.max(3, Math.ceil(18 / base.length));
+      const items = [];
+      for (let k = 0; k < reps; k++) for (const c of base) items.push(c);
+      rows.push({
+        dir: ri % 2 === 0 ? 1 : -1,
+        reps: reps,
+        items: items,
+        slow: () => { this._hov[ri] = true; },
+        resume: () => { this._hov[ri] = false; }
+      });
+    }
+
+    /* Eight frames feed the tray; the list is doubled so the loop is seamless
+       (the marquee travels exactly one set before repeating). */
+    const trayBase = this._frames().slice(0, 8);
+    const portrait = this.state.portrait;
+
+    return {
+      /* The body is authored upright, as the camera back. On wide screens the
+         whole camera lies down (90°) and the screen counter-rotates so the
+         picture stays level — the chrome and engraving turn with the body. */
+      bodyW: portrait ? 'min(86vw, 60vh, 430px)' : 'min(52vw, 74vh)',
+      trayShots: trayBase.concat(trayBase).map((s, i) => ({
+        slotId: 'cam-tray-' + (i % 8) + '-' + s.id,
+        src: s.src || '',
+        caption: s.caption
+      })),
+      pageKicker: gal.kicker || FALLBACK.kicker,
+      pageTitle: gal.title || FALLBACK.title,
+      pageLede: gal.lede || '',
+      filters: ['All'].concat(gal.groups || FALLBACK.groups).map(label => ({
+        label,
+        border: g === label ? '#2C3A2E' : '#D8D0BC',
+        bg: g === label ? '#2C3A2E' : 'transparent',
+        color: g === label ? '#F2EEE4' : '#4A4A40',
+        pick: () => this.setState({ group: label, open: null })
+      })),
+      countKey: 'c-' + g,
+      gridKey: 'grid-' + g,
+      countLine: shots.length + (shots.length === 1 ? ' frame' : ' frames')
+        + (g === 'All' ? ', all of it' : ' in ' + g.toLowerCase()),
+      rows: rows,
+      lightbox: cur && {
+        key: 'lb-' + cur.id,
+        enter: (this.state.dir > 0 ? 'hsInR' : this.state.dir < 0 ? 'hsInL' : 'hsZoom')
+          + ' 520ms cubic-bezier(.22,.61,.36,1) both',
+        slotId: 'hs-gal-' + cur.id,
+        src: cur.src || '',
+        caption: cur.caption,
+        meta: cur.group + ' · ' + cur.season,
+        position: (openIndex + 1) + ' / ' + shots.length
+      },
+      close: () => this.setState({ open: null }),
+      prev: (e) => { e.stopPropagation(); this._step(-1); },
+      next: (e) => { e.stopPropagation(); this._step(1); },
+      stop: (e) => e.stopPropagation()
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  /* Navigation: one row on wide screens; below 1080px the links fold into a
+     menu button that opens a panel under the header. */
+  .hs-nav { display:flex; align-items:center; gap:clamp(14px, 2.4vw, 30px); flex:0 0 auto; }
+  .hs-nav-links { display:flex; align-items:center; gap:clamp(18px, 2.2vw, 30px); }
+  .hs-nav-links a { white-space:nowrap; }
+  .hs-menu { display:none; }
+  .hs-menu > summary { list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:center; width:44px; height:44px; border:1px solid currentColor; border-radius:50%; opacity:0.9; transition:opacity 300ms, background 300ms; }
+  .hs-menu > summary::-webkit-details-marker { display:none; }
+  .hs-menu > summary:hover { opacity:1; }
+  .hs-menu .hs-ico-close { display:none; }
+  .hs-menu[open] .hs-ico-open { display:none; }
+  .hs-menu[open] .hs-ico-close { display:block; }
+  .hs-menu-panel { position:absolute; top:100%; left:0; right:0; max-height:calc(100svh - 76px); overflow:auto; background:#1B241C; border-top:1px solid rgba(198,172,124,0.35); box-shadow:0 30px 60px -30px rgba(0,0,0,0.55); padding:10px 24px 28px; animation:hsMenuIn 380ms cubic-bezier(.2,.7,.3,1) both; }
+  .hs-menu-panel a.hs-menu-link { display:flex; align-items:center; justify-content:space-between; padding:18px 2px; border-bottom:1px solid rgba(242,238,228,0.12); font-family:'Marcellus', serif; font-size:24px; letter-spacing:-0.01em; text-decoration:none; color:#F6F3EA; }
+  .hs-menu-panel a.hs-menu-link:hover { color:#D8C39A; }
+  .hs-menu-panel a.hs-menu-link span { font-family:'Jost', sans-serif; font-size:16px; color:#C6AC7C; }
+  .hs-menu-panel a.hs-menu-cta { display:block; margin-top:24px; text-align:center; font-size:11px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:#1B241C; background:#D8C39A; padding:16px 20px; }
+  @keyframes hsMenuIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:none; } }
+  @media (max-width:1080px) {
+    .hs-nav-links { display:none; }
+    .hs-menu { display:block; }
+  }
+  @media (max-width:520px) {
+    .hs-enquire { display:none !important; }
+    .hs-brand-name { font-size:13px !important; letter-spacing:0.22em !important; }
+  }
+
+  @keyframes hsVeil { from { opacity:0; } to { opacity:1; } }
+</style>
+</helmet>
+
+<div style="font-family:'Jost', system-ui, sans-serif; font-weight:300">
+  <header style="position:sticky; top:0; z-index:60; background:rgba(244,241,232,0.94); backdrop-filter:saturate(150%) blur(14px); -webkit-backdrop-filter:saturate(150%) blur(14px); border-bottom:1px solid #DCD5C4">
+    <div style="max-width:1240px; margin:0 auto; padding:14px 24px; display:flex; flex-wrap:nowrap; gap:24px; align-items:center; justify-content:space-between">
+      <a href="index.html" style="display:flex; flex-wrap:nowrap; align-items:center; gap:12px; min-width:0; font-family:'Marcellus', serif; font-size:15px; letter-spacing:0.3em; text-transform:uppercase; text-decoration:none; color:#1B241C">
+        <video src="uploads/Video Project (2).mp4" poster="uploads/photos/logo-mark.png" autoPlay="{{ true }}" muted="{{ true }}" loop="{{ true }}" playsInline="{{ true }}" preload="auto" aria-hidden="true" data-hs-mark-h="48" style="display:block; width:64px; height:48px; opacity:1; flex:0 0 auto; object-fit:contain; transition:opacity 400ms ease; border-radius:4px; mix-blend-mode:multiply"></video>
+        <span class="hs-brand-name" style="white-space:nowrap">Hill Stream</span>
+      </a>
+      <nav class="hs-nav" aria-label="Main">
+        <div class="hs-nav-links">
+          <sc-for list="{{ links }}" as="l" hint-placeholder-count="5">
+            <a href="{{ l.href }}" style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:{{ l.color }}; padding-bottom:3px; border-bottom:1px solid {{ l.rule }}; transition:color 350ms, border-color 350ms" style-hover="border-color:#C6AC7C">{{ l.label }}</a>
+          </sc-for>
+        </div>
+        <a class="hs-enquire" href="Booking%20Engine.dc.html" style="font-size:10px; letter-spacing:0.24em; text-transform:uppercase; text-decoration:none; color:#F4F1E8; background:#1B241C; border:1px solid #C6AC7C; padding:11px 18px; white-space:nowrap; transition:background 350ms, color 350ms, border-color 350ms" style-hover="background:#243024; color:#F4F1E8; border-color:#DCC79B">Enquire</a>
+        <details class="hs-menu">
+          <summary aria-label="Menu" title="Menu" style="color:#1B241C">
+            <svg class="hs-ico-open" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M2 5h14M2 9h14M2 13h14"/></svg>
+            <svg class="hs-ico-close" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>
+          </summary>
+          <div class="hs-menu-panel">
+            <sc-for list="{{ links }}" as="m" hint-placeholder-count="5">
+              <a class="hs-menu-link" href="{{ m.href }}">{{ m.label }}<span>→</span></a>
+            </sc-for>
+            <a class="hs-menu-cta" href="Booking%20Engine.dc.html">Enquire</a>
+          </div>
+        </details>
+      </nav>
+    </div>
+  </header>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;current&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;wellness&quot;,&quot;dining&quot;,&quot;gallery&quot;,&quot;reviews&quot;,&quot;visit&quot;,&quot;booking&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const PAGES = [
+  { id: 'wellness', label: 'Wellness', href: 'Wellness.dc.html' },
+  { id: 'dining', label: 'Dining', href: 'Dining.dc.html' },
+  { id: 'gallery', label: 'Gallery', href: 'Gallery.dc.html' },
+  { id: 'reviews', label: 'Reviews', href: 'Reviews.dc.html' },
+  { id: 'visit', label: 'Getting here', href: 'Visit.dc.html' }
+];
+
+class Component extends DCLogic {
+  componentDidMount() { this._wireMark(); }
+  componentDidUpdate() { this._wireMark(); }
+
+  /* The clip's own aspect drives the box, autoplay is armed from script (the muted
+     attribute must exist before Chrome's gate reads it), and the reveal re-asserts
+     on every render so a re-stamp of the template cannot hide it. */
+  _wireMark() {
+    const v = (this._root || document).querySelector('video[data-hs-mark-h]');
+    if (!v) return;
+    if (!v._hsWired) {
+      v._hsWired = true;
+      v.muted = true;
+      v.defaultMuted = true;
+      v.setAttribute('muted', '');
+      const kick = () => { const p = v.play(); if (p && p.catch) p.catch(() => {}); };
+      v.addEventListener('loadeddata', () => { this._wireMark(); kick(); });
+      v.addEventListener('canplay', () => { this._wireMark(); kick(); });
+      kick();
+    }
+    if (!v.videoWidth) return;
+    const h = parseFloat(v.dataset.hsMarkH);
+    v.style.height = h + 'px';
+    v.style.width = Math.round(h * (v.videoWidth / v.videoHeight)) + 'px';
+    v.style.opacity = '1';
+  }
+
+  renderVals() {
+    const current = this.props.current || 'home';
+    return {
+      links: PAGES.map(p => ({
+        label: p.label,
+        href: p.href,
+        color: p.id === current ? '#1B241C' : '#4E5449',
+        rule: p.id === current ? '#C6AC7C' : 'transparent'
+      }))
+    };
+  }
+}
+
+</script>
+</body>
+</html>
