@@ -297,13 +297,16 @@
     // same left/top/width/height in frame-%, computed by _applyView(), so the
     // inside-mask crop and the outside-mask spill stay pixel-aligned.
     '.frame img{position:absolute;max-width:none;transform:translate(-50%,-50%);' +
-    '  -webkit-user-drag:none;user-select:none;touch-action:none}' +
+    '  -webkit-user-drag:none;user-select:none}' +
+    // Swallow touch gestures only while reframing; otherwise a finger that
+    // lands on a photograph must still scroll the page.
+    ':host([data-reframe]) .frame img{touch-action:none}' +
     // Lazy photographs: the frame shimmers until the file arrives, then the
     // picture comes in from a blur. data-loaded is set by the load handler.
     '.frame img[part=image]{opacity:0;filter:blur(18px);' +
     '  transition:opacity .7s ease,filter 1s cubic-bezier(.2,.7,.3,1)}' +
     ':host([data-loaded]) .frame img[part=image]{opacity:1;filter:none}' +
-    ':host([data-filled]:not([data-loaded])) .frame{background:linear-gradient(100deg,' +
+    ':host([data-filled]:not([data-loaded]):not([data-eager])) .frame{background:linear-gradient(100deg,' +
     '  rgba(127,127,127,.10) 30%,rgba(127,127,127,.24) 50%,rgba(127,127,127,.10) 70%);' +
     '  background-size:220% 100%;animation:hs-slot-shimmer 1.3s linear infinite}' +
     '@keyframes hs-slot-shimmer{from{background-position:120% 0}to{background-position:-100% 0}}' +
@@ -512,7 +515,7 @@
       root.innerHTML =
         '<style>' + stylesheet + '</style>' +
         '<div class="frame" part="frame">' +
-        '  <img part="image" alt="" draggable="false" loading="lazy" decoding="async" style="display:none">' +
+        '  <img part="image" alt="" draggable="false" decoding="async" style="display:none">' +
         '  <div class="empty" part="empty">' + icon +
         '    <div class="cap"></div>' +
         '    <div class="sub">or <u>browse files</u></div></div>' +
@@ -716,6 +719,12 @@
     }
 
     connectedCallback() {
+      // A slot is often rendered before it is attached, when it cannot yet
+      // see an enclosing [data-hs-eager]; settle eager vs lazy here too.
+      if (this._img && this.closest('[data-hs-eager]')) {
+        this.setAttribute('data-eager', '');
+        if (this._img.loading !== 'eager') this._img.loading = 'eager';
+      }
       // Warn once per page — an id-less slot works for the session but
       // cannot persist, and two id-less slots would share nothing.
       if (!this.id && !ImageSlot._warned) {
@@ -1152,6 +1161,11 @@
           // flag, not complete, to know a load is in flight.
           this._loadPending = true;
           this.removeAttribute('data-loaded');
+          // Lazy with a shimmer by default; inside [data-hs-eager] (the home
+          // page) photographs load straight away and only keep the blur-in.
+          const eager = !!this.closest('[data-hs-eager]');
+          this.toggleAttribute('data-eager', eager);
+          this._img.loading = eager ? 'eager' : 'lazy';
           this._img.src = url;
           this._ghost.src = url;
         } else {
