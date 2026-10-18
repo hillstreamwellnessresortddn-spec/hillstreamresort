@@ -799,9 +799,9 @@ class Component extends DCLogic {
       this._pend.push(el);
     });
 
-    /* Room cards get their own entrance: the card rises (columns in a row one
-       after another), the photograph wipes open from the bottom while settling
-       out of a close zoom, then the name, line and price follow in turn. */
+    /* Room cards get their own entrance: the card fades in (columns in a row one
+       after another) as the photograph pops, settling out of a close zoom, then
+       the name, line and price fade in turn. */
     document.querySelectorAll('[data-hsroom]').forEach(card => {
       if (card._hsr || card.getBoundingClientRect().top < vh * 0.9) return;
       const row = Array.from(document.querySelectorAll('[data-hsroom]')).filter(c => c.offsetTop === card.offsetTop);
@@ -811,14 +811,8 @@ class Component extends DCLogic {
       card._hsrLine = 0.9;
       card._hsrDelay = Math.max(0, row.indexOf(card)) * 160;
       card.style.opacity = '0';
-      card.style.transform = 'translateY(90px)';
-      card.style.transition = `opacity 900ms ${ease}, transform 1300ms ${ease}`;
-      const photo = card.querySelector('[data-hsrp="photo"]');
+      card.style.transition = `opacity 900ms ${ease}`;
       const zoom = card.querySelector('[data-hsrp="zoom"]');
-      if (photo) {
-        photo.style.clipPath = 'inset(100% 0 0 0)';
-        photo.style.transition = 'clip-path 1400ms cubic-bezier(.75,0,.2,1) 120ms';
-      }
       if (zoom) {
         zoom.style.transform = 'scale(1.28)';
         zoom.style.transition = `transform 2400ms ${ease} 120ms`;
@@ -826,8 +820,7 @@ class Component extends DCLogic {
       card.querySelectorAll('[data-hsrp="line"]').forEach((p, i) => {
         const d = 650 + i * 140;
         p.style.opacity = '0';
-        p.style.transform = 'translateY(22px)';
-        p.style.transition = `opacity 800ms ease ${d}ms, transform 1000ms ${ease} ${d}ms`;
+        p.style.transition = `opacity 800ms ease ${d}ms`;
       });
       this._pend.push(card);
     });
@@ -861,11 +854,9 @@ class Component extends DCLogic {
         el.style.filter = 'none';
         if (el._hsrKind === 'image') el.style.clipPath = 'inset(0 0 0 0)';
         if (el._hsrKind === 'room') {
-          const photo = el.querySelector('[data-hsrp="photo"]');
           const zoom = el.querySelector('[data-hsrp="zoom"]');
-          if (photo) photo.style.clipPath = 'inset(0 0 0 0)';
           if (zoom) zoom.style.transform = 'scale(1)';
-          el.querySelectorAll('[data-hsrp="line"]').forEach(p => { p.style.opacity = '1'; p.style.transform = 'none'; });
+          el.querySelectorAll('[data-hsrp="line"]').forEach(p => { p.style.opacity = '1'; });
         }
         el._hsrDone = true;
       }, wait);
